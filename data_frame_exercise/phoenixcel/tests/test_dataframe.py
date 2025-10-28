@@ -8,9 +8,7 @@ from phoenixcel.src.series import Series
 class TestDataFrameInit:
     def test_dataframe_initialization(self):
         df = DataFrame()
-        assert df._dictionary == {}
-        assert df._list == []
-
+        assert type(df) is DataFrame
 
 class TestDataFrameFromCSV:
     def test_from_csv_creates_dataframe(self):

@@ -51,7 +51,7 @@ class GroupBy(dict):
             for result_key in result.keys():
                 if not descriptions.get(result_key):
                     descriptions[result_key] = {}
-                aggregation_label = f"{aggregation['column']} {function_name}"
+                aggregation_label = f"{aggregation['column']}_{function_name}"
                 descriptions[result_key][aggregation_label] = result[result_key]
         return GroupBy(descriptions)
 
