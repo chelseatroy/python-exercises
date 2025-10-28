@@ -26,7 +26,13 @@ class TestDataFrameFromCSV:
 
 
 class TestDataFrameFromRows:
-    def test_from_rows_creates_dataframe(self):
+    def test_from_rows_empty_creates_dataframe(self):
+        rows = []
+        df = DataFrame.from_rows(rows)
+        assert len(df.columns) == 0
+        assert df.columns == []
+
+    def test_from_rows_with_data_creates_dataframe(self):
         rows = [
             {'name': 'Alice', 'age': '30'},
             {'name': 'Bob', 'age': '25'}
@@ -47,6 +53,12 @@ class TestDataFrameFromRows:
 
 
 class TestDataFrameFromDictionary:
+    def test_from_dictionary_empty_creates_dataframe(self):
+        data = {}
+        df = DataFrame.from_dictionary(data)
+        assert len(df.columns) == 0
+        assert df.columns == []
+
     def test_from_dictionary_creates_dataframe(self):
         data = {
             'name': ['Alice', 'Bob'],

@@ -34,6 +34,10 @@ class DataFrame():
     @classmethod
     def from_rows(cls, rows):
         df = cls()
+
+        if not rows:
+            return df
+        
         for key in rows[0].keys():
             df._dictionary[key] = Series()
         for row in rows:
@@ -50,6 +54,10 @@ class DataFrame():
     @classmethod
     def from_dictionary(cls, dictionary):
         df = cls()
+
+        if not dictionary:
+            return df
+        
         df._dictionary = dictionary
         for i in range(len(dictionary[list(dictionary.keys())[0]])):
             item = {}
