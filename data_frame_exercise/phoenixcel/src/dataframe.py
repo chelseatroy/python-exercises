@@ -77,7 +77,6 @@ class DataFrame():
         Modifies:
           Nothing
         '''
-        print(self._list)
         return Series([row[item] for row in self._list])
 
     # Method for setting a column in the dictionary
