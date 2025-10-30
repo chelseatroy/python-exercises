@@ -4,7 +4,6 @@ from phoenixcel.src.groupby import GroupBy
 
 class DataFrame():
     def __init__(self):
-        self._dictionary = {}
         self._list = []
 
     # Ways to crate an instance
@@ -16,19 +15,9 @@ class DataFrame():
         with open(file_path) as f:
             reader = csv.DictReader(f)
 
-            for row in reader:
-                if header_unread:
-                    for key in row.keys():
-                        df._dictionary[key] = Series()
-                    header_unread = False
-                
+            for row in reader:                
                 df._list.append(row)
 
-                for key in row.keys():
-                    df._dictionary[key].append(row[key])
-
-            for key in list(df._dictionary.keys()):
-                setattr(df, key.lower().replace(" ", "_"), df._dictionary[key])
         return df
 
     @classmethod
@@ -38,16 +27,8 @@ class DataFrame():
         if not rows:
             return df
         
-        for key in rows[0].keys():
-            df._dictionary[key] = Series()
         for row in rows:
-            for key in rows[0].keys():
-                df._dictionary[key].append(row[key])
-        
             df._list.append(row)
-
-        for key in list(df._dictionary.keys()):
-            setattr(df, key.lower().replace(" ", "_"), df._dictionary[key])
 
         return df
 
@@ -58,28 +39,29 @@ class DataFrame():
         if not dictionary:
             return df
         
-        df._dictionary = dictionary
         for i in range(len(dictionary[list(dictionary.keys())[0]])):
             item = {}
             for key in dictionary.keys():
                 item[key] = dictionary[key][i]
             df._list.append(item)
 
-        for key in list(df._dictionary.keys()):
-            setattr(df, key.lower().replace(" ", "_"), df._dictionary[key])
-
         return df
 
     # Properties
     @property
     def shape(self):
-        return \
-            len(self._dictionary.keys()), \
-            len(self._dictionary[list(self._dictionary.keys())[0]])
+        if not self._list:
+            return (0, 0)
+        
+        #assumes all rows have same number of columns as first row 
+        return len(self._list[0]), len(self._list)
 
     @property
     def columns(self):
-        return list(self._dictionary.keys())
+        if not self._list:
+            return []
+        
+        return list(self._list[0].keys()) #assumes all rows have values in the same columns as the first row
 
     # Methods for getting a column in the dictionary
     def __getitem__(self, item):
@@ -90,12 +72,13 @@ class DataFrame():
           item - the column header
 
         Output:
-          the column, which is a series
+          the column as a Series
 
         Modifies:
           Nothing
         '''
-        return Series(self._dictionary[item])
+        print(self._list)
+        return Series([row[item] for row in self._list])
 
     # Method for setting a column in the dictionary
     def __setitem__(self, key, value):
@@ -112,16 +95,16 @@ class DataFrame():
         Modifies:
           Modifies the dataframe object in place.
         '''
-        self._dictionary[key] = value
-        for index, item in enumerate(self._list):
-            item[key] = value[index]
+        if not len(value) == len(self._list):
+            raise ValueError("Length of new column must match number of rows in dataframe")
 
-        setattr(self, key.lower().replace(" ", "_"), self._dictionary[key])
+        for index, row in enumerate(self._list):
+            row[key] = value[index]
 
     def where(self, condition):
         rows = [row for row in self._list if condition(row)]
         return DataFrame.from_rows(rows)
-
+    
     def assign(self, **kwargs):
         for key, value in kwargs.items():
             new_column = Series()

@@ -18,10 +18,6 @@ class TestDataFrameFromCSV:
         assert 'species' in df.columns
         assert 'specimen_id' in df.columns
         assert 'weight' in df.columns
-        assert hasattr(df, 'species')
-        assert hasattr(df, 'specimen_id')
-        assert hasattr(df, 'weight')
-
 
 class TestDataFrameFromRows:
     def test_from_rows_empty_creates_dataframe(self):
@@ -42,12 +38,12 @@ class TestDataFrameFromRows:
 
     def test_from_rows_creates_attributes(self):
         rows = [
-            {'Name': 'Alice', 'Age': '30'},
-            {'Name': 'Bob', 'Age': '25'}
+            {'name': 'Alice', 'age': '30'},
+            {'name': 'Bob', 'age': '25'}
         ]
         df = DataFrame.from_rows(rows)
-        assert hasattr(df, 'name')
-        assert hasattr(df, 'age')
+        assert df["name"] == Series(['Alice', 'Bob'])
+        assert df["age"] == Series(['30', '25'])
 
 
 class TestDataFrameFromDictionary:
@@ -117,7 +113,7 @@ class TestDataFrameSetItem:
     def test_setitem_creates_attribute(self):
         new_series = Series(['Engineer', 'Designer'])
         self.df['Job Title'] = new_series
-        assert hasattr(self.df, 'job_title')
+        assert self.df['Job Title'] == new_series
 
 
 class TestDataFrameWhere:
