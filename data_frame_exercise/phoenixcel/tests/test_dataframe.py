@@ -142,6 +142,24 @@ class TestDataFrameAssign:
         result = self.df.assign(age_doubled=lambda row: int(row['age']) * 2)
         assert 'age_doubled' in result.columns
 
+class TestDataFrameAppend:
+    def test_append_same_columns_add_rows(self):
+        first_df = DataFrame.from_rows([
+            {"name" : "Alice", "age": 30},
+            {"name" : "Bob", "age": 25},
+        ])
+        update_df = DataFrame.from_rows([
+            {"name" : "Chelsea", "age": 35},
+            {"name" : "Terry", "age": 61},
+        ])
+        result = first_df.append(update_df)
+
+        # number of rows
+        assert result.shape[1] == 4
+        assert "name" in result.columns
+        assert "age" in result.columns
+        assert result["name"] == Series(["Alice", "Bob", "Chelsea", "Terry"])
+        assert result["age"] == Series([30, 25,35, 61])
 
 class TestDataFrameGroupBy:
     @pytest.fixture(autouse=True)
