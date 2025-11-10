@@ -1,7 +1,7 @@
 import requests
 import time
 
-def fetch_all_posts(base_url="https://chelseatroy.com", start_page=1, end_page=None, max_posts=None):
+def query_wordpress_api(base_url="https://chelseatroy.com", start_page=1, end_page=None, max_posts=None):
     """
     Fetch all blog posts from a WordPress site using the REST API.
 
@@ -120,7 +120,7 @@ def fetch_blog_posts(base_url="https://chelseatroy.com", max_posts=None, start_p
     print()
 
     # Fetch all posts
-    posts = fetch_all_posts(base_url, start_page=start_page, end_page=end_page, max_posts=max_posts)
+    posts = query_wordpress_api(base_url, start_page=start_page, end_page=end_page, max_posts=max_posts)
 
     if not posts:
         print("No posts were retrieved.")
@@ -149,24 +149,3 @@ def fetch_blog_posts(base_url="https://chelseatroy.com", max_posts=None, start_p
     print(f"Total characters in this batch: {len(all_text):,}")
 
     return output_file
-
-
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description='Fetch blog posts from a WordPress site')
-    parser.add_argument('--url', default='https://chelseatroy.com',
-                        help='Base URL of the WordPress site (default: https://chelseatroy.com)')
-    parser.add_argument('--max-posts', type=int, default=None,
-                        help='Maximum number of posts to fetch (default: fetch all)')
-    parser.add_argument('--start-page', type=int, default=1,
-                        help='Page number to start from (default: 1)')
-    parser.add_argument('--end-page', type=int, default=None,
-                        help='Page number to end at (default: fetch all)')
-    parser.add_argument('--append', action='store_true',
-                        help='Append to existing file instead of overwriting')
-
-    args = parser.parse_args()
-
-    fetch_blog_posts(base_url=args.url, max_posts=args.max_posts,
-         start_page=args.start_page, end_page=args.end_page, append=args.append)

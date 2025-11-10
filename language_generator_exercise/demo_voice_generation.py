@@ -11,7 +11,7 @@ from phoenixvoice.src.fetch_blog_posts import fetch_blog_posts
 def main():
     # Configuration
     blog_url = "https://chelseatroy.com"
-    blog_file = "phoenixvoice/chelseatroy_blog_posts.txt"
+    blog_file = "chelseatroy_blog_posts.txt"
     max_posts = 50  # Adjust as needed
 
     # Step 1: Get or fetch blog posts
@@ -19,7 +19,7 @@ def main():
         fetch_blog_posts(base_url=blog_url, max_posts=max_posts)
 
     # Step 2: Train Markov model
-    markov_generator = MarkovVoiceGenerator(order=2)
+    markov_generator = MarkovVoiceGenerator(order=3)
     markov_generator.train(blog_file)
 
     # Step 3: Generate text with Markov model

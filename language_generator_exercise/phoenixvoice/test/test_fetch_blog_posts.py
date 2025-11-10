@@ -7,7 +7,7 @@ from pathlib import Path
 # Add src directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from phoenixvoice.src.fetch_blog_posts import fetch_all_posts, extract_text_from_posts, fetch_blog_posts
+from phoenixvoice.src.fetch_blog_posts import query_wordpress_api, extract_text_from_posts, fetch_blog_posts
 
 
 class TestFetchBlogPosts(unittest.TestCase):
@@ -27,7 +27,7 @@ class TestFetchBlogPosts(unittest.TestCase):
         mock_response.headers.get.return_value = '1'
         mock_get.return_value = mock_response
 
-        posts = fetch_all_posts("https://example.com", start_page=1, end_page=None)
+        posts = query_wordpress_api("https://example.com", start_page=1, end_page=None)
 
         self.assertEqual(len(posts), 1)
         self.assertEqual(posts[0]['title']['rendered'], 'Test Post Title')
@@ -45,7 +45,7 @@ class TestFetchBlogPosts(unittest.TestCase):
 
         mock_get.side_effect = [mock_response_page1, mock_response_page2]
 
-        posts = fetch_all_posts("https://example.com")
+        posts = query_wordpress_api("https://example.com")
 
         self.assertEqual(len(posts), 150)
         self.assertEqual(mock_get.call_count, 2)
@@ -57,7 +57,7 @@ class TestFetchBlogPosts(unittest.TestCase):
         mock_response.headers.get.return_value = '5'
         mock_get.return_value = mock_response
 
-        posts = fetch_all_posts("https://example.com", max_posts=50)
+        posts = query_wordpress_api("https://example.com", max_posts=50)
 
         self.assertEqual(len(posts), 50)
 
@@ -67,7 +67,7 @@ class TestFetchBlogPosts(unittest.TestCase):
         mock_response.json.return_value = []
         mock_get.return_value = mock_response
 
-        posts = fetch_all_posts("https://example.com")
+        posts = query_wordpress_api("https://example.com")
 
         self.assertEqual(len(posts), 0)
 
@@ -77,7 +77,7 @@ class TestFetchBlogPosts(unittest.TestCase):
         import requests
         mock_get.side_effect = requests.exceptions.RequestException("Network error")
 
-        posts = fetch_all_posts("https://example.com")
+        posts = query_wordpress_api("https://example.com")
 
         self.assertEqual(len(posts), 0)
 
@@ -88,7 +88,7 @@ class TestFetchBlogPosts(unittest.TestCase):
         mock_response.headers.get.return_value = '10'
         mock_get.return_value = mock_response
 
-        posts = fetch_all_posts("https://example.com", start_page=1, end_page=2)
+        posts = query_wordpress_api("https://example.com", start_page=1, end_page=2)
 
         self.assertEqual(len(posts), 200)
         self.assertEqual(mock_get.call_count, 2)
@@ -137,7 +137,7 @@ class TestFetchBlogPosts(unittest.TestCase):
         self.assertIn('Untitled', text)
         self.assertIn('Unknown date', text)
 
-    @patch('phoenixvoice.src.fetch_blog_posts.fetch_all_posts')
+    @patch('phoenixvoice.src.fetch_blog_posts.query_wordpress_api')
     @patch('builtins.open', new_callable=mock_open)
     def test_main_creates_file_with_correct_name(self, mock_file, mock_fetch):
         mock_fetch.return_value = [self.sample_post]
@@ -146,7 +146,7 @@ class TestFetchBlogPosts(unittest.TestCase):
 
         mock_file.assert_called_once_with('example_com_blog_posts.txt', 'w', encoding='utf-8')
 
-    @patch('phoenixvoice.src.fetch_blog_posts.fetch_all_posts')
+    @patch('phoenixvoice.src.fetch_blog_posts.query_wordpress_api')
     @patch('builtins.open', new_callable=mock_open)
     def test_main_appends_when_flag_set(self, mock_file, mock_fetch):
         mock_fetch.return_value = [self.sample_post]
@@ -155,14 +155,14 @@ class TestFetchBlogPosts(unittest.TestCase):
 
         mock_file.assert_called_once_with('example_com_blog_posts.txt', 'a', encoding='utf-8')
 
-    @patch('phoenixvoice.src.fetch_blog_posts.fetch_all_posts')
+    @patch('phoenixvoice.src.fetch_blog_posts.query_wordpress_api')
     def test_main_handles_no_posts(self, mock_fetch):
         mock_fetch.return_value = []
 
         # Should not raise an exception
         fetch_blog_posts(base_url="https://example.com")
 
-    @patch('phoenixvoice.src.fetch_blog_posts.fetch_all_posts')
+    @patch('phoenixvoice.src.fetch_blog_posts.query_wordpress_api')
     @patch('builtins.open', new_callable=mock_open)
     def test_main_passes_max_posts_to_fetch(self, mock_file, mock_fetch):
         mock_fetch.return_value = [self.sample_post]
