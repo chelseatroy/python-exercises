@@ -5,14 +5,14 @@ from pathlib import Path
 
 # Add phoenixvoice to path
 sys.path.insert(0, str(Path(__file__).parent / "phoenixvoice"))
-from language_generator_exercise.phoenixvoice.src.markov_voice_generator import MarkovVoiceGenerator
+from phoenixvoice.src.markov_voice_generator import MarkovVoiceGenerator
 from phoenixvoice.src.fetch_blog_posts import fetch_blog_posts
 
 def main():
     # Configuration
     blog_url = "https://chelseatroy.com"
     blog_file = "chelseatroy_blog_posts.txt"
-    max_posts = 50  # Adjust as needed
+    max_posts = 50  
 
     # Step 1: Get or fetch blog posts
     if not os.path.exists(blog_file):
