@@ -8,7 +8,7 @@ from pathlib import Path
 # Add src directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from phoenixvoice.src.markov_parser import MarkovVoiceGenerator
+from phoenixvoice.src.markov_voice_generator import MarkovVoiceGenerator
 from phoenixvoice.src.voice_generator import VoiceGenerator
 
 

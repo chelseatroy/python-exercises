@@ -5,7 +5,7 @@ from pathlib import Path
 
 # Add phoenixvoice to path
 sys.path.insert(0, str(Path(__file__).parent / "phoenixvoice"))
-from phoenixvoice.src.markov_parser import MarkovVoiceGenerator
+from language_generator_exercise.phoenixvoice.src.markov_voice_generator import MarkovVoiceGenerator
 from phoenixvoice.src.fetch_blog_posts import fetch_blog_posts
 
 def main():

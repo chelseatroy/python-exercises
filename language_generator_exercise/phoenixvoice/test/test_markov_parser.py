@@ -8,7 +8,7 @@ from pathlib import Path
 # Add src directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from phoenixvoice.src.markov_parser import MarkovModel, parse_blog_posts_file, build_markov_model_from_file
+from phoenixvoice.src.markov_voice_generator import MarkovModel, parse_blog_posts_file, build_markov_model_from_file
 
 
 class TestMarkovModel(unittest.TestCase):
