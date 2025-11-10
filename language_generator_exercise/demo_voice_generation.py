@@ -19,11 +19,11 @@ def main():
         fetch_blog_posts(base_url=blog_url, max_posts=max_posts)
 
     # Step 2: Train Markov model
-    markov_generator = MarkovVoiceGenerator(order=3)
+    markov_generator = MarkovVoiceGenerator(order=4)
     markov_generator.train(blog_file)
 
     # Step 3: Generate text with Markov model
-    markov_text = markov_generator.generate_text(max_tokens=100)
+    markov_text = markov_generator.generate_text(max_tokens=300)
     print(markov_text)
 
 if __name__ == "__main__":
