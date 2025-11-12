@@ -1,7 +1,26 @@
 # Core dependencies for WordPress blog fetching
-# Required for both Markov and Transformer models
+# Required for all text generation models
 requests>=2.31.0
 beautifulsoup4>=4.12.0
 
 # Testing
 pytest>=7.4.0
+
+# Optional dependencies for different generators
+# Install only what you need based on which generators you want to use
+
+# For Markov and N-gram models (no additional dependencies needed)
+# - MarkovVoiceGenerator: no extra deps
+# - NgramVoiceGenerator: no extra deps
+
+# For Word2Vec embeddings-based generation
+# Install with: pip install gensim
+gensim>=4.3.0
+
+# For RNN/LSTM neural generation
+# Install with: pip install torch
+torch>=2.0.0
+
+# For GPT API-based generation
+# Install with: pip install openai
+openai>=1.0.0

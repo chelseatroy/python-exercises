@@ -1,3 +1,17 @@
+"""
+Markov model voice generator.
+
+This implements probabilistic text generation using Markov chains,
+where the next token is chosen based on the frequency of transitions
+observed in the training data.
+
+Good for learning about:
+- Probabilistic text generation fundamentals
+- N-gram models and state transitions
+- Simple statistical language modeling
+- Trade-offs between model order and data sparsity
+"""
+
 import re
 import random
 import pickle
