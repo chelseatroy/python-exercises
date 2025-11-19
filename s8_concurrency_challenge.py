@@ -36,7 +36,7 @@ async def run():
     loop = asyncio.get_running_loop()
     nums = [200_000 + i*10_000 for i in range(20)]
 
-    with ProcessPoolExecutor(max_workers=os.cpu_count()) as ex:
+    with ProcessPoolExecutor(max_workers=3) as ex:
         async def one(n):
             await asyncio.sleep(0.1)                  # fake async I/O
             res = await loop.run_in_executor(ex, cpu_task, n)
