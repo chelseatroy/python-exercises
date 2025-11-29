@@ -1,0 +1,7 @@
+one plus three
+eight minus two
+the result of four plus one, minus five
+six times five minus the result of nine times two
+the result of ten plus three, minus the result of one plus seven
+The result of three times three, divided by two
+Three divided by nine
