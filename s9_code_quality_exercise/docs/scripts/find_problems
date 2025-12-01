@@ -13,7 +13,7 @@ if [ -z "$total_coverage" ]; then
     exit 1
 fi
 
-if (( $(echo "$total_coverage < 95" | bc -l) )); then
+if (( $(echo "$total_coverage < 99" | bc -l) )); then
     exit 0
 else
     exit 1
