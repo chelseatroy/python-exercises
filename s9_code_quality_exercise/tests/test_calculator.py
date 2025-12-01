@@ -80,6 +80,8 @@ class TestCalcSimple(unittest.TestCase):
         self.assertEqual(calc_simple('three times three, divided by two'), 4.5)
         # "two times three, plus one" means "(2 * 3) + 1" = 7
         self.assertEqual(calc_simple('two times three, plus one'), 7)
+        # "five plus two, times three" means "(5 + 2) * 3" = 21
+        self.assertEqual(calc_simple('five plus two, times three'), 21)
 
 
 class TestProcessLine(unittest.TestCase):
