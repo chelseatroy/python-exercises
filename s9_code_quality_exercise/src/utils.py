@@ -1,31 +1,24 @@
+WORD_TO_NUMBER = {
+    'zero': 0, '0': 0,
+    'one': 1, '1': 1,
+    'two': 2, '2': 2,
+    'three': 3, '3': 3,
+    'four': 4, '4': 4,
+    'five': 5, '5': 5,
+    'six': 6, '6': 6,
+    'seven': 7, '7': 7,
+    'eight': 8, '8': 8,
+    'nine': 9, '9': 9,
+    'ten': 10, '10': 10
+}
+
 def get_num(word):
     word = word.strip().lower()
 
-    # Map words to numbers
-    if word == 'zero' or word == '0':
-        return 0
-    elif word == 'one' or word == '1':
-        return 1
-    elif word == 'two' or word == '2':
-        return 2
-    elif word == 'three' or word == '3':
-        return 3
-    elif word == 'four' or word == '4':
-        return 4
-    elif word == 'five' or word == '5':
-        return 5
-    elif word == 'six' or word == '6':
-        return 6
-    elif word == 'seven' or word == '7':
-        return 7
-    elif word == 'eight' or word == '8':
-        return 8
-    elif word == 'nine' or word == '9':
-        return 9
-    elif word == 'ten' or word == '10':
-        return 10
-    else:
-        try:
-            return int(word)
-        except:
-            raise ValueError("Unknown number")
+    if word in WORD_TO_NUMBER:
+        return WORD_TO_NUMBER[word]
+
+    try:
+        return int(word)
+    except:
+        raise ValueError("Unknown number")
