@@ -1,12 +1,14 @@
 import unittest
 import sys
 import os
+from unittest.mock import patch
 
 # Add src directory to path so we can import from it
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from processor import process_line, calc_simple
 from utils import get_num
+from natural_language_calculator import main
 
 
 class TestGetNum(unittest.TestCase):
@@ -163,6 +165,12 @@ class TestProcessLine(unittest.TestCase):
         self.assertEqual(result, 12)
         self.assertIsInstance(result, int)
 
+    def test_nested_with_result_of_divided(self):
+        """Test nested: 'X divided by the result of Y'."""
+        result = process_line('six divided by the result of one plus one')
+        self.assertEqual(result, 3)
+        self.assertIsInstance(result, int)
+
     def test_case_insensitive(self):
         """Test that capitalization doesn't matter."""
         result = process_line('ONE PLUS THREE')
@@ -223,6 +231,16 @@ class TestCompleteExamples(unittest.TestCase):
                 result = process_line(expression)
                 self.assertEqual(result, expected,
                     f"Expression '{expression}' should equal {expected}, got {result}")
+
+
+class TestMain(unittest.TestCase):
+    """Test the main function."""
+
+    @patch('sys.argv', ['natural_language_calculator.py'])
+    def test_main_with_no_arguments(self):
+        """Test that main returns 1 when called with no arguments."""
+        result = main()
+        self.assertEqual(result, 1)
 
 
 if __name__ == '__main__':
