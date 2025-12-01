@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/../.."
+
+if ./run_tests.sh > /dev/null 2>&1; then
+    git add -A
+    if [ -f "commit_message.txt" ]; then
+        commit_msg=$(cat commit_message.txt)
+        git commit -m "$commit_msg" || true
+    else
+        git commit -m "Refactored code" || true
+    fi
+    exit 0
+else
+    git reset --hard
+    exit 1
+fi

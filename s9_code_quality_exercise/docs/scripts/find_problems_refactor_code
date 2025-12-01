@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/../.."
+
+claude --dangerously-skip-permissions < docs/scripts/Identify.refactoring.process.md
+
+if [ -f "potential_refactorings.md" ]; then
+    exit 0
+else
+    exit 1
+fi
