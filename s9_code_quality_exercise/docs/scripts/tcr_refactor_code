@@ -5,8 +5,8 @@ cd "$(dirname "$0")/../.."
 
 if ./run_tests.sh > /dev/null 2>&1; then
     git add -A
-    if [ -f "commit_message.txt" ]; then
-        commit_msg=$(cat commit_message.txt)
+    if [ -f "commit.txt" ]; then
+        commit_msg=$(cat commit.txt)
         git commit -m "$commit_msg" || true
     else
         git commit -m "Refactored code" || true
