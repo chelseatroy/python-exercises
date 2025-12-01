@@ -1,9 +1,11 @@
 from utils import *
 
+RESULT_PREFIX = 'the result of '
+
 def normalize_line(line):
     line = line.lower()
-    if line.startswith('the result of '):
-        line = line[14:]
+    if line.startswith(RESULT_PREFIX):
+        line = line[len(RESULT_PREFIX):]
     return line
 
 def process_line(line):
