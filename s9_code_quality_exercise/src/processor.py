@@ -1,10 +1,13 @@
 from utils import *
 
-def process_line(line):
-    # Clean up the line
+def normalize_line(line):
     line = line.lower()
     if line.startswith('the result of '):
         line = line[14:]
+    return line
+
+def process_line(line):
+    line = normalize_line(line)
 
     # Check if it has nested result
     if ', minus the result of ' in line or ', plus the result of ' in line or ', times the result of ' in line or ', divided by the result of ' in line or ' minus the result of ' in line or ' plus the result of ' in line or ' times the result of ' in line or ' divided by the result of ' in line:
