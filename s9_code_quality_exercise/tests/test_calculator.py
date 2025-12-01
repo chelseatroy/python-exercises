@@ -171,6 +171,12 @@ class TestProcessLine(unittest.TestCase):
         self.assertEqual(result, 3)
         self.assertIsInstance(result, int)
 
+    def test_nested_both_sides_divided(self):
+        """Test nested on both sides: 'result of X, divided by result of Y'."""
+        result = process_line('the result of ten plus two, divided by the result of one plus one')
+        self.assertEqual(result, 6)
+        self.assertIsInstance(result, int)
+
     def test_case_insensitive(self):
         """Test that capitalization doesn't matter."""
         result = process_line('ONE PLUS THREE')
