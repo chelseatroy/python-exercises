@@ -242,6 +242,16 @@ class TestMain(unittest.TestCase):
         result = main()
         self.assertEqual(result, 1)
 
+    @patch('builtins.open')
+    def test_main_write_error(self, mock_open):
+        """Test that main returns 1 when write fails."""
+        mock_open.side_effect = [
+            unittest.mock.mock_open(read_data='one plus one\n').return_value,
+            PermissionError()
+        ]
+        result = main('test.txt')
+        self.assertEqual(result, 1)
+
 
 if __name__ == '__main__':
     unittest.main()
