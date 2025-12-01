@@ -1,4 +1,4 @@
-from utils import *
+from utils import get_num
 
 RESULT_PREFIX = 'the result of '
 
