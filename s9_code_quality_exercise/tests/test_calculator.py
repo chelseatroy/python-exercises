@@ -242,15 +242,38 @@ class TestMain(unittest.TestCase):
         result = main()
         self.assertEqual(result, 1)
 
+    @patch('sys.argv', ['natural_language_calculator.py', 'test_input.txt'])
     @patch('builtins.open')
-    def test_main_write_error(self, mock_open):
+    def test_main_with_sys_argv(self, mock_open):
+        """Test that main uses sys.argv when input_file is None."""
+        mock_read = unittest.mock.mock_open(read_data='one plus one\n')
+        mock_write = unittest.mock.mock_open()
+        mock_open.side_effect = [mock_read.return_value, mock_write.return_value]
+
+        result = main()
+        self.assertEqual(result, 0)
+
+    def test_main_write_error(self):
         """Test that main returns 1 when write fails."""
-        mock_open.side_effect = [
-            unittest.mock.mock_open(read_data='one plus one\n').return_value,
-            PermissionError()
-        ]
-        result = main('test.txt')
-        self.assertEqual(result, 1)
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+            f.write('one plus one\n')
+            input_file = f.name
+
+        try:
+            read_mock = unittest.mock.mock_open(read_data='one plus one\n')
+
+            def open_side_effect(filename, mode):
+                if mode == 'r':
+                    return read_mock(filename, mode)
+                elif mode == 'w':
+                    raise PermissionError()
+
+            with patch('builtins.open', side_effect=open_side_effect):
+                result = main(input_file)
+                self.assertEqual(result, 1)
+        finally:
+            os.unlink(input_file)
 
 
 if __name__ == '__main__':
