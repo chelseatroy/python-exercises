@@ -5,7 +5,7 @@ cd "$(dirname "$0")/../.."
 
 if ./run_tests.sh > /dev/null 2>&1; then
     git add -A
-    git commit -m "Added tests"
+    git commit -m "Added tests" || true
     exit 0
 else
     git reset --hard
