@@ -157,6 +157,12 @@ class TestProcessLine(unittest.TestCase):
         self.assertEqual(result, 10)
         self.assertIsInstance(result, int)
 
+    def test_nested_with_result_of_times(self):
+        """Test nested: 'X times the result of Y'."""
+        result = process_line('three times the result of two plus two')
+        self.assertEqual(result, 12)
+        self.assertIsInstance(result, int)
+
     def test_case_insensitive(self):
         """Test that capitalization doesn't matter."""
         result = process_line('ONE PLUS THREE')
