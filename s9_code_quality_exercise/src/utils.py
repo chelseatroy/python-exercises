@@ -2,27 +2,27 @@ def get_num(word):
     word = word.strip().lower()
 
     # Map words to numbers
-    if word == 'zero' or word == '0':
+    if word == 'zero':
         return 0
-    elif word == 'one' or word == '1':
+    elif word == 'one':
         return 1
-    elif word == 'two' or word == '2':
+    elif word == 'two':
         return 2
-    elif word == 'three' or word == '3':
+    elif word == 'three':
         return 3
-    elif word == 'four' or word == '4':
+    elif word == 'four':
         return 4
-    elif word == 'five' or word == '5':
+    elif word == 'five':
         return 5
-    elif word == 'six' or word == '6':
+    elif word == 'six':
         return 6
-    elif word == 'seven' or word == '7':
+    elif word == 'seven':
         return 7
-    elif word == 'eight' or word == '8':
+    elif word == 'eight':
         return 8
-    elif word == 'nine' or word == '9':
+    elif word == 'nine':
         return 9
-    elif word == 'ten' or word == '10':
+    elif word == 'ten':
         return 10
     else:
         try:
