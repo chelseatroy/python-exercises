@@ -44,24 +44,24 @@ def run_script(script_path: Path, display_name: str) -> bool:
 
 def get_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="AI-Powered Loop Fixer.", prog="ai_fixer_loop"
+        description="AI-Powered Loop Fixer.", prog="ai_command_loop"
     )
     parser.add_argument(
         "--find",
         type=Path,
-        default="find_problems",
+        default="default_find_problems.sh",
         help="The script to run to find problems.",
     )
     parser.add_argument(
         "--fix",
         type=Path,
-        default="fix_problem",
+        default="default_fix_problem.sh",
         help="The script to run to fix problems.",
     )
     parser.add_argument(
         "--tcr",
         type=Path,
-        default="tcr",
+        default="default_tcr.sh",
         help="The script for Test && Commit || Revert.",
     )
     return parser

@@ -6,7 +6,7 @@ The purpose of this action is to read the code and identify potential refactorin
 
 The output will be either to:
 
-IF the code is good enough, THEN remove the `potential_refactorings.md`
-Otherwise, create a new `potential_refactorings.md` with a few of the top places to refactor. 
+IF the code is good enough, THEN remove the `__potential_refactorings.md` file
+Otherwise, create a new `__potential_refactorings.md` file with a few of the top places to refactor. 
 
 Suggestions should include where, what, and why. Be brief. No examples. 

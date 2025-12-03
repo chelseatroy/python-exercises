@@ -6,7 +6,7 @@ This process is for refactoring production code.
 Only refactor one thing.
 ## Steps
   1. Choose and perform the simplest possible refactoring (one at a time).
-  2. Write a commit message to the file `commit.txt` with the message format: "- r <refactoring>" (quotes must include the - r).
+  2. Write a commit message to the file `__commit-msg.txt` with the message format: "- r <refactoring>" (quotes must include the - r).
 
 ## Code Style
 - Prefer self-explanatory, readable code over comments.
