@@ -1,0 +1,18 @@
+{
+  "rules": {
+    "votes": {
+      "$poll": {
+        ".read": true,
+        ".indexOn": ["t"],
+        ".validate": "$poll.matches(/^[a-z0-9-]{1,40}$/)",
+        "$voter": {
+          ".write": "(!data.exists() && newData.exists()) || (data.exists() && data.child('t').val() < now - 86400000)",
+          ".validate": "$voter.matches(/^[A-Za-z0-9-]{8,40}$/) && newData.hasChildren(['c', 't'])",
+          "c": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 10" },
+          "t": { ".validate": "newData.val() == now" },
+          "$other": { ".validate": false }
+        }
+      }
+    }
+  }
+}
