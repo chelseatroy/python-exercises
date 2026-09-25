@@ -1,33 +1,55 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getDatabase, ref, query, orderByChild, startAt, endAt,
-  onValue, get, set, update, serverTimestamp,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-import { firebaseConfig } from "./firebase-config.js";
+import { POLL_API_URL } from "./config.js";
 import { POLLS } from "./polls.js";
 
-// Votes older than this are ignored, and deleted by whichever browser loads the page next.
+// Matches the backend: votes older than this don't count, and this browser
+// forgets its own answers after the same span.
 const VOTE_LIFETIME_MS = 24 * 60 * 60 * 1000;
-// Slack for clock differences between this browser and the database server,
-// whose rules only permit deleting votes that are a full day old.
-const CLEANUP_MARGIN_MS = 10 * 60 * 1000;
+// How often to re-fetch counts while any poll's results are open.
+const REFRESH_MS = 5000;
 
 const pollList = document.getElementById("polls");
 const banner = document.getElementById("banner");
 
+function storage(key, fallback) {
+  return {
+    load() {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw === null ? fallback() : JSON.parse(raw);
+      } catch {
+        return fallback();
+      }
+    },
+    save(value) {
+      // Storage blocked (e.g. private mode): the value lasts until the page reloads.
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+    },
+  };
+}
+
 function getVoterId() {
-  const key = "intro-polls-voter-id";
-  try {
-    let id = localStorage.getItem(key);
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem(key, id);
-    }
-    return id;
-  } catch {
-    // Storage blocked (e.g. private mode): the id lasts until the page reloads.
-    return crypto.randomUUID();
+  const store = storage("intro-polls-voter-id", () => null);
+  let id = store.load();
+  if (typeof id !== "string") {
+    id = crypto.randomUUID();
+    store.save(id);
   }
+  return id;
+}
+
+// This browser's own answers, as { pollId: { c: choiceIndex, t: timeAnswered } }.
+const answerStore = storage("intro-polls-answers", () => ({}));
+
+function loadAnswers() {
+  const cutoff = Date.now() - VOTE_LIFETIME_MS;
+  const answers = answerStore.load();
+  return Object.fromEntries(Object.entries(answers || {}).filter(([, a]) => a && a.t >= cutoff));
+}
+
+function saveAnswer(pollId, choice) {
+  const answers = loadAnswers();
+  answers[pollId] = { c: choice, t: Date.now() };
+  answerStore.save(answers);
 }
 
 function showBanner(message) {
@@ -46,13 +68,26 @@ function el(tag, attrs = {}, ...children) {
   return node;
 }
 
-function recentVotes(votes) {
-  const cutoff = Date.now() - VOTE_LIFETIME_MS;
-  return Object.entries(votes || {}).filter(([, vote]) => vote && vote.t >= cutoff);
+async function callApi(options) {
+  const response = await fetch(POLL_API_URL, options);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const data = await response.json();
+  if (!data.ok) throw new Error(data.error || "Request failed");
+  return data;
+}
+
+// A plain-string body goes out as text/plain, which skips the CORS preflight
+// request that Apps Script can't answer.
+function submitVote(pollId, choice) {
+  return callApi({ method: "POST", body: JSON.stringify({ poll: pollId, voter: voterId, choice }) });
+}
+
+function fetchCounts() {
+  return callApi({ cache: "no-store" });
 }
 
 function renderPoll(poll, index) {
-  const state = { votes: {}, myChoice: null, showingResults: false, submitting: false };
+  const state = { counts: null, myChoice: null, showingResults: false, submitting: false };
   const name = `poll-${poll.id}`;
 
   const radios = poll.options.map((option, i) =>
@@ -93,11 +128,11 @@ function renderPoll(poll, index) {
   }
 
   function drawResults() {
-    const counts = poll.options.map(() => 0);
-    const votes = recentVotes(state.votes);
-    for (const [, vote] of votes) {
-      if (Number.isInteger(vote.c) && vote.c < counts.length) counts[vote.c] += 1;
+    if (!state.counts) {
+      results.replaceChildren(el("h3", { text: "Loading results…" }));
+      return;
     }
+    const counts = poll.options.map((_, i) => state.counts[i] || 0);
     const total = counts.reduce((a, b) => a + b, 0);
     const max = Math.max(1, ...counts);
 
@@ -129,8 +164,10 @@ function renderPoll(poll, index) {
     status.textContent = "Submitting…";
     update();
     try {
-      await set(ref(db, `votes/${poll.id}/${voterId}`), { c: Number(picked.value), t: serverTimestamp() });
-      state.myChoice = Number(picked.value);
+      const data = await submitVote(poll.id, Number(picked.value));
+      state.myChoice = data.choice;
+      saveAnswer(poll.id, data.choice);
+      setAllCounts(data.counts);
     } catch (error) {
       console.error(error);
       status.textContent = "That didn't go through. Check your connection and try again.";
@@ -142,14 +179,19 @@ function renderPoll(poll, index) {
   resultsButton.addEventListener("click", () => {
     state.showingResults = !state.showingResults;
     update();
+    if (state.showingResults) refreshCounts();
+    scheduleRefresh();
   });
 
   return {
     card,
-    setVotes(votes) {
-      state.votes = votes || {};
-      const mine = recentVotes(state.votes).find(([voter]) => voter === voterId);
-      if (mine) state.myChoice = mine[1].c;
+    get showingResults() { return state.showingResults; },
+    setMyChoice(choice) {
+      state.myChoice = choice;
+      update();
+    },
+    setCounts(counts) {
+      state.counts = counts || [];
       update();
     },
     disable() {
@@ -159,34 +201,52 @@ function renderPoll(poll, index) {
   };
 }
 
-async function deleteExpiredVotes(pollId) {
-  const pollRef = ref(db, `votes/${pollId}`);
-  const expired = await get(query(pollRef, orderByChild("t"),
-    endAt(Date.now() - VOTE_LIFETIME_MS - CLEANUP_MARGIN_MS)));
-  if (!expired.exists()) return;
-  const deletions = {};
-  expired.forEach((child) => { deletions[child.key] = null; });
-  await update(pollRef, deletions);
+function setAllCounts(counts) {
+  POLLS.forEach((poll, i) => polls[i].setCounts(counts[poll.id]));
+}
+
+let refreshing = false;
+async function refreshCounts() {
+  if (refreshing) return;
+  refreshing = true;
+  try {
+    setAllCounts((await fetchCounts()).counts);
+    banner.hidden = true;
+  } catch (error) {
+    console.error(error);
+    showBanner("Couldn't load results. They'll retry in a few seconds.");
+  }
+  refreshing = false;
+}
+
+// Re-fetch counts every few seconds, but only while someone is looking at results.
+let refreshTimer = null;
+function scheduleRefresh() {
+  const wanted = configured && !document.hidden && polls.some((p) => p.showingResults);
+  if (wanted && refreshTimer === null) {
+    refreshTimer = setInterval(refreshCounts, REFRESH_MS);
+  } else if (!wanted && refreshTimer !== null) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
 }
 
 const voterId = getVoterId();
-const configured = !Object.values(firebaseConfig).some((value) => value.includes("REPLACE_ME"));
-const db = configured ? getDatabase(initializeApp(firebaseConfig)) : null;
+const configured = !POLL_API_URL.includes("REPLACE_ME");
 
 const polls = POLLS.map(renderPoll);
 pollList.append(...polls.map((p) => p.card));
 
-if (!db) {
-  showBanner("Voting isn't set up yet: docs/firebase-config.js still has placeholder values.");
+if (!configured) {
+  showBanner("Voting isn't set up yet: docs/config.js still has a placeholder URL.");
   polls.forEach((p) => p.disable());
 } else {
+  const answers = loadAnswers();
   POLLS.forEach((poll, i) => {
-    const recent = query(ref(db, `votes/${poll.id}`), orderByChild("t"),
-      startAt(Date.now() - VOTE_LIFETIME_MS));
-    onValue(recent, (snapshot) => polls[i].setVotes(snapshot.val()), (error) => {
-      console.error(error);
-      showBanner("Couldn't load votes. Try reloading the page.");
-    });
-    deleteExpiredVotes(poll.id).catch((error) => console.warn("Cleanup skipped:", error));
+    if (answers[poll.id]) polls[i].setMyChoice(answers[poll.id].c);
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && polls.some((p) => p.showingResults)) refreshCounts();
+    scheduleRefresh();
   });
 }
