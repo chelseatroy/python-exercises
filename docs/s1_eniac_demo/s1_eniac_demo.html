@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One ENIAC Digit</title>
+<style>
+  /* One deliberate look: an ENIAC steel panel with neon lamps, the same in light and dark. */
+  :root {
+    color-scheme: dark;
+    --bg: #1B1F21;
+    --panel: #262C2F;
+    --panel-edge: #3A4246;
+    --ink: #E8E3D6;
+    --muted: #9CA5A8;
+    --neon: #FF8A3D;
+    --neon-off: #4A3B31;
+    --binary: #7CC6FF;
+    --binary-off: #2F3F4A;
+    --dead: #30363A;
+    --body: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    --head: Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--body); }
+  main { max-width: 960px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 64px; display: grid; gap: 40px; }
+  h1, h2 { font-family: var(--head); font-weight: 400; margin: 0; text-wrap: balance; }
+  h1 { font-size: clamp(2rem, 5vw, 3rem); line-height: 1.1; }
+  h2 { font-size: 1.5rem; }
+  p { margin: 0; max-width: 68ch; }
+  .muted { color: var(--muted); }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+  section { display: grid; gap: 14px; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 6px;
+    padding: 20px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  button {
+    font: 600 0.9rem var(--body); cursor: pointer; color: var(--ink);
+    background: #323A3E; border: 1px solid var(--panel-edge); border-radius: 5px; padding: 8px 14px;
+  }
+  button:hover { background: #3A4348; }
+  button:focus-visible { outline: 2px solid var(--neon); outline-offset: 2px; }
+  button[aria-pressed="true"] { background: var(--neon); color: #1B1F21; border-color: var(--neon); }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+  /* accumulator */
+  .rings { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; }
+  .ring { display: grid; justify-items: center; gap: 4px; }
+  .ring svg { width: 170px; height: 170px; }
+  .lamp { transition: fill 0.12s; }
+  .lamp.on { fill: var(--neon); filter: drop-shadow(0 0 5px var(--neon)); }
+  .lamp.off { fill: var(--neon-off); }
+  .carry { transition: opacity 0.15s; }
+  .ring svg text { font-family: var(--mono); fill: var(--muted); }
+  .ring .center { fill: var(--ink); font-size: 34px; font-weight: 600; }
+  .readout { font: 600 2rem var(--mono); }
+  .overflow { color: var(--neon); font-weight: 600; }
+
+  /* two readings */
+  .readings { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .bits { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; max-width: 420px; }
+  .bit { display: grid; gap: 4px; justify-items: center; }
+  .bit button {
+    width: 100%; aspect-ratio: 1; max-width: 36px; padding: 0; border-radius: 50%;
+    border: 1px solid var(--panel-edge);
+  }
+  .eniac .bit button.on { background: var(--neon); box-shadow: 0 0 8px var(--neon); border-color: var(--neon); }
+  .eniac .bit button:not(.on) { background: var(--neon-off); }
+  .binary .bit button.on { background: var(--binary); box-shadow: 0 0 8px var(--binary); border-color: var(--binary); }
+  .binary .bit button:not(.on) { background: var(--binary-off); }
+  .bit span { font: 0.7rem var(--mono); color: var(--muted); }
+  .big { font: 600 2.2rem/1.1 var(--mono); }
+  .eniac .big { color: var(--neon); }
+  .binary .big { color: var(--binary); }
+  .count { font-size: 0.95rem; }
+
+  /* all patterns */
+  .grid-wrap { overflow-x: auto; }
+  .grid { display: grid; grid-template-columns: repeat(32, minmax(8px, 1fr)); gap: 2px; min-width: 420px; max-width: 640px; }
+  .cell { aspect-ratio: 1; border-radius: 1px; background: var(--dead); cursor: crosshair; }
+  .grid.eniac-mode .cell.valid { background: var(--neon); box-shadow: 0 0 6px var(--neon); }
+  .grid.binary-mode .cell { background: var(--binary); opacity: 0.85; }
+  .grid .cell.hover { outline: 2px solid var(--ink); outline-offset: 0; }
+  .grid-layout { display: flex; flex-wrap: wrap; gap: 20px 28px; align-items: flex-start; }
+  .grid-info { display: grid; gap: 8px; min-width: 220px; flex: 1; }
+  .facts li { margin-bottom: 6px; }
+  .facts { margin: 0; padding-left: 1.2em; max-width: 68ch; }
+  @media (prefers-reduced-motion: reduce) { .lamp, .carry { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:grid;gap:12px">
+    <div class="label">ENIAC, 1945</div>
+    <h1>One ENIAC Digit</h1>
+    <p>ENIAC didn't use binary. It stored each decimal digit in a <strong>ring counter</strong>: a loop of 10 flip-flops, each built from vacuum tubes, with exactly one switched on at a time. Which one is on <em>is</em> the digit. Neon lamps on the front panel showed which one.</p>
+  </header>
+
+  <section>
+    <h2>Counting with pulses</h2>
+    <p class="muted">Numbers moved around ENIAC as trains of pulses: a 7 was sent as 7 pulses. Each pulse moves the lit lamp one step around the ring. Passing 9 back to 0 sends a carry pulse to the next ring. This is a 3-digit slice of an accumulator (a real one held 10 digits and a sign).</p>
+    <div class="panel" style="display:grid;gap:16px">
+      <div class="rings" id="rings"></div>
+      <div class="row" style="justify-content:space-between">
+        <div class="row">
+          <button type="button" id="p1">Send 1 pulse</button>
+          <button type="button" id="p7">Send 7 pulses</button>
+          <button type="button" id="p25">Send 25 pulses</button>
+          <button type="button" id="clear">Clear</button>
+        </div>
+        <div><span class="label">Stored</span> <span class="readout" id="readout">000</span> <span class="overflow" id="overflow"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Ten switches, two ways to read them</h2>
+    <p class="muted">Both panels have the same 10 switches. ENIAC reads them as one digit, so only one may be on. Binary lets any combination count. Click the lamps to try patterns.</p>
+    <div class="readings">
+      <div class="panel eniac" style="display:grid;gap:12px">
+        <div class="label">Read the ENIAC way</div>
+        <div class="bits" id="eniac-bits"></div>
+        <div class="big" id="eniac-value">7</div>
+        <p class="count">Patterns that mean something: <span class="mono">10</span> of <span class="mono">1,024</span>. The biggest number is <span class="mono">9</span>.</p>
+      </div>
+      <div class="panel binary" style="display:grid;gap:12px">
+        <div class="label">Read the binary way</div>
+        <div class="bits" id="binary-bits"></div>
+        <div class="big" id="binary-value">0</div>
+        <p class="count">Patterns that mean something: <span class="mono">1,024</span> of <span class="mono">1,024</span>. The biggest number is <span class="mono">1,023</span>.</p>
+      </div>
+    </div>
+    <p>The same 10 switches hold one decimal digit for ENIAC, or any number up to 1,023 in binary: three decimal digits and then some. Binary needs only about 3.3 switches per decimal digit's worth of information. ENIAC spent 10.</p>
+  </section>
+
+  <section>
+    <h2>All 1,024 patterns</h2>
+    <p class="muted">Every square is one on/off pattern of 10 switches, in order from 0000000000 (top left) to 1111111111 (bottom right). Hover or tap a square to see what it means.</p>
+    <div class="row">
+      <button type="button" id="mode-eniac" aria-pressed="true">Light what ENIAC can use</button>
+      <button type="button" id="mode-binary" aria-pressed="false">Light what binary can use</button>
+    </div>
+    <div class="panel grid-layout">
+      <div class="grid-wrap"><div class="grid eniac-mode" id="grid"></div></div>
+      <div class="grid-info">
+        <div class="label">Pattern</div>
+        <div class="mono" style="font-size:1.1rem" id="g-bits">0000000001</div>
+        <div><span class="label">ENIAC</span> <span class="mono" id="g-eniac">digit 0</span></div>
+        <div><span class="label">Binary</span> <span class="mono" id="g-binary">1</span></div>
+        <p class="muted" id="g-note" style="font-size:0.92rem">ENIAC's 10 usable patterns land on squares 1, 2, 4, 8 … 512: the same patterns binary uses for the powers of 2. Everything else is dark to ENIAC: 1,014 patterns that mean nothing.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What happened next</h2>
+    <ul class="facts">
+      <li>ENIAC had 20 accumulators, each holding a signed 10-digit decimal number. That's 100 flip-flops for the digits of one number, where binary would need about 35 switches for the same range, sign included.</li>
+      <li>Numbers were fixed-point. There was no stored decimal point; programmers kept track of where it belonged and scaled their numbers to fit.</li>
+      <li>In 1945, the <em>First Draft of a Report on the EDVAC</em>, written by John von Neumann after working with the ENIAC team, argued for binary, partly for exactly this reason: far fewer tubes to store the same numbers, and simpler circuits to do arithmetic.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---- the accumulator: three decade ring counters ----
+  const digits = [0, 0, 0];  // hundreds, tens, ones
+  const names = ["Hundreds", "Tens", "Ones"];
+  const R = 62, C = 85;
+  $("rings").innerHTML = names.map((name, d) => {
+    let svg = `<svg viewBox="0 0 170 170" role="img" aria-label="${name} ring">`;
+    svg += `<circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="var(--panel-edge)" stroke-width="2"/>`;
+    for (let k = 0; k < 10; k++) {
+      const a = (-90 + 36 * k) * Math.PI / 180;
+      const x = C + R * Math.cos(a), y = C + R * Math.sin(a);
+      const lx = C + (R - 22) * Math.cos(a), ly = C + (R - 22) * Math.sin(a) + 4;
+      svg += `<circle class="lamp off" data-d="${d}" data-k="${k}" cx="${x}" cy="${y}" r="9"/>`;
+      svg += `<text x="${lx}" y="${ly}" text-anchor="middle" font-size="11">${k}</text>`;
+    }
+    svg += `<text class="center" id="center-${d}" x="${C}" y="${C + 12}" text-anchor="middle">0</text>`;
+    svg += `</svg>`;
+    return `<div class="ring">${svg}<span class="label">${name}</span></div>`;
+  }).join("");
+
+  function drawRings() {
+    document.querySelectorAll("#rings .lamp").forEach((el) => {
+      const on = digits[Number(el.dataset.d)] === Number(el.dataset.k);
+      el.classList.toggle("on", on);
+      el.classList.toggle("off", !on);
+    });
+    digits.forEach((v, d) => { $("center-" + d).textContent = v; });
+    $("readout").textContent = digits.join("");
+  }
+
+  function pulse() {
+    // a pulse goes into the ones ring; wrapping from 9 to 0 carries into the next ring
+    for (let d = 2; d >= 0; d--) {
+      digits[d] = (digits[d] + 1) % 10;
+      if (digits[d] !== 0) break;
+      if (d === 0) $("overflow").textContent = "overflow: 999 + 1 wrapped to 000";
+    }
+    drawRings();
+  }
+
+  let queue = 0, timer = null;
+  function send(n) {
+    $("overflow").textContent = "";
+    if (reduceMotion) { for (let i = 0; i < n; i++) pulse(); return; }
+    queue += n;
+    if (timer) return;
+    timer = setInterval(() => {
+      if (queue === 0) { clearInterval(timer); timer = null; return; }
+      queue--; pulse();
+    }, 160);
+  }
+  $("p1").onclick = () => send(1);
+  $("p7").onclick = () => send(7);
+  $("p25").onclick = () => send(25);
+  $("clear").onclick = () => { queue = 0; digits.fill(0); $("overflow").textContent = ""; drawRings(); };
+  digits[2] = 7; drawRings();
+
+  // ---- two readings of 10 switches (bit 9 on the left, bit 0 on the right) ----
+  let eniacDigit = 7;
+  let binaryPattern = 0b0000100101;  // 37
+  function bitsRow(id, labelFor) {
+    $(id).innerHTML = Array.from({ length: 10 }, (_, i) => {
+      const k = 9 - i;
+      return `<div class="bit"><button type="button" data-k="${k}" aria-label="Switch ${k}"></button><span>${labelFor(k)}</span></div>`;
+    }).join("");
+  }
+  bitsRow("eniac-bits", (k) => k);
+  bitsRow("binary-bits", (k) => 2 ** k);
+  function drawReadings() {
+    document.querySelectorAll("#eniac-bits button").forEach((b) => {
+      const on = Number(b.dataset.k) === eniacDigit;
+      b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on));
+    });
+    $("eniac-value").textContent = eniacDigit;
+    document.querySelectorAll("#binary-bits button").forEach((b) => {
+      const on = (binaryPattern >> Number(b.dataset.k)) & 1;
+      b.classList.toggle("on", !!on); b.setAttribute("aria-pressed", String(!!on));
+    });
+    $("binary-value").textContent = binaryPattern.toLocaleString("en-US");
+  }
+  $("eniac-bits").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; eniacDigit = Number(b.dataset.k); drawReadings(); };
+  $("binary-bits").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; binaryPattern ^= 1 << Number(b.dataset.k); drawReadings(); };
+  drawReadings();
+
+  // ---- all 1,024 patterns ----
+  const grid = $("grid");
+  let html = "";
+  for (let p = 0; p < 1024; p++) {
+    const valid = p !== 0 && (p & (p - 1)) === 0;  // exactly one switch on
+    html += `<div class="cell ${valid ? "valid" : ""}" data-p="${p}"></div>`;
+  }
+  grid.innerHTML = html;
+  let hovered = null;
+  function showPattern(p) {
+    const bits = p.toString(2).padStart(10, "0");
+    const valid = p !== 0 && (p & (p - 1)) === 0;
+    $("g-bits").textContent = bits;
+    const lit = bits.split("").filter((b) => b === "1").length;
+    $("g-eniac").textContent = valid ? "digit " + Math.log2(p)
+      : lit === 0 ? "means nothing: no lamp lit" : `means nothing: ${lit} lamps lit`;
+    $("g-binary").textContent = p.toLocaleString("en-US");
+    if (hovered) hovered.classList.remove("hover");
+    hovered = grid.children[p];
+    hovered.classList.add("hover");
+  }
+  const pick = (e) => { const c = e.target.closest(".cell"); if (c) showPattern(Number(c.dataset.p)); };
+  grid.addEventListener("mouseover", pick);
+  grid.addEventListener("click", pick);
+  showPattern(1);
+  const setMode = (mode) => {
+    grid.classList.toggle("eniac-mode", mode === "eniac");
+    grid.classList.toggle("binary-mode", mode === "binary");
+    $("mode-eniac").setAttribute("aria-pressed", String(mode === "eniac"));
+    $("mode-binary").setAttribute("aria-pressed", String(mode === "binary"));
+  };
+  $("mode-eniac").onclick = () => setMode("eniac");
+  $("mode-binary").onclick = () => setMode("binary");
+})();
+</script>
+</body>
+</html>

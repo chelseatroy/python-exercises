@@ -89,3 +89,9 @@ An interactive page for Session 1 that uses a bank teller's envelopes to show wh
 
 - The page: `docs/s1_binary_envelopes/s1_binary_envelopes.html` (one self-contained file)
 - The same logic in Python: `s1_binary_envelopes_demo/envelopes.py` (run it to print a comparison of bases)
+
+## ENIAC Demo (bonus, GitHub Pages)
+
+A bonus page for Session 1 showing how ENIAC stored each decimal digit in a ring of 10 flip-flops, and how many of those switches' patterns go unused compared to binary. It's served at https://chelseatroy.github.io/python-exercises/s1_eniac_demo/s1_eniac_demo.html.
+
+- The page: `docs/s1_eniac_demo/s1_eniac_demo.html` (one self-contained file)
