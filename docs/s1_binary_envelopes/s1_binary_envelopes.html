@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Teller's Envelopes</title>
+<style>
+  :root {
+    --ground: #EDF1EC;
+    --surface: #FAFBF8;
+    --ink: #1C2621;
+    --muted: #57665E;
+    --line: #CAD3CC;
+    --kraft: #D9B880;
+    --kraft-flap: #C9A56A;
+    --kraft-edge: #A6834B;
+    --kraft-ink: #3A2B10;
+    --accent: #23704F;
+    --accent-ink: #FFFFFF;
+    --gap: #B3412F;
+    --chip-body: #262D2B;
+    --chip-edge: #121614;
+    --chip-pin: #A9B1AD;
+    --chip-off: #3B4541;
+    --chip-text: #C6CFCA;
+    --display: Georgia, "Times New Roman", serif;
+    --body: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #111714;
+      --surface: #19211D;
+      --ink: #E3EBE5;
+      --muted: #97A79E;
+      --line: #2D3A33;
+      --kraft: #B7955B;
+      --kraft-flap: #A3824B;
+      --kraft-edge: #7C6135;
+      --kraft-ink: #20170A;
+      --accent: #5DBE8C;
+      --accent-ink: #0D1A13;
+      --gap: #E27762;
+      --chip-body: #2C3532;
+      --chip-edge: #4A5752;
+      --chip-pin: #8B9590;
+      --chip-off: #45514C;
+      --chip-text: #C6CFCA;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #111714;
+    --surface: #19211D;
+    --ink: #E3EBE5;
+    --muted: #97A79E;
+    --line: #2D3A33;
+    --kraft: #B7955B;
+    --kraft-flap: #A3824B;
+    --kraft-edge: #7C6135;
+    --kraft-ink: #20170A;
+    --accent: #5DBE8C;
+    --accent-ink: #0D1A13;
+    --gap: #E27762;
+    --chip-body: #2C3532;
+    --chip-edge: #4A5752;
+    --chip-pin: #8B9590;
+    --chip-off: #45514C;
+    --chip-text: #C6CFCA;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 16px/1.55 var(--body);
+  }
+  .page {
+    max-width: 980px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 40px 64px;
+    display: grid;
+    gap: 36px;
+  }
+  h1, h2 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 1.05; }
+  h2 { font-size: 1.55rem; line-height: 1.2; }
+  p { margin: 0; max-width: 65ch; }
+  .muted { color: var(--muted); }
+  .mono, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .label {
+    font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase;
+    font-weight: 700; color: var(--muted);
+  }
+  section { display: grid; gap: 14px; }
+
+  header { display: grid; gap: 14px; }
+  .puzzle {
+    font-size: 1.12rem;
+    border-left: 3px solid var(--kraft-edge);
+    padding-left: 16px;
+  }
+
+  /* controls */
+  .controls {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px 32px;
+  }
+  .control { display: grid; gap: 8px; align-content: start; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  input[type="number"] {
+    width: 6.5em; font: 600 1rem var(--mono); padding: 6px 8px;
+    border: 1px solid var(--line); border-radius: 6px; background: var(--ground); color: var(--ink);
+  }
+  .bases { display: flex; flex-wrap: wrap; gap: 6px; }
+  .bases button {
+    font: 600 0.95rem var(--mono); cursor: pointer;
+    border: 1px solid var(--line); background: var(--ground); color: var(--ink);
+    border-radius: 6px; padding: 6px 0; min-width: 2.3em;
+  }
+  .bases button[aria-pressed="true"] {
+    background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
+  }
+  button:focus-visible, input:focus-visible, .cell:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  /* stats */
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px;
+  }
+  .stat { border-top: 2px solid var(--ink); padding-top: 8px; display: grid; gap: 2px; }
+  .stat .big { font: 600 1.9rem/1.1 var(--mono); font-variant-numeric: tabular-nums; }
+  .stat .sub { font-size: 0.85rem; color: var(--muted); }
+
+  /* serve bar */
+  .serve { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+  .primary {
+    font: 700 0.95rem var(--body); cursor: pointer;
+    background: var(--accent); color: var(--accent-ink);
+    border: 0; border-radius: 6px; padding: 9px 16px;
+  }
+  .receipt {
+    font-family: var(--mono); font-size: 0.95rem; min-height: 1.6em;
+    overflow-wrap: anywhere;
+  }
+  .digits-line { font-size: 0.95rem; color: var(--muted); }
+  .digits-line strong { color: var(--ink); font-family: var(--mono); }
+
+  /* the rack of envelopes */
+  .rack-wrap {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 18px 14px;
+  }
+  .rack { display: flex; gap: 14px; align-items: flex-end; width: max-content; min-width: 100%; }
+  .col { display: grid; gap: 6px; justify-items: center; }
+  .col .digit {
+    font: 600 1.5rem/1 var(--mono); color: var(--muted);
+    height: 1.6rem; transition: color 0.2s;
+  }
+  .col .digit.on { color: var(--accent); }
+  .stack { display: flex; flex-direction: column-reverse; gap: 5px; align-items: center; }
+  .col .place {
+    font: 600 0.78rem var(--mono); color: var(--muted);
+    border-top: 1px solid var(--line); padding-top: 6px; width: 100%; text-align: center;
+  }
+  .col .more { font: 0.72rem var(--mono); color: var(--muted); text-align: center; }
+
+  .env {
+    position: relative;
+    width: 62px; height: 38px;
+    background: var(--kraft);
+    border: 1px solid var(--kraft-edge);
+    border-radius: 3px;
+    display: grid; place-items: end center;
+    padding-bottom: 3px;
+    font: 600 0.8rem var(--mono); color: var(--kraft-ink);
+    transition: transform 0.28s ease, background-color 0.28s ease, box-shadow 0.28s ease;
+  }
+  .env::before {
+    content: ""; position: absolute; inset: 0 0 45% 0;
+    background: var(--kraft-flap);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    border-radius: 3px 3px 0 0;
+    transition: background-color 0.28s ease;
+  }
+  .env span { position: relative; }
+  .env.partial { border-style: dashed; }
+  .env.given {
+    background: var(--accent); color: var(--accent-ink);
+    transform: translateY(-6px) rotate(-3deg);
+    box-shadow: 0 6px 12px -6px rgba(0,0,0,0.45);
+  }
+  .env.given::before { background: color-mix(in oklab, var(--accent) 80%, black); }
+
+  .legend-row { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.85rem; color: var(--muted); }
+  .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 6px; }
+
+  /* amounts grid */
+  .grid-wrap { overflow-x: auto; }
+  .grid {
+    display: grid;
+    grid-template-columns: 3.4em repeat(50, minmax(9px, 1fr));
+    gap: 2px;
+    min-width: 560px;
+  }
+  .row-label {
+    font: 0.68rem/1 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums;
+    align-self: center; text-align: right; padding-right: 6px;
+  }
+  .cell {
+    aspect-ratio: 1; max-width: 100%;
+    border-radius: 2px; cursor: pointer; border: 0; padding: 0;
+    background: var(--line);
+  }
+  .cell.current { outline: 2px solid var(--ink); outline-offset: 0; }
+  .heat-scale {
+    height: 10px; width: 160px; border-radius: 2px;
+    background: linear-gradient(90deg, color-mix(in oklab, var(--accent) 12%, var(--surface)), var(--accent));
+  }
+
+  /* why (collapsed until students open it) */
+  .reveal {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  }
+  .reveal summary {
+    cursor: pointer; list-style: none; padding: 16px 20px 16px 48px; position: relative;
+    display: grid; gap: 2px;
+  }
+  .reveal summary::-webkit-details-marker { display: none; }
+  .reveal summary::before {
+    content: ""; position: absolute; left: 20px; top: 24px;
+    width: 9px; height: 9px; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
+    transform: rotate(-45deg); transition: transform 0.2s;
+  }
+  .reveal[open] summary::before { transform: rotate(45deg); top: 21px; }
+  .reveal summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 10px; }
+  .reveal .why { padding: 4px 20px 20px; }
+  .why { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; align-items: start; }
+  .why ol { margin: 0; padding-left: 1.3em; display: grid; gap: 10px; max-width: 60ch; }
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 8px;
+  }
+  .chart-card svg { width: 100%; height: auto; display: block; }
+  .chart-card text { font-family: var(--mono); fill: var(--muted); font-size: 11px; }
+  .chart-card .val { fill: var(--ink); font-weight: 600; }
+  .chart-card .bound-label { fill: var(--gap); stroke: var(--surface); stroke-width: 4px; paint-order: stroke; font-weight: 600; }
+  code { font-family: var(--mono); font-size: 0.92em; }
+
+  /* patterns and what they mean */
+  .patterns { padding: 4px 20px 22px; display: grid; gap: 12px; border-top: 1px solid var(--line); margin-top: 4px; padding-top: 20px; }
+  .patterns h3 { font: 400 1.25rem/1.2 var(--display); margin: 0; }
+  .schemes { display: flex; flex-wrap: wrap; gap: 6px; }
+  .schemes button {
+    font: 600 0.88rem var(--body); cursor: pointer;
+    border: 1px solid var(--line); background: var(--ground); color: var(--ink);
+    border-radius: 6px; padding: 6px 12px;
+  }
+  .schemes button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .schemes button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .switch-values { font-size: 0.92rem; }
+  .switch-values .mono { font-weight: 600; }
+  .bins-wrap { overflow-x: auto; background: var(--ground); border-radius: 8px; }
+  .bins { position: relative; }
+  .pchip {
+    position: absolute; left: 0; top: 0;
+    width: 46px; height: 16px; padding: 3px 4px; gap: 3px; display: flex;
+    background: var(--chip-body); border: 1px solid var(--chip-edge); border-radius: 2px;
+    cursor: pointer;
+    transition: transform 0.7s cubic-bezier(.2,.8,.2,1), box-shadow 0.3s, opacity 0.3s;
+  }
+  .pchip::before, .pchip::after {
+    content: ""; position: absolute; left: 5px; right: 5px; height: 3px;
+    background: repeating-linear-gradient(90deg, var(--chip-pin) 0 3px, transparent 3px 7px);
+  }
+  .pchip::before { top: -4px; }
+  .pchip::after { bottom: -4px; }
+  .pchip i { flex: 1; border-radius: 1px; background: var(--chip-off); }
+  .pchip i.on { background: var(--accent); box-shadow: 0 0 4px var(--accent); }
+  .pchip.repeat { box-shadow: 0 0 0 2px var(--gap); }
+  .pchip.nothing { opacity: 0.45; box-shadow: 0 0 0 1px var(--gap); }
+  .pchip.selected { outline: 2px solid var(--ink); outline-offset: 5px; z-index: 1; }
+  .pchip:focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; }
+  .bigchip { width: 100%; max-width: 380px; height: auto; display: block; }
+  .bigchip .cell { cursor: pointer; }
+  .bigchip .cell rect { transition: fill 0.2s; }
+  .bigchip .cell.on rect { filter: drop-shadow(0 0 6px var(--accent)); }
+  .bigchip .cell:focus { outline: none; }
+  .bigchip .cell:focus-visible rect { stroke: var(--ink); stroke-width: 2.5; }
+  .bigchip text { font-family: var(--mono); font-variant-numeric: tabular-nums; pointer-events: none; }
+  .readout { display: grid; gap: 4px; min-width: 200px; flex: 1; }
+  .readout .means { font: 400 2rem/1.1 var(--display); }
+  .readout .means.nothing { color: var(--gap); }
+  .readout .how { font-family: var(--mono); font-size: 0.95rem; }
+  .readout .others { font-size: 0.95rem; }
+  .readout .others.bad { color: var(--gap); font-weight: 600; }
+  .bin-label {
+    position: absolute; bottom: 6px; text-align: center;
+    font: 600 0.75rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums;
+  }
+  .bin-label.unused { opacity: 0.35; }
+  .bin-label.nothing { color: var(--gap); font-family: var(--body); font-size: 0.68rem; line-height: 1.1; }
+  .pattern-summary { font-size: 1rem; }
+  .pattern-summary strong { font-family: var(--mono); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .env, .env::before, .col .digit, .pchip { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header>
+    <div class="label">A puzzle about counting</div>
+    <h1>The Teller's Envelopes</h1>
+    <p class="puzzle">A bank teller has $1,000 in $1 bills and a pile of envelopes. Before the bank opens, they want to fill envelopes so that any customer can be handed <em>any</em> whole amount from $1 to $1,000 by passing over sealed envelopes, never opening one. How few envelopes can they use?</p>
+    <p class="muted">Each envelope holds a power of the <strong>base</strong>: $1, $base, $base², and so on, with base − 1 envelopes of each size. Change the base and watch what happens to the envelopes.</p>
+  </header>
+
+  <div class="controls">
+    <div class="control">
+      <span class="label" id="base-label">Base (envelope sizes are its powers)</span>
+      <div class="bases" id="bases" role="group" aria-labelledby="base-label"></div>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <section aria-labelledby="counter-h">
+    <h2 id="counter-h">At the counter</h2>
+    <div class="serve">
+      <label for="amount">A customer asks for $</label>
+      <input id="amount" type="number" min="1" max="1000" value="37">
+      <button class="primary" id="serve" type="button">Hand it over</button>
+    </div>
+    <div class="receipt" id="receipt" aria-live="polite"></div>
+    <p class="digits-line" id="digits-line"></p>
+    <div class="rack-wrap"><div class="rack" id="rack"></div></div>
+    <div class="legend-row">
+      <span>Big digit above a column: how many of that size were handed over.</span>
+      <span><span class="swatch" style="border:1px dashed var(--kraft-edge);background:var(--kraft)"></span>Dashed: the last envelope, holding whatever money was left.</span>
+    </div>
+  </section>
+
+  <section aria-labelledby="grid-h">
+    <h2 id="grid-h">Every amount, and how many ways to make it</h2>
+    <p class="muted">One square per dollar amount, from $1 to $1,000, 50 to a row. Darker squares can be made by more different handoffs. Click a square to serve that amount.</p>
+    <div class="legend-row">
+      <span class="row" style="gap:8px">1 way <span class="heat-scale"></span> <span id="max-ways">most ways</span></span>
+    </div>
+    <div class="grid-wrap"><div class="grid" id="grid"></div></div>
+  </section>
+
+  <details class="reveal" id="why">
+    <summary>
+      <h2>Why do some bases need more envelopes?</h2>
+      <span class="muted">Work it out yourself first, then open this to check.</span>
+    </summary>
+    <div class="why">
+      <ol>
+        <li>Each envelope is a yes-or-no choice: the teller hands it over or keeps it.</li>
+        <li>With <span class="mono">k</span> envelopes, that's <span class="mono">2 × 2 × … × 2 = 2<sup>k</sup></span> different handoffs.</li>
+        <li>The teller must be able to make <span class="mono">1,000</span> different amounts. One more handoff is always used up by handing over nothing, which makes $0. So they need <span class="mono">2<sup>k</sup> ≥ 1,001</span>, which makes <span class="mono">k</span> at least <span class="mono">10</span>. That's <code>(1000).bit_length()</code>, the number of binary digits in 1000.</li>
+        <li>Base 2 reaches that minimum because almost every handoff lands on a <em>different</em> amount. In bigger bases, many handoffs land on the same amount (the dark squares above). Every duplicate is a choice the teller paid an envelope for and got nothing new.</li>
+      </ol>
+      <div class="chart-card">
+        <div class="label" style="margin-bottom:6px">Envelopes needed to cover every amount, by base</div>
+        <svg id="chart" viewBox="0 0 420 250" role="img" aria-label="Bar chart of envelopes needed for each base"></svg>
+        <p class="muted" style="font-size:0.82rem;padding-bottom:6px">Base 1 is off the chart: it needs 1,000 envelopes, one per dollar.</p>
+      </div>
+    </div>
+    <div class="patterns">
+      <h3>Same switches, different meanings</h3>
+      <p>A computer stores numbers in switches that are on or off, just like envelopes that are handed over or kept. A way of storing numbers wastes nothing when every on/off pattern means a different number.</p>
+      <p class="muted">This chip has 4 switches, so it can hold 16 different patterns. Pick a way of reading the switches and watch what the patterns mean.</p>
+      <div class="schemes" id="schemes" role="group" aria-label="How the switches are read">
+        <button type="button" data-scheme="binary" aria-pressed="true">Binary</button>
+        <button type="button" data-scheme="base3" aria-pressed="false">Base 3 envelopes</button>
+        <button type="button" data-scheme="base10" aria-pressed="false">Base 10 envelopes</button>
+        <button type="button" data-scheme="bcd" aria-pressed="false">One decimal digit</button>
+      </div>
+      <p class="switch-values" id="switch-values"></p>
+      <div class="chip-row">
+        <svg class="bigchip" id="bigchip" viewBox="0 0 380 180" role="group" aria-label="A 4-switch memory chip. Click a switch to turn it on or off."></svg>
+        <div class="readout" aria-live="polite">
+          <span class="label">This pattern means</span>
+          <span class="means" id="chip-means"></span>
+          <span class="how" id="chip-how"></span>
+          <span class="others" id="chip-others"></span>
+        </div>
+      </div>
+      <p class="muted">Click the switches on the chip to try patterns. Below, every one of the 16 patterns sits above the number it means. Click any small chip to load it onto the big one.</p>
+      <div class="bins-wrap"><div class="bins" id="bins"></div></div>
+      <p class="pattern-summary" id="pattern-summary" aria-live="polite"></p>
+    </div>
+  </details>
+
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const state = { max: 1000, base: 2, amount: 37 };
+  let model = null;
+  let serveToken = 0;
+
+  // ---- the same logic as envelopes.py ----
+  function fillEnvelopes(max, base) {
+    if (base === 1) return Array.from({ length: max }, () => ({ value: 1, level: 0, place: 1 }));
+    const envelopes = [];
+    let size = 1, level = 0, remaining = max;
+    while (remaining > 0) {
+      for (let c = 0; c < base - 1 && remaining > 0; c++) {
+        const value = Math.min(size, remaining);
+        envelopes.push({ value, level, place: size });
+        remaining -= value;
+      }
+      size *= base;
+      level++;
+    }
+    return envelopes;
+  }
+
+  function waysToMake(values, max) {
+    const ways = new Float64Array(max + 1);
+    ways[0] = 1;
+    for (const v of values) for (let a = max; a >= v; a--) ways[a] += ways[a - v];
+    return ways;
+  }
+
+  // Pick envelopes adding to amount, biggest first. Returns their indices.
+  function handOver(amount, envelopes) {
+    const order = envelopes.map((e, i) => i).sort((a, b) => envelopes[b].value - envelopes[a].value);
+    const n = order.length, max = state.max;
+    const canMake = new Array(n + 1);
+    canMake[n] = new Uint8Array(max + 1); canMake[n][0] = 1;
+    for (let i = n - 1; i >= 0; i--) {
+      const v = envelopes[order[i]].value, next = canMake[i + 1], cur = next.slice();
+      for (let a = v; a <= max; a++) if (next[a - v]) cur[a] = 1;
+      canMake[i] = cur;
+    }
+    const chosen = [];
+    for (let i = 0; i < n; i++) {
+      const v = envelopes[order[i]].value;
+      if (amount >= v && canMake[i + 1][amount - v]) { chosen.push(order[i]); amount -= v; }
+    }
+    return chosen;
+  }
+
+  // ---- build ----
+  function rebuild() {
+    const envelopes = fillEnvelopes(state.max, state.base);
+    const ways = waysToMake(envelopes.map((e) => e.value), state.max);
+    let maxWays = 1;
+    for (let a = 0; a <= state.max; a++) if (ways[a] > maxWays) maxWays = ways[a];
+    model = { envelopes, ways, maxWays };
+    renderStats();
+    renderRack();
+    renderGrid();
+    renderChart();
+    serve(false);
+  }
+
+  function renderStats() {
+    const k = model.envelopes.length;
+    $("stats").innerHTML = `
+      <div class="stat"><span class="label">Envelopes</span><span class="big">${k.toLocaleString("en-US")}</span><span class="sub">in base ${state.base}</span></div>
+      <div class="stat"><span class="label">Amounts needed</span><span class="big">1,000</span><span class="sub">$1 through $1,000</span></div>
+    `;
+  }
+
+  function renderRack() {
+    const { envelopes } = model;
+    const levels = new Map();
+    envelopes.forEach((e, i) => {
+      if (!levels.has(e.level)) levels.set(e.level, { place: e.place, idx: [] });
+      levels.get(e.level).idx.push(i);
+    });
+    const cap = state.base === 1 ? 12 : Infinity;
+    const cols = [...levels.entries()].sort((a, b) => b[0] - a[0]);
+    $("rack").innerHTML = cols.map(([level, col]) => {
+      const shown = col.idx.slice(0, cap);
+      const hidden = col.idx.length - shown.length;
+      return `<div class="col" data-level="${level}">
+        <div class="digit" data-digit="${level}">0</div>
+        <div class="stack">${shown.map((i) => {
+          const e = envelopes[i];
+          return `<div class="env ${e.value !== e.place ? "partial" : ""}" data-i="${i}"><span>$${e.value}</span></div>`;
+        }).join("")}</div>
+        ${hidden > 0 ? `<div class="more">+${hidden} more</div>` : ""}
+        <div class="place">$${col.place}s</div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderGrid() {
+    const { ways, maxWays } = model;
+    const logMax = Math.log(maxWays) || 1;
+    let html = "";
+    for (let a = 1; a <= state.max; a++) {
+      if (a % 50 === 1) html += `<span class="row-label" aria-hidden="true">$${a}</span>`;
+      const w = ways[a];
+      const pct = maxWays === 1 ? 30 : Math.round(12 + 88 * (Math.log(w) / logMax));
+      const label = w >= 1e15 ? w.toExponential(1) : w.toLocaleString("en-US");
+      html += `<button class="cell" data-a="${a}" style="background:color-mix(in oklab, var(--accent) ${pct}%, var(--surface))" title="$${a}: ${label} way${w === 1 ? "" : "s"}" aria-label="$${a}: ${label} ways"></button>`;
+    }
+    $("grid").innerHTML = html;
+    $("max-ways").textContent = (maxWays >= 1e15 ? maxWays.toExponential(1) : maxWays.toLocaleString("en-US")) + (maxWays === 1 ? " way" : " ways");
+  }
+
+  function renderChart() {
+    const W = 420, H = 250, left = 34, right = 10, top = 22, bottom = 34;
+    const bases = [2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const counts = bases.map((b) => fillEnvelopes(state.max, b).length);
+    const bound = state.max.toString(2).length;
+    const yMax = Math.max(...counts, 4);
+    const step = yMax <= 10 ? 2 : yMax <= 30 ? 5 : 10;
+    const top10 = Math.ceil(yMax / step) * step;
+    const y = (v) => top + (H - top - bottom) * (1 - v / top10);
+    const bw = (W - left - right) / bases.length;
+    let svg = "";
+    for (let t = 0; t <= top10; t += step) {
+      svg += `<line x1="${left}" x2="${W - right}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" stroke-width="1"/>`;
+      svg += `<text x="${left - 6}" y="${y(t) + 4}" text-anchor="end">${t}</text>`;
+    }
+    bases.forEach((b, i) => {
+      const x = left + i * bw + bw * 0.18, w = bw * 0.64, v = counts[i];
+      const on = b === state.base;
+      svg += `<rect x="${x}" y="${y(v)}" width="${w}" height="${y(0) - y(v)}" rx="2" fill="${on ? "var(--accent)" : "var(--kraft)"}" stroke="${on ? "var(--accent)" : "var(--kraft-edge)"}"/>`;
+      svg += `<text class="val" x="${x + w / 2}" y="${y(v) - 5}" text-anchor="middle">${v}</text>`;
+      svg += `<text x="${x + w / 2}" y="${H - bottom + 16}" text-anchor="middle">${b}</text>`;
+    });
+    svg += `<line x1="${left}" x2="${W - right}" y1="${y(bound)}" y2="${y(bound)}" stroke="var(--gap)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+    svg += `<text class="bound-label" x="${W - right}" y="${y(bound) + 14}" text-anchor="end">nothing gets below ${bound}</text>`;
+    svg += `<text x="${(left + W - right) / 2}" y="${H - 4}" text-anchor="middle">base</text>`;
+    $("chart").innerHTML = svg;
+  }
+
+  // ---- serving a customer ----
+  function digitsText(amount) {
+    if (state.base === 1) return `In base 1 (tally marks), $${amount} is just ${amount} ones.`;
+    const s = amount.toString(state.base);
+    return `$${amount} written in base ${state.base} is <strong>${s}</strong>. Each digit says how many envelopes of that size to hand over.`;
+  }
+
+  function serve(animate = true) {
+    const token = ++serveToken;
+    const amount = Math.max(1, Math.min(state.max, Math.floor(Number($("amount").value) || 1)));
+    state.amount = amount;
+    $("amount").value = amount;
+    document.querySelectorAll(".env.given").forEach((el) => el.classList.remove("given"));
+    document.querySelectorAll(".col .digit").forEach((el) => { el.textContent = "0"; el.classList.remove("on"); });
+    document.querySelectorAll(".cell.current").forEach((el) => el.classList.remove("current"));
+    const cell = document.querySelector(`.cell[data-a="${amount}"]`);
+    if (cell) cell.classList.add("current");
+
+    const chosen = handOver(amount, model.envelopes);
+    const partialUsed = chosen.some((i) => model.envelopes[i].value !== model.envelopes[i].place);
+    $("digits-line").innerHTML = digitsText(amount) + (partialUsed ? " (This handoff uses the dashed leftover envelope, so it won't match the digits exactly.)" : "");
+
+    const perLevel = new Map();
+    let running = 0;
+    const parts = [];
+    const step = (n) => {
+      if (token !== serveToken) return;
+      if (n >= chosen.length) {
+        $("receipt").textContent = `${parts.join(" + ")} = $${running}  (${chosen.length} envelope${chosen.length === 1 ? "" : "s"})`;
+        return;
+      }
+      const e = model.envelopes[chosen[n]];
+      running += e.value;
+      parts.push("$" + e.value);
+      perLevel.set(e.level, (perLevel.get(e.level) || 0) + 1);
+      const el = document.querySelector(`.env[data-i="${chosen[n]}"]`);
+      if (el) el.classList.add("given");
+      const d = document.querySelector(`.digit[data-digit="${e.level}"]`);
+      if (d) { d.textContent = perLevel.get(e.level); d.classList.add("on"); }
+      $("receipt").textContent = parts.join(" + ") + ` = $${running}`;
+      if (animate && !reduceMotion) setTimeout(() => step(n + 1), Math.max(60, Math.min(380, 2400 / chosen.length)));
+      else step(n + 1);
+    };
+    step(0);
+  }
+
+  // ---- patterns: 4 switches, 16 patterns, what number each one means ----
+  const SCHEMES = {
+    binary: { weights: [8, 4, 2, 1], note: "Switch values <span class=\"mono\">8 4 2 1</span>: one of each power of 2." },
+    base3: { weights: [3, 3, 1, 1], note: "Switch values <span class=\"mono\">3 3 1 1</span>: two of each power of 3, like the base-3 envelopes." },
+    base10: { weights: [1, 1, 1, 1], note: "Switch values <span class=\"mono\">1 1 1 1</span>: the first four of base 10's nine $1 envelopes." },
+    bcd: { weights: [8, 4, 2, 1], maxValid: 9, note: "Switch values <span class=\"mono\">8 4 2 1</span>, but the 4 switches store one decimal digit, so only 0 through 9 mean anything. Computers have really done this (binary-coded decimal)." },
+  };
+  const COLW = 56, CHIPW = 46, ROWH = 26, AXIS = 30, NOTHING_COL = 16;
+  const bitsOf = (p) => [8, 4, 2, 1].map((b) => (p & b ? 1 : 0));
+  const binsEl = $("bins");
+  const chips = [];
+  let currentScheme = "binary";
+  let selected = 6;  // 0110
+
+  function meaning(p, scheme) {
+    const value = bitsOf(p).reduce((sum, b, i) => sum + b * scheme.weights[i], 0);
+    return scheme.maxValid !== undefined && value > scheme.maxValid ? null : value;
+  }
+
+  (function buildPatterns() {
+    const maxStack = 6;  // the most patterns any scheme puts on one number (1 1 1 1 has six ways to make 2)
+    binsEl.style.width = (NOTHING_COL + 1) * COLW + "px";
+    binsEl.style.height = maxStack * ROWH + AXIS + 14 + "px";
+    let html = "";
+    for (let v = 0; v <= NOTHING_COL; v++) {
+      html += `<div class="bin-label ${v === NOTHING_COL ? "nothing" : ""}" data-bin="${v}" style="left:${v * COLW}px;width:${COLW}px">${v === NOTHING_COL ? "means<br>nothing" : v}</div>`;
+    }
+    for (let p = 0; p < 16; p++) {
+      const bits = bitsOf(p);
+      html += `<button type="button" class="pchip" data-p="${p}" aria-label="Pattern ${bits.join("")}">${bits.map((b) => `<i class="${b ? "on" : ""}"></i>`).join("")}</button>`;
+    }
+    binsEl.innerHTML = html;
+    binsEl.querySelectorAll(".pchip").forEach((el) => chips.push(el));
+  })();
+
+  // the big illustrated chip
+  (function buildBigChip() {
+    const pinXs = Array.from({ length: 8 }, (_, i) => 58 + i * 37.5);
+    let svg = pinXs.map((x) => `<rect x="${x}" y="12" width="10" height="20" rx="1.5" fill="var(--chip-pin)"/><rect x="${x}" y="148" width="10" height="20" rx="1.5" fill="var(--chip-pin)"/>`).join("");
+    svg += `<rect x="24" y="30" width="332" height="120" rx="8" fill="var(--chip-body)" stroke="var(--chip-edge)" stroke-width="2"/>`;
+    svg += `<path d="M24 78 a12 12 0 0 1 0 24" fill="var(--chip-edge)" stroke="var(--chip-edge)" stroke-width="2"/>`;
+    svg += `<circle cx="46" cy="48" r="4.5" fill="var(--chip-off)"/>`;
+    svg += `<text x="340" y="50" text-anchor="end" font-size="11" fill="var(--chip-text)" letter-spacing="1.5">4-BIT</text>`;
+    for (let i = 0; i < 4; i++) {
+      const x = 74 + i * 62;
+      svg += `<g class="cell" data-i="${i}" tabindex="0" role="button" aria-pressed="false">
+        <rect x="${x}" y="60" width="46" height="46" rx="5" fill="var(--chip-off)"/>
+        <text class="bit" x="${x + 23}" y="89" text-anchor="middle" font-size="18" font-weight="600" fill="var(--chip-text)">0</text>
+        <text class="weight" x="${x + 23}" y="132" text-anchor="middle" font-size="12" fill="var(--chip-text)"></text>
+      </g>`;
+    }
+    $("bigchip").innerHTML = svg;
+  })();
+
+  function renderBigChip() {
+    const scheme = SCHEMES[currentScheme];
+    const bits = bitsOf(selected);
+    document.querySelectorAll("#bigchip .cell").forEach((g, i) => {
+      const on = bits[i] === 1;
+      g.classList.toggle("on", on);
+      g.setAttribute("aria-pressed", String(on));
+      g.setAttribute("aria-label", `Switch ${i + 1}, worth ${scheme.weights[i]}, ${on ? "on" : "off"}`);
+      g.querySelector("rect").setAttribute("fill", on ? "var(--accent)" : "var(--chip-off)");
+      const bit = g.querySelector(".bit");
+      bit.textContent = bits[i];
+      bit.setAttribute("fill", on ? "var(--accent-ink)" : "var(--chip-text)");
+      g.querySelector(".weight").textContent = "worth " + scheme.weights[i];
+    });
+    chips.forEach((el, p) => el.classList.toggle("selected", p === selected));
+
+    const value = meaning(selected, scheme);
+    const parts = bits.map((b, i) => (b ? scheme.weights[i] : null)).filter((w) => w !== null);
+    const raw = parts.reduce((a, b) => a + b, 0);
+    const means = $("chip-means");
+    const others = $("chip-others");
+    means.classList.toggle("nothing", value === null);
+    if (value === null) {
+      means.textContent = "nothing";
+      $("chip-how").textContent = `${bits.join("")}: ${parts.join(" + ")} = ${raw}`;
+      others.textContent = `${raw} isn't a decimal digit, so this pattern is wasted.`;
+      others.className = "others bad";
+      return;
+    }
+    means.textContent = value;
+    $("chip-how").textContent = `${bits.join("")}: ${parts.length ? parts.join(" + ") + " = " + value : "all off = 0"}`;
+    const same = [];
+    for (let p = 0; p < 16; p++) if (p !== selected && meaning(p, scheme) === value) same.push(bitsOf(p).join(""));
+    if (same.length === 0) { others.textContent = `No other pattern means ${value}.`; others.className = "others"; }
+    else { others.textContent = `${same.length} other pattern${same.length === 1 ? " also means" : "s also mean"} ${value}: ${same.join(", ")}`; others.className = "others bad"; }
+  }
+
+  function showScheme(name) {
+    currentScheme = name;
+    const scheme = SCHEMES[name];
+    const H = parseFloat(binsEl.style.height);
+    const stack = new Array(NOTHING_COL + 1).fill(0);
+    let repeats = 0, nothing = 0, top = 0;
+    chips.forEach((el, p) => {
+      const value = meaning(p, scheme);
+      const col = value === null ? NOTHING_COL : value;
+      const row = stack[col]++;
+      const x = col * COLW + (COLW - CHIPW) / 2;
+      const y = H - AXIS - (row + 1) * ROWH + 4;
+      el.style.transform = `translate(${x}px, ${y}px)`;
+      el.style.transitionDelay = reduceMotion ? "0ms" : `${p * 25}ms`;
+      el.classList.toggle("nothing", value === null);
+      el.classList.toggle("repeat", value !== null && row > 0);
+      el.title = `${bitsOf(p).join("")} means ${value === null ? "nothing" : value}`;
+      if (value === null) nothing++;
+      else { if (row > 0) repeats++; top = Math.max(top, value); }
+    });
+    binsEl.querySelectorAll(".bin-label").forEach((el) => {
+      el.classList.toggle("unused", stack[Number(el.dataset.bin)] === 0);
+    });
+    const distinct = 16 - repeats - nothing;
+    $("switch-values").innerHTML = scheme.note;
+    let summary = `16 patterns, <strong>${distinct}</strong> different numbers (0 through ${top}).`;
+    if (repeats) summary += ` <strong>${repeats}</strong> patterns just repeat a number another pattern already makes.`;
+    if (nothing) summary += ` <strong>${nothing}</strong> patterns mean nothing at all.`;
+    if (!repeats && !nothing) summary += " Every pattern means something new, so nothing is wasted.";
+    $("pattern-summary").innerHTML = summary;
+    renderBigChip();
+  }
+
+  $("schemes").addEventListener("click", (ev) => {
+    const b = ev.target.closest("button"); if (!b) return;
+    document.querySelectorAll("#schemes button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    showScheme(b.dataset.scheme);
+  });
+  const toggleCell = (g) => { selected ^= [8, 4, 2, 1][Number(g.dataset.i)]; renderBigChip(); };
+  $("bigchip").addEventListener("click", (ev) => { const g = ev.target.closest(".cell"); if (g) toggleCell(g); });
+  $("bigchip").addEventListener("keydown", (ev) => {
+    const g = ev.target.closest(".cell");
+    if (g && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); toggleCell(g); }
+  });
+  binsEl.addEventListener("click", (ev) => {
+    const c = ev.target.closest(".pchip"); if (!c) return;
+    selected = Number(c.dataset.p);
+    renderBigChip();
+  });
+  showScheme("binary");
+
+  // ---- controls ----
+  $("bases").innerHTML = Array.from({ length: 10 }, (_, i) => i + 1)
+    .map((b) => `<button type="button" id="base-${b}" data-base="${b}" aria-pressed="${b === state.base}">${b}</button>`).join("");
+  $("bases").addEventListener("click", (ev) => {
+    const b = ev.target.closest("button"); if (!b) return;
+    state.base = Number(b.dataset.base);
+    document.querySelectorAll("#bases button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    rebuild();
+  });
+  $("serve").addEventListener("click", () => serve(true));
+  $("amount").addEventListener("keydown", (e) => { if (e.key === "Enter") serve(true); });
+  $("grid").addEventListener("click", (ev) => {
+    const c = ev.target.closest(".cell"); if (!c) return;
+    $("amount").value = c.dataset.a;
+    serve(true);
+    $("rack").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
+  });
+
+  rebuild();
+  setTimeout(() => serve(true), 400);
+})();
+</script>
+</body>
+</html>
