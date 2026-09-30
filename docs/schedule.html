@@ -1,0 +1,37 @@
+---
+title: Schedule
+permalink: /schedule/
+---
+{% assign sessions = site.sessions | sort: 'number' %}
+<header class="page-head">
+  <p class="eyebrow">{{ site.course_number }} · {{ site.term }}</p>
+  <h1>Schedule</h1>
+  <p class="lede">{{ site.meeting }}. Homework for Session N is at the bottom of that session's agenda, and it's due one minute before Session N+1. The <a href="{{ '/syllabus/#homework' | relative_url }}">syllabus</a> has the details.</p>
+</header>
+
+<div class="table-scroll">
+<table class="schedule">
+  <thead>
+    <tr><th scope="col">Session</th><th scope="col">Topic</th><th scope="col">Homework</th></tr>
+  </thead>
+  <tbody>
+    {% for s in sessions %}
+    <tr>
+      <th scope="row"><a href="{{ s.url | relative_url }}">Session {{ s.number }}</a></th>
+      <td>{{ s.topic }}</td>
+      <td><a href="{{ s.url | relative_url }}#homework">Homework {{ s.number }}</a> <span class="est">{{ s.homework_estimate }}</span></td>
+    </tr>
+    {% endfor %}
+    <tr>
+      <th scope="row">Session 10</th>
+      <td>Final Exam</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<section class="prose">
+  <h2 id="due-dates">Due dates</h2>
+  {% include due-calendar.html %}
+</section>

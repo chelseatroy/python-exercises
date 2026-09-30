@@ -1,0 +1,37 @@
+---
+layout: default
+---
+{% assign sessions = site.sessions | sort: 'number' %}
+{% assign prev_number = page.number | minus: 1 %}
+{% assign next_number = page.number | plus: 1 %}
+<header class="page-head">
+  <p class="eyebrow">Agenda</p>
+  <h1>Session {{ page.number }}</h1>
+  <p class="lede">{{ page.topic }}</p>
+  <p class="meta"><a href="#homework">Homework {{ page.number }}</a> ({{ page.homework_estimate }}) is due before {% if next_number == 10 %}the Final Exam (Session 10){% else %}Session {{ next_number }}{% endif %}.</p>
+</header>
+
+{% if page.demos %}
+<section class="demos" aria-labelledby="demos-heading">
+  <h2 id="demos-heading">Interactive demos</h2>
+  <ul>
+    {% for demo in page.demos %}
+    <li><a href="{{ demo.url | relative_url }}">{{ demo.title }}</a> <span>{{ demo.blurb }}</span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<article class="prose">
+{{ content }}
+</article>
+
+<nav class="pager" aria-label="Sessions">
+  {% for s in sessions %}
+    {% if s.number == prev_number %}<a class="prev" href="{{ s.url | relative_url }}">← Session {{ s.number }}</a>{% endif %}
+  {% endfor %}
+  <a class="up" href="{{ '/schedule/' | relative_url }}">Schedule</a>
+  {% for s in sessions %}
+    {% if s.number == next_number %}<a class="next" href="{{ s.url | relative_url }}">Session {{ s.number }} →</a>{% endif %}
+  {% endfor %}
+</nav>

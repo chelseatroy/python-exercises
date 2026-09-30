@@ -1,0 +1,27 @@
+title: Intermediate Python
+course_number: MPCS 51046
+term: Autumn 2026
+meeting: Wednesdays, 2:00–5:00 PM CT, online
+baseurl: /python-exercises
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  toc_levels: 2..5
+
+collections:
+  sessions:
+    output: true
+    permalink: /sessions/:name/
+
+defaults:
+  - scope:
+      path: ""
+      type: sessions
+    values:
+      layout: session
+  - scope:
+      path: ""
+    values:
+      layout: default

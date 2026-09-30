@@ -1,51 +1,39 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Python Exercises Demos</title>
-<style>
-  :root {
-    color-scheme: light dark;
-    --ground: #F4F6F3;
-    --ink: #1C2621;
-    --muted: #57665E;
-    --line: #CAD3CC;
-    --link: #23704F;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --ground: #111714; --ink: #E3EBE5; --muted: #97A79E; --line: #2D3A33; --link: #5DBE8C; }
-  }
-  body {
-    margin: 0; background: var(--ground); color: var(--ink);
-    font: 16px/1.55 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
-  }
-  main { max-width: 640px; margin: 0 auto; padding: 48px 20px; }
-  h1 { font: 400 2rem/1.2 Georgia, "Times New Roman", serif; margin: 0 0 24px; }
-  ul { list-style: none; padding: 0; margin: 0; }
-  li { border-top: 1px solid var(--line); padding: 14px 0; }
-  li:last-child { border-bottom: 1px solid var(--line); }
-  a { color: var(--link); font-weight: 600; font-size: 1.1rem; }
-  p { margin: 4px 0 0; color: var(--muted); }
-</style>
-</head>
-<body>
-<main>
-  <h1>Python Exercises Demos</h1>
-  <ul>
-    <li>
-      <a href="s1_polls/s1_polls.html">Session 1: Intro Examples Polls</a>
-      <p>Answer each poll, then see how the class voted.</p>
-    </li>
-    <li>
-      <a href="s1_binary_envelopes/s1_binary_envelopes.html">Session 1: The Teller's Envelopes</a>
-      <p>Why binary is the most space-efficient way to store numbers.</p>
-    </li>
-    <li>
-      <a href="s1_eniac_demo/s1_eniac_demo.html">Session 1 bonus: One ENIAC Digit</a>
-      <p>How ENIAC stored decimal digits before computers switched to binary.</p>
-    </li>
+---
+permalink: /
+---
+{% assign sessions = site.sessions | sort: 'number' %}
+<header class="page-head home">
+  <p class="eyebrow">{{ site.course_number }} · {{ site.term }}</p>
+  <h1>{{ site.title }}</h1>
+  <p class="lede">{{ site.meeting }}</p>
+</header>
+
+<div class="cards">
+  <a class="card" href="{{ '/syllabus/' | relative_url }}">
+    <strong>Syllabus</strong>
+    <span>Course policy, grading, the presentation, and the final project.</span>
+  </a>
+  <a class="card" href="{{ '/schedule/' | relative_url }}">
+    <strong>Schedule</strong>
+    <span>Every session's agenda and homework, and the due-date calendar.</span>
+  </a>
+</div>
+
+<section>
+  <h2>Sessions</h2>
+  <ol class="session-list">
+    {% for s in sessions %}
+    <li><a href="{{ s.url | relative_url }}">Session {{ s.number }}</a> <span>{{ s.topic }}</span></li>
+    {% endfor %}
+    <li><span class="no-link">Session 10</span> <span>Final Exam</span></li>
+  </ol>
+</section>
+
+<section>
+  <h2>Interactive demos</h2>
+  <ul class="demo-list">
+    {% for s in sessions %}{% for demo in s.demos %}
+    <li><a href="{{ demo.url | relative_url }}">{{ demo.title }}</a> <span>Session {{ s.number }}: {{ demo.blurb }}</span></li>
+    {% endfor %}{% endfor %}
   </ul>
-</main>
-</body>
-</html>
+</section>

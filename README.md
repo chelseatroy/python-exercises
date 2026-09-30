@@ -56,6 +56,20 @@ jupyter notebook
 The notebook server will open in your browser. Navigate to the different directories to access the exercise notebooks for the different exercises.
 
 
+## Course Website (GitHub Pages)
+
+https://chelseatroy.github.io/python-exercises/ is the course website: the syllabus, a schedule, and an agenda page for each session. GitHub Pages builds it with Jekyll from `docs/` on `main`, so editing a Markdown file and pushing to origin updates the site.
+
+- Syllabus: `docs/syllabus.md`
+- Session agendas: `docs/_sessions/s01.md` through `s09.md`. The front matter at the top of each file sets the topic shown on the schedule, the homework time estimate, and (for Session 1) the interactive demos. Each agenda's homework heading ends in `{#homework}`, which the schedule links to.
+- Home page and schedule: `docs/index.html` and `docs/schedule.html`, built from the sessions' front matter
+- Layouts and styles: `docs/_layouts/` and `docs/assets/css/site.css`
+- Due-date calendar (on the schedule and in the syllabus): `docs/_includes/due-calendar.html`. It's HTML, not an image, so a date can be changed by moving a box to another week. Each label's arrow points at the box whose `id` matches the label's `data-to`.
+- Images: `docs/assets/img/`
+- Course name, term, and meeting time: `docs/_config.yml`
+
+The interactive demos below are plain HTML pages in `docs/`; Jekyll copies them through unchanged.
+
 ## Intro Examples Polls (GitHub Pages)
 
 `docs/s1_polls/` holds a one-page poll site for the Session 1 intro examples (`s1_Intro_Examples.ipynb`). Students answer each poll, and only after answering can they open that poll's results. Votes are stored in a Google Sheet through a small Apps Script web app (`polls-backend.gs`). Only votes from the last 24 hours count, so the page resets itself between quarters.
@@ -72,7 +86,7 @@ The notebook server will open in your browser. Navigate to the different directo
 4. Copy the web app URL (it ends in `/exec`) into `docs/s1_polls/config.js` and commit.
 5. On GitHub: **Settings > Pages > Build and deployment**, choose *Deploy from a branch*, branch `main`, folder `/docs`.
 
-The poll page is served at https://chelseatroy.github.io/python-exercises/s1_polls/s1_polls.html. The site root, https://chelseatroy.github.io/python-exercises/, is a short index (`docs/index.html`) linking to each page in `docs/`.
+The poll page is served at https://chelseatroy.github.io/python-exercises/s1_polls/s1_polls.html.
 
 If you change `polls-backend.gs` later, paste it in again and use **Deploy > Manage deployments > Edit > Version: New version**. That keeps the same URL. A *New deployment* gets a new URL.
 

@@ -1,0 +1,172 @@
+/* Palette and type match the session demo pages (s1_binary_envelopes etc.). */
+:root {
+  color-scheme: light dark;
+  --ground: #F4F6F3;
+  --surface: #FAFBF8;
+  --ink: #1C2621;
+  --muted: #57665E;
+  --line: #CAD3CC;
+  --link: #23704F;
+  --mark: #FFF1A8;
+  --important-bg: #FFF8D6;
+  --important-edge: #D9A400;
+  --display: Georgia, "Times New Roman", serif;
+  --body: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground: #111714;
+    --surface: #19211D;
+    --ink: #E3EBE5;
+    --muted: #97A79E;
+    --line: #2D3A33;
+    --link: #5DBE8C;
+    --mark: #5A4B12;
+    --important-bg: #2A2612;
+    --important-edge: #B08A1E;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: 17px/1.6 var(--body);
+  overflow-wrap: break-word;
+}
+a { color: var(--link); }
+main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+
+/* Header and footer */
+.site-header { border-bottom: 1px solid var(--line); background: var(--surface); }
+.site-header .bar {
+  max-width: 760px; margin: 0 auto; padding: 12px 16px;
+  display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; justify-content: space-between;
+}
+.brand { font: 400 1.2rem/1.2 var(--display); color: var(--ink); text-decoration: none; }
+.site-header nav { display: flex; gap: 20px; }
+.site-header nav a { color: var(--muted); text-decoration: none; font-weight: 600; }
+.site-header nav a:hover, .site-header nav a[aria-current="page"] { color: var(--link); }
+.site-footer {
+  max-width: 760px; margin: 0 auto; padding: 24px 16px 40px;
+  border-top: 1px solid var(--line); color: var(--muted); font-size: 0.9rem;
+}
+
+/* Page headings */
+.page-head { margin-bottom: 32px; }
+.eyebrow { margin: 0 0 4px; color: var(--muted); font-size: 0.85rem; letter-spacing: 0.04em; text-transform: uppercase; }
+h1, h2, h3, h4 { font-family: var(--display); font-weight: 400; line-height: 1.25; }
+h1 { font-size: 2.2rem; margin: 0 0 8px; }
+.home h1 { font-size: 2.8rem; }
+.lede { font-size: 1.15rem; color: var(--muted); margin: 0 0 8px; }
+.meta { margin: 0; }
+
+/* Home */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 40px; }
+.card {
+  display: block; padding: 20px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); color: var(--ink); text-decoration: none;
+}
+.card:hover { border-color: var(--link); }
+.card strong { display: block; font: 400 1.4rem/1.2 var(--display); color: var(--link); margin-bottom: 6px; }
+.card span { color: var(--muted); }
+.session-list, .demo-list, .demos ul { list-style: none; padding: 0; margin: 0; }
+.session-list li, .demo-list li, .demos li { border-top: 1px solid var(--line); padding: 12px 0; }
+.session-list li:last-child, .demo-list li:last-child, .demos li:last-child { border-bottom: 1px solid var(--line); }
+.session-list a, .demo-list a, .demos a, .no-link { font-weight: 600; display: inline-block; min-width: 6.5em; }
+.session-list span, .demo-list span, .demos span { color: var(--muted); }
+
+/* Session pages */
+.demos { margin: 0 0 32px; padding: 16px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.demos h2 { font-size: 1.2rem; margin: 0 0 8px; }
+.pager {
+  display: flex; justify-content: space-between; gap: 16px; margin-top: 48px;
+  padding-top: 16px; border-top: 1px solid var(--line); font-weight: 600;
+}
+.pager .up { margin: 0 auto; }
+
+/* Schedule */
+.table-scroll { overflow-x: auto; margin-bottom: 40px; }
+table.schedule { width: 100%; border-collapse: collapse; }
+.schedule th, .schedule td { text-align: left; vertical-align: top; padding: 12px 12px 12px 0; border-bottom: 1px solid var(--line); }
+.schedule thead th { color: var(--muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.schedule th[scope="row"] { white-space: nowrap; }
+.est { display: block; color: var(--muted); font-size: 0.9rem; }
+
+/* Converted agenda and syllabus text */
+.prose h2 { font-size: 1.6rem; margin: 2.2em 0 0.5em; }
+.prose h3 { font-size: 1.25rem; margin: 1.6em 0 0.4em; }
+.prose h4 { font-size: 1.15rem; margin: 1.6em 0 0.4em; }
+.prose li > h3 { display: inline; font-size: 1.15rem; }
+.prose li { margin: 0.3em 0; }
+.prose img { max-width: 100%; height: auto; border-radius: 6px; }
+.prose code { font-family: var(--mono); font-size: 0.9em; }
+.prose pre {
+  overflow-x: auto; max-width: 100%; padding: 12px; font-size: 0.9rem;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+}
+.prose table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 1em 0; }
+.prose th, .prose td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+mark { background: var(--mark); color: inherit; padding: 0 2px; border-radius: 2px; }
+.important {
+  margin: 1.5em 0; padding: 4px 20px 12px;
+  background: var(--important-bg); border-left: 5px solid var(--important-edge); border-radius: 4px;
+}
+.important > p:first-child img { display: inline-block; vertical-align: top; margin-right: 12px; }
+.footnotes { margin-top: 48px; border-top: 1px solid var(--line); font-size: 0.9rem; color: var(--muted); }
+.toc { margin: 0 0 32px; padding: 12px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.toc summary { cursor: pointer; font-weight: 600; }
+.toc ul { padding-left: 1.2em; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Due-date calendar (_includes/due-calendar.html). Colors are sampled from the original calendar image
+   and stay the same in dark mode. */
+.due-cal { margin: 24px 0; }
+.due-cal-scroll {
+  overflow-x: auto;
+  width: min(1120px, calc(100vw - 32px));
+  position: relative; left: 50%; transform: translateX(-50%);
+  border-radius: 8px;
+}
+.due-cal-board {
+  --side: 200px;
+  position: relative; min-width: 1000px; padding: 12px 20px 28px;
+  background: #212121; color: #000;
+  font-family: Calibri, Carlito, "Segoe UI", system-ui, sans-serif;
+}
+.cal-arrows { position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none; overflow: visible; }
+.cal-row { display: grid; grid-template-columns: var(--side) 1fr var(--side); column-gap: 24px; }
+.cal-month {
+  margin: 20px 0 0; padding: 6px; background: #0173c3; color: #fff;
+  font: 700 1.25rem/1.2 inherit; font-family: inherit; text-align: center; letter-spacing: 0.02em;
+}
+.cal-dow { display: grid; grid-template-columns: repeat(7, 1fr); background: #0d6aaf; color: #fff; border-top: 3px solid #fff; }
+.cal-dow span { padding: 5px 0; text-align: center; font-size: 0.72rem; font-weight: 700; }
+.cal-week { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: minmax(62px, auto); background: #fff; }
+.cal-day { grid-row: 1; border-right: 1px solid #d5dbe3; border-bottom: 1px solid #d5dbe3; position: relative; }
+.cal-day:first-child { border-left: 1px solid #d5dbe3; }
+.cal-sun { background: #e7ebf6; }
+.cal-num { position: absolute; top: 3px; right: 6px; font-size: 0.8rem; font-weight: 700; color: #262626; }
+.cal-num.cal-wkend { color: #2f6db5; }
+.cal-out .cal-num { color: #c3c9d2; }
+.cal-ev {
+  grid-row: 1; align-self: center; position: relative; z-index: 2;
+  margin: 20px 6px 8px; padding: 6px 4px; text-align: center; font-size: 0.95rem; line-height: 1.15; color: #000;
+}
+.cal-session { background: #70a7dc; }
+.cal-green { background: #02ff00; }
+.cal-yellow { background: #eeff41; }
+.cal-holiday { background: #ffab40; }
+.cal-side { display: flex; flex-direction: column; justify-content: center; gap: 6px; position: relative; z-index: 2; }
+.cal-label { padding: 8px 12px; text-align: center; font-size: 0.95rem; line-height: 1.2; color: #000; }
+.cal-left .cal-label { align-self: stretch; }
+.cal-right .cal-label { align-self: stretch; }
+.cal-hw { background: #ee4cee; }
+.cal-hw-red { background: #ee4cee; outline: 4px solid #ff0000; outline-offset: -4px; }
+.due-cal figcaption { margin-top: 8px; color: var(--muted); font-size: 0.9rem; }

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if page.title %}{{ page.title }} · {% endif %}{{ site.title }}</title>
+<link rel="stylesheet" href="{{ '/assets/css/site.css' | relative_url }}">
+</head>
+<body>
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="{{ '/' | relative_url }}">{{ site.title }}</a>
+    <nav>
+      <a href="{{ '/schedule/' | relative_url }}"{% if page.url == '/schedule/' or page.collection == 'sessions' %} aria-current="page"{% endif %}>Schedule</a>
+      <a href="{{ '/syllabus/' | relative_url }}"{% if page.url == '/syllabus/' %} aria-current="page"{% endif %}>Syllabus</a>
+    </nav>
+  </div>
+</header>
+<main>
+{{ content }}
+</main>
+<footer class="site-footer">
+  {{ site.title }} · {{ site.course_number }} · {{ site.term }}
+</footer>
+</body>
+</html>
