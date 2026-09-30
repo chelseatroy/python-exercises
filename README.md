@@ -66,9 +66,21 @@ https://chelseatroy.github.io/python-exercises/ is the course website: the sylla
 - Layouts and styles: `docs/_layouts/` and `docs/assets/css/site.css`
 - Due-date calendar (on the schedule and in the syllabus): `docs/_includes/due-calendar.html`. It's HTML, not an image, so a date can be changed by moving a box to another week. Each label's arrow points at the box whose `id` matches the label's `data-to`.
 - Images: `docs/assets/img/`
+- Exercise downloads: `docs/downloads/`, built by `tools/build_downloads.py` (see below)
 - Course name, term, and meeting time: `docs/_config.yml`
 
 The interactive demos below are plain HTML pages in `docs/`; Jekyll copies them through unchanged.
+
+### Exercise downloads
+
+Agendas link students to the exact files they need (single files, or a folder as a `.zip`) instead of asking them to clone this repo. Those downloads are copies in `docs/downloads/`, so after changing an exercise that students download, rebuild them and commit the result:
+
+```bash
+python3 tools/build_downloads.py          # rewrites anything out of date
+python3 tools/build_downloads.py --check  # only reports; exits 1 if something is out of date
+```
+
+The list of downloads and where each comes from is `DOWNLOADS` at the top of `tools/build_downloads.py`. Zips include only files tracked by git, without Jupyter checkpoints or `__pycache__`.
 
 ## Intro Examples Polls (GitHub Pages)
 
