@@ -546,7 +546,7 @@ To best take advantage of the remote format while mitigating its drawbacks, I ha
   * For a question asked in the course Slack channel, we (the course staff) commit to a response within:  
     * 24 hours M 9A-F 5P (weekdays)  
     * 48 hours F 5P-M 9A (the weekend)  
-  * For a question asked by some other means, we commit to a response time of one week.  
+  * For a question asked by some other means, we commit to a response time of one week (this does not apply to [requests for leniency](#important-requests-for-leniency)).  
       
 * Technology use and academic honesty:  
   * *Please* collaborate on the in-class assignments.   
