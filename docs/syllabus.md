@@ -565,8 +565,8 @@ To best take advantage of the remote format while mitigating its drawbacks, I ha
 
 * I commit to automatically applying a few common SDS accommodations to the entire class, regardless of whether a student has requested them:
 
-* Class recordings are uploaded to, and transcribed by, Panopto.  
-* Exams and quizzes are administered at 1.5x the amount of time suggested by the results of playtests.
+  * Class recordings are uploaded to, and transcribed by, Panopto.  
+  * Exams and quizzes are administered at 1.5x the amount of time suggested by the results of playtests.
 
   Why: I know that SDS accommodations often depend on receiving a *diagnosis*, and diagnoses are not equally easy for everyone to get. I want everyone to get their accommodation needs met in spite of this. 
 
