@@ -258,7 +258,7 @@ The class participation grade is designed to support our development of **Invest
 
 ![Pie chart of the three skill sets with all three highlighted](../assets/img/syllabus/image10.png)
 
-Class sessions are mandatory in this course. If you are unable to attend an individual class session, please send a DM to the instructors and course staff, and we’ll give you 2 of the 6 participation points for that day (otherwise it’s a zero). There is no way to get full participation credit for a class that you cannot attend, even if you have a legitimate reason.[^3] To get full credit for class participation you are expected to come to each class and complete the activities therein. These can include:
+Class sessions are mandatory in this course. If you are unable to attend an individual class session, please notify the instructors and course staff ahead of class, and we’ll give you 2 of the 6 participation points for that day (otherwise it’s a zero). There is no way to get full participation credit for a class that you cannot attend, even if you have a legitimate reason.[^3] To get full credit for class participation you are expected to come to each class and complete the activities therein. These can include:
 
 * Individual activities: writing reflection exercises, asking questions   
 * Paired activities: close reading and reflection exercises  
