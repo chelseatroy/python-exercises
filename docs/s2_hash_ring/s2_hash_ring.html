@@ -23,6 +23,7 @@
     --machine-ink: #F6F1E7;
     --machine-muted: #B9B2CC;
     --slot: #EDE6D8;
+    --heat: #9C3D0A;
     --display: Georgia, "Times New Roman", serif;
     --body: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
     --mono: ui-monospace, Menlo, Consolas, monospace;
@@ -47,6 +48,7 @@
       --machine-ink: #ECE8F4;
       --machine-muted: #8F88A3;
       --slot: #2A2636;
+      --heat: #FFC861;
     }
   }
   :root[data-theme="dark"] {
@@ -68,6 +70,7 @@
     --machine-ink: #ECE8F4;
     --machine-muted: #8F88A3;
     --slot: #2A2636;
+    --heat: #FFC861;
   }
 
   * { box-sizing: border-box; }
@@ -125,7 +128,7 @@
   }
 
   /* ---------- 1. good hash functions ---------- */
-  .traits { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; }
+  .traits { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
   .trait-num {
     display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
     background: var(--tag); color: var(--tag-ink); font: 700 0.95rem var(--mono); margin-right: 8px;
@@ -144,13 +147,18 @@
   .verdict.bad { color: var(--clash); }
   .aside { font-size: 0.88rem; color: var(--muted); border-left: 3px solid var(--tag); padding-left: 10px; }
   .bigstat { font: 600 2rem/1.1 var(--mono); font-variant-numeric: tabular-nums; }
-  .wide { grid-column: 1 / -1; }
   .hist-controls { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; }
   .hist-controls > div { display: grid; gap: 4px; }
-  #hist { width: 100%; height: auto; display: block; }
-  #hist text { font-family: var(--mono); fill: var(--muted); font-size: 12px; }
-  #hist .count { fill: var(--ink); font-weight: 600; }
-  #hist .bar { transition: y 0.5s cubic-bezier(.2,.8,.2,1), height 0.5s cubic-bezier(.2,.8,.2,1), fill 0.3s; }
+  #u-ring { width: 100%; max-width: 340px; height: auto; display: block; justify-self: center; }
+  #u-ring text { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  #u-ring .u-seg { stroke: var(--surface); stroke-width: 3; transition: fill 0.5s; }
+  #u-ring .u-count { fill: var(--ink); stroke: var(--surface); stroke-width: 4px; paint-order: stroke; font-size: 20px; font-weight: 700; }
+  #u-ring .u-big { fill: var(--ink); font-size: 34px; font-weight: 700; }
+  #u-ring .u-small { fill: var(--muted); font-size: 11px; }
+  .u-controls { display: grid; gap: 6px; }
+  .u-controls .seg button { font-size: 0.8rem; padding: 4px 10px; }
+  .heat-key { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); }
+  .heat-key i { width: 90px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, var(--slot), var(--heat)); border: 1px solid var(--line); }
 
   /* ---------- 2. the ring ---------- */
   .ring-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 22px; align-items: start; }
@@ -228,6 +236,7 @@
     display: grid; gap: 3px; align-content: start;
   }
   .log li { animation: pop 0.25s ease; }
+  .cmt { color: var(--muted); }
   .log li::marker { color: var(--muted); }
   .log .good { color: var(--hit); font-weight: 700; }
   .log .bad { color: var(--clash); font-weight: 700; }
@@ -328,26 +337,22 @@
         <p class="aside">Password hashes like bcrypt are slow <em>on purpose</em>, around 0.1 s each, so attackers can't guess quickly. A dict that used one would need about 2 minutes to look up 1,000 keys.</p>
       </div>
 
-      <div class="card trait wide">
+      <div class="card trait">
         <h3><span class="trait-num">3</span>Uniform</h3>
-        <p class="muted">Hashes spread keys evenly over the buckets, so no bucket gets crowded. (The word for this really is <strong>uniformity</strong>.)</p>
-        <div class="hist-controls">
-          <div><span class="label">Hash function</span>
-            <div class="seg" id="u-fn" role="group" aria-label="Hash function">
-              <button type="button" data-v="toy" aria-pressed="true">a real-ish hash</button>
-              <button type="button" data-v="len" aria-pressed="false">len(key)</button>
-              <button type="button" data-v="first" aria-pressed="false" title="ord(key[0]): the Unicode number of the key's first character">first letter's Unicode</button>
-            </div>
+        <p class="muted">Keys spread evenly over the buckets. Nobody gets crowded. (The word really is <strong>uniformity</strong>.)</p>
+        <svg id="u-ring" viewBox="0 0 300 300" role="img" aria-label="How many of 120 keys land in each of 8 buckets"></svg>
+        <div class="heat-key"><span>0 keys</span><i></i><span>60+</span></div>
+        <div class="u-controls">
+          <div class="seg" id="u-fn" role="group" aria-label="Hash function">
+            <button type="button" data-v="toy" aria-pressed="true">real-ish hash</button>
+            <button type="button" data-v="len" aria-pressed="false">len(key)</button>
+            <button type="button" data-v="first" aria-pressed="false" title="ord(key[0]): the Unicode number of the key's first character">first letter's Unicode</button>
           </div>
-          <div><span class="label">Keys</span>
-            <div class="seg" id="u-keys" role="group" aria-label="Key set">
-              <button type="button" data-v="words" aria-pressed="true">120 English words</button>
-              <button type="button" data-v="users" aria-pressed="false">user_1 … user_120</button>
-            </div>
+          <div class="seg" id="u-keys" role="group" aria-label="Key set">
+            <button type="button" data-v="words" aria-pressed="true">120 English words</button>
+            <button type="button" data-v="users" aria-pressed="false">user_1 … user_120</button>
           </div>
         </div>
-        <p class="muted" style="font-size:0.85rem"><span style="color:var(--accent);font-weight:700">- - -</span> perfectly even</p>
-        <svg id="hist" viewBox="0 0 640 230" role="img" aria-label="How many keys land in each of 8 buckets"></svg>
         <p id="u-verdict" aria-live="polite"></p>
       </div>
     </div>
@@ -495,11 +500,11 @@
       <summary><h3>Why doesn't Python just do <code>+1</code>? (Clustering)</h3><span class="muted">Try "the next one (+1)" vs "Python's jump" on the ring first.</span></summary>
       <div class="body">
         <p>With +1, colliding keys pile up in a run of full neighboring buckets, called a <strong>cluster</strong>. Any key that lands anywhere in a cluster has to walk to the end of it, and the cluster grows. A bad enough cluster is a linear search, just like a long chain: O(n). Python's jump mixes in more of the hash every step, so the trail scatters around the ring:</p>
-        <pre class="log" style="min-height:0;padding-left:14px"><code>perturb = hash
-i = hash % size
-while bucket i is taken:
-    perturb >>= 5
-    i = (5*i + 1 + perturb) % size</code></pre>
+        <pre class="log" style="min-height:0;padding-left:14px"><code>perturb = hash                       <span class="cmt"># keep a copy of the full hash to mix in later</span>
+i = hash % size                      <span class="cmt"># start at the home bucket, the remainder</span>
+while bucket i is taken:             <span class="cmt"># collision: try somewhere else</span>
+    perturb >>= 5                    <span class="cmt"># shift 5 bits off, so each try uses new bits of the hash</span>
+    i = (5*i + 1 + perturb) % size   <span class="cmt"># jump: scramble i, add those bits, wrap around the ring</span></code></pre>
         <p class="muted">Once <code>perturb</code> shifts down to 0, <code>5*i + 1</code> still reaches every bucket, as long as the size is a power of 2. That's one reason a CPython dict's array size is always a power of 2 (8, 16, 32, …).</p>
       </div>
     </details>
@@ -576,7 +581,7 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const NS = "http://www.w3.org/2000/svg";
 
-  const WORDS = ("greeting farewell departing requesting thanking apologizing purchasing apple banana cherry dragon eagle falcon giraffe hippo iguana jaguar koala lemur moose narwhal otter penguin quokka raccoon salmon tiger urchin vulture walrus yak zebra anchor bridge castle desert engine forest garden harbor island jungle kettle lantern meadow needle orchard pepper quarry river saddle tunnel umbrella valley window yarn zipper amber bronze copper denim ebony fuchsia gold hazel indigo jade khaki lilac magenta navy olive peach ruby scarlet teal violet python lambda tuple string float integer boolean module import return yield class method object pickle bucket ring hash key value table probe chain array index cat dog owl fox bee ant elk emu gnu cow pig hen ram eel cod").split(" ");
+  const WORDS = ("greeting farewell departing requesting thanking apologizing purchasing apple banana cherry dragon eagle falcon giraffe hippo iguana jaguar koala lemur moose narwhal otter penguin quokka raccoon salmon tiger urchin vulture walrus yak zebra anchor bridge castle desert engine forest garden harbor island jungle kettle lantern meadow needle orchard pepper quarry river saddle tunnel umbrella valley window yarn zipper amber bronze copper denim ebony fuchsia gold hazel indigo jade khaki lilac magenta navy olive peach ruby scarlet teal violet python lambda tuple string float integer boolean module import return yield class method object pickle bucket ring hash key value table probe chain array index cat dog owl fox bee ant elk emu gnu cow pig hen ram eel cod mango lotus sprout").split(" ");
 
   // ---------- hashing ----------
   const isIntKey = (s) => /^\d{1,7}$/.test(s);
@@ -625,46 +630,44 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
   });
 
   // ---------------------------------------------------------
-  // 1c. Uniform: histogram
+  // 1c. Uniform: a ring of buckets, shaded by how many keys each holds
   // ---------------------------------------------------------
   const uState = { fn: "toy", keys: "words" };
-  const U_BUCKETS = 8;
-  (function buildHist() {
-    const W = 640, H = 230, left = 34, bottom = 34, top = 14;
-    let s = `<line id="h-ideal" x1="${left}" x2="${W - 6}" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 5"/>`;
-    const bw = (W - left - 6) / U_BUCKETS;
+  const U_BUCKETS = 8, U_FULL = 60;             // U_FULL keys = the strongest shade
+  (function buildURing() {
+    const C = 150, R1 = 74, R2 = 144, polarU = (r, deg) => [C + r * Math.cos((deg * Math.PI) / 180), C + r * Math.sin((deg * Math.PI) / 180)];
+    let svg = "";
     for (let b = 0; b < U_BUCKETS; b++) {
-      const x = left + b * bw + bw * 0.14;
-      s += `<rect class="bar" data-b="${b}" x="${x}" width="${bw * 0.72}" y="${H - bottom}" height="0" rx="4"/>`;
-      s += `<text class="count" data-c="${b}" x="${x + bw * 0.36}" y="${H - bottom - 6}" text-anchor="middle"></text>`;
-      s += `<text x="${x + bw * 0.36}" y="${H - bottom + 18}" text-anchor="middle">bucket ${b}</text>`;
+      const mid = -90 + (b * 360) / U_BUCKETS, half = 180 / U_BUCKETS;
+      const [x0, y0] = polarU(R2, mid - half), [x1, y1] = polarU(R2, mid + half), [x2, y2] = polarU(R1, mid + half), [x3, y3] = polarU(R1, mid - half);
+      svg += `<path class="u-seg" data-b="${b}" d="M${x0},${y0} A${R2},${R2} 0 0 1 ${x1},${y1} L${x2},${y2} A${R1},${R1} 0 0 0 ${x3},${y3} Z"><title>bucket ${b}</title></path>`;
+      const [tx, ty] = polarU((R1 + R2) / 2, mid);
+      svg += `<text class="u-count" data-c="${b}" x="${tx}" y="${ty + 7}" text-anchor="middle"></text>`;
     }
-    s += `<line x1="${left}" x2="${W - 6}" y1="${H - bottom}" y2="${H - bottom}" stroke="var(--line)" stroke-width="2"/>`;
-    $("hist").innerHTML = s;
-    $("hist").dataset.geom = JSON.stringify({ H, bottom, top });
+    svg += `<text class="u-small" x="${C}" y="${C - 26}" text-anchor="middle">fullest bucket</text>`;
+    svg += `<text class="u-big" id="u-worst" x="${C}" y="${C + 12}" text-anchor="middle"></text>`;
+    svg += `<text class="u-small" id="u-even" x="${C}" y="${C + 32}" text-anchor="middle"></text>`;
+    $("u-ring").innerHTML = svg;
   })();
   function renderHist() {
     const keys = uState.keys === "words" ? WORDS.slice(0, 120) : Array.from({ length: 120 }, (_, i) => `user_${i + 1}`);
     const fn = { toy: toyHash, len: lenHash, first: firstHash }[uState.fn];
     const counts = new Array(U_BUCKETS).fill(0);
     keys.forEach((k) => counts[mod(fn(k), U_BUCKETS)]++);
-    const { H, bottom, top } = JSON.parse($("hist").dataset.geom);
-    const maxC = Math.max(...counts, 30);
-    const y = (v) => H - bottom - (H - bottom - top) * (v / maxC);
     const ideal = keys.length / U_BUCKETS;  // 15
     const worst = Math.max(...counts);
     counts.forEach((c, b) => {
-      const bar = $("hist").querySelector(`[data-b="${b}"]`);
-      bar.setAttribute("y", y(c)); bar.setAttribute("height", y(0) - y(c));
-      bar.setAttribute("fill", c > ideal * 2 ? "var(--clash)" : "var(--tag)");
-      const t = $("hist").querySelector(`[data-c="${b}"]`);
-      t.setAttribute("y", y(c) - 6); t.textContent = c;
+      const pct = c === 0 ? 0 : Math.round(12 + 88 * Math.min(1, c / U_FULL));
+      $("u-ring").querySelector(`[data-b="${b}"]`).style.fill = `color-mix(in oklab, var(--heat) ${pct}%, var(--slot))`;
+      $("u-ring").querySelector(`[data-c="${b}"]`).textContent = c;
     });
-    $("h-ideal").setAttribute("y1", y(ideal)); $("h-ideal").setAttribute("y2", y(ideal));
+    $("u-worst").textContent = worst;
+    $("u-worst").style.fill = worst <= ideal * 1.6 ? "var(--hit)" : "var(--clash)";
+    $("u-even").textContent = `even would be ${+ideal.toFixed(1)}`;
     const empty = counts.filter((c) => c === 0).length;
     $("u-verdict").innerHTML = worst <= ideal * 1.6
-      ? `<span class="verdict good">Nicely spread.</span> The most crowded bucket holds ${worst} keys, close to the perfectly even ${+ideal.toFixed(1)}.`
-      : `<span class="verdict bad">Lumpy!</span> One bucket holds <strong>${worst}</strong> of ${keys.length} keys${empty ? `, and ${empty} bucket${empty === 1 ? " sits" : "s sit"} empty` : ""}. Finding a key there could take ${worst} checks.`;
+      ? `<span class="verdict good">Nicely spread.</span> Every bucket is about the same shade.`
+      : `<span class="verdict bad">Lumpy!</span> One bucket holds <strong>${worst}</strong> of ${keys.length} keys${empty ? `, and ${empty} sit${empty === 1 ? "s" : ""} empty` : ""}. Finding a key there could take ${worst} checks.`;
   }
   function wireSeg(id, onPick) {
     $(id).addEventListener("click", (e) => {
