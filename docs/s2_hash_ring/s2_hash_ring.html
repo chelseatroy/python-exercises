@@ -1101,7 +1101,7 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
     for (const k of st.keys) { const b = locate(k); if (b !== before.get(k)) { moved++; st.hl.moved.add(b); } }
     renderRing();
     const verb = size > old ? "Grow!" : size < old ? "Shrink!" : "Same size, but rebuilt.";
-    log(`${verb} ${old} → ${size} buckets. Every key is re-hashed into the new array: ${moved} of ${st.keys.length} moved${tombs ? `, and all ${tombs} tombstones are gone` : ""}.`, "good");
+    log(`${verb} ${old} → ${size} buckets. Every key is re-hashed into the new array: ${moved} of ${st.keys.length} moved${tombs === 1 ? ", and the tombstone is gone" : tombs ? `, and all ${tombs} tombstones are gone` : ""}.`, "good");
     await sleep(900);
   }
   function locate(k) {
@@ -1314,10 +1314,18 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
     grow: () => {
       configure({ N: 8, mode: "open", probe: "python", grow: true });
       resetTable();
-      $("key").value = "";
-      mission(`Add keys and watch the <strong>load factor</strong> meter. When an insert finds 2/3 of the buckets used up, CPython picks a new size (the next power of 2 that's at least 3 × the keys) and re-hashes everything. Delete a key or two before it grows, and watch the tombstones vanish.`, [
-        step(`Add a random key`, null, () => $("random").click(), { repeat: true }),
-        step(`Delete the newest key`, () => st.keys[st.keys.length - 1] ?? "", () => {
+      // the notebook's keys; 5 is as many as 8 buckets can hold (2/3 of 8, rounded down)
+      ["greeting", "departing", "requesting", "thanking", "apologizing"].forEach(quietInsert);
+      renderRing();
+      $("key").value = "purchasing";
+      const addOne = () => {
+        const k = st.keys.includes("purchasing") ? WORDS.find((w) => !st.keys.includes(w)) : "purchasing";
+        $("key").value = k;
+        return lock(() => doInsert(k));
+      };
+      mission(`These 8 buckets hold 5 keys. That's CPython's limit: 2/3 of 8 is 5⅓. Watch the <strong>load factor</strong> meter. The next insert finds no unused bucket, so CPython picks a new size (the next power of 2 that's at least 3 × the keys) and re-hashes everything. To watch a tombstone vanish too, delete a key first.`, [
+        step(`Add one more key`, null, addOne, { repeat: true }),
+        step(`Delete a key first`, () => st.keys[st.keys.length - 1] ?? "", () => {
           const k = st.keys[st.keys.length - 1];
           return k === undefined ? null : lock(() => doDelete(k));
         }, { repeat: true }),
