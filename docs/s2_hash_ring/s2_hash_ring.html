@@ -1,0 +1,1491 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Hash Ring</title>
+<style>
+  :root {
+    --ground: #F6F1E7;
+    --surface: #FFFDF8;
+    --ink: #1F1B2D;
+    --muted: #6A6377;
+    --line: #E0D8C8;
+    --accent: #3B5BDB;
+    --accent-ink: #FFFFFF;
+    --tag: #F2C14E;
+    --tag-edge: #C99A1E;
+    --tag-ink: #3A2A00;
+    --hit: #2B8A3E;
+    --clash: #D9480F;
+    --tomb: #8E8A99;
+    --machine: #2B2540;
+    --machine-ink: #F6F1E7;
+    --machine-muted: #B9B2CC;
+    --slot: #EDE6D8;
+    --display: Georgia, "Times New Roman", serif;
+    --body: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #15131C;
+      --surface: #1E1B28;
+      --ink: #ECE8F4;
+      --muted: #A49DB3;
+      --line: #34303F;
+      --accent: #7C93F5;
+      --accent-ink: #0F1020;
+      --tag: #D9AA3A;
+      --tag-edge: #A97F1C;
+      --tag-ink: #241A00;
+      --hit: #51CF66;
+      --clash: #FF8A4C;
+      --tomb: #6F6A7D;
+      --machine: #0D0B14;
+      --machine-ink: #ECE8F4;
+      --machine-muted: #8F88A3;
+      --slot: #2A2636;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #15131C;
+    --surface: #1E1B28;
+    --ink: #ECE8F4;
+    --muted: #A49DB3;
+    --line: #34303F;
+    --accent: #7C93F5;
+    --accent-ink: #0F1020;
+    --tag: #D9AA3A;
+    --tag-edge: #A97F1C;
+    --tag-ink: #241A00;
+    --hit: #51CF66;
+    --clash: #FF8A4C;
+    --tomb: #6F6A7D;
+    --machine: #0D0B14;
+    --machine-ink: #ECE8F4;
+    --machine-muted: #8F88A3;
+    --slot: #2A2636;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 16px/1.55 var(--body);
+  }
+  .page {
+    padding-inline: clamp(16px, 4vw, 72px);
+    padding-block: 40px 72px;
+    display: grid;
+    gap: 44px;
+  }
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.3rem, 7vw, 3.6rem); line-height: 1.02; }
+  h2 { font-size: 1.7rem; line-height: 1.15; }
+  h3 { font-size: 1.25rem; line-height: 1.2; }
+  p { margin: 0; }
+  .muted { color: var(--muted); }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  code { font-family: var(--mono); font-size: 0.92em; }
+  .label {
+    font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase;
+    font-weight: 700; color: var(--muted);
+  }
+  section { display: grid; gap: 16px; }
+  header { display: grid; gap: 14px; }
+  .lede { font-size: 1.15rem; }
+
+  button { font: inherit; color: inherit; }
+  button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+  .seg button, .btn {
+    font: 600 0.9rem var(--body); cursor: pointer;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    border-radius: 999px; padding: 6px 13px;
+  }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+  .btn:hover, .seg button:hover { border-color: var(--muted); }
+  .primary {
+    font: 700 0.95rem var(--body); cursor: pointer;
+    background: var(--accent); color: var(--accent-ink);
+    border: 0; border-radius: 999px; padding: 8px 18px;
+  }
+  .primary:disabled, .btn:disabled { opacity: 0.5; cursor: progress; }
+  input[type="text"] {
+    font: 600 1rem var(--mono); padding: 7px 10px; min-width: 0;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink);
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px; display: grid; gap: 12px; align-content: start;
+  }
+
+  /* ---------- 1. good hash functions ---------- */
+  .traits { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; }
+  .trait-num {
+    display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+    background: var(--tag); color: var(--tag-ink); font: 700 0.95rem var(--mono); margin-right: 8px;
+  }
+  .trait h3 { display: flex; align-items: center; }
+  .runs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .runs .col { display: grid; gap: 4px; align-content: start; }
+  .runs .out {
+    font: 600 1.05rem var(--mono); padding: 3px 8px; border-radius: 6px; background: var(--slot);
+    animation: pop 0.35s ease;
+  }
+  .runs .out.same { color: var(--hit); }
+  .runs .out.diff { color: var(--clash); }
+  .verdict { font-weight: 700; }
+  .verdict.good { color: var(--hit); }
+  .verdict.bad { color: var(--clash); }
+  .aside { font-size: 0.88rem; color: var(--muted); border-left: 3px solid var(--tag); padding-left: 10px; }
+  .bigstat { font: 600 2rem/1.1 var(--mono); font-variant-numeric: tabular-nums; }
+  .wide { grid-column: 1 / -1; }
+  .hist-controls { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; }
+  .hist-controls > div { display: grid; gap: 4px; }
+  #hist { width: 100%; height: auto; display: block; }
+  #hist text { font-family: var(--mono); fill: var(--muted); font-size: 12px; }
+  #hist .count { fill: var(--ink); font-weight: 600; }
+  #hist .bar { transition: y 0.5s cubic-bezier(.2,.8,.2,1), height 0.5s cubic-bezier(.2,.8,.2,1), fill 0.3s; }
+
+  /* ---------- 2. the ring ---------- */
+  .ring-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 22px; align-items: start; }
+  @media (max-width: 860px) { .ring-layout { grid-template-columns: 1fr; } }
+  .panel { display: grid; gap: 14px; align-content: start; }
+  .settings { display: grid; gap: 12px; }
+  .setting { display: grid; gap: 5px; }
+  .setting[hidden] { display: none; }
+  .size-row { display: flex; align-items: center; gap: 12px; }
+  .size-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+  .size-row output { font: 700 1.3rem var(--mono); min-width: 2ch; text-align: right; }
+
+  .ring-wrap { position: relative; width: 100%; max-width: 88vh; margin-inline: auto; }
+  #ring { width: 100%; height: auto; display: block; overflow: visible; }
+  #ring text { font-family: var(--mono); pointer-events: none; }
+  .seg-slot { fill: var(--slot); stroke: var(--line); stroke-width: 1.5; transition: fill 0.25s, stroke 0.25s; }
+  .seg-slot.full { fill: var(--tag); stroke: var(--tag-edge); }
+  .seg-slot.tomb { fill: var(--slot); stroke: var(--tomb); stroke-dasharray: 4 3; }
+  .seg-slot.checked { stroke: var(--clash); stroke-width: 3.5; }
+  .seg-slot.landed { stroke: var(--hit); stroke-width: 4.5; }
+  .seg-slot.miss { stroke: var(--clash); stroke-width: 4.5; fill: color-mix(in oklab, var(--clash) 18%, var(--slot)); }
+  .seg-slot.moved { animation: moved 1.2s ease; }
+  .idx { fill: var(--muted); font-size: 14px; font-weight: 600; }
+  .idx.hot { fill: var(--ink); }
+  .slot-key { fill: var(--tag-ink); font-weight: 700; }
+  .node rect { fill: var(--tag); stroke: var(--tag-edge); stroke-width: 1.5; transition: stroke 0.2s; }
+  .node text { fill: var(--tag-ink); font-weight: 700; }
+  .node.checked rect { stroke: var(--clash); stroke-width: 3.5; }
+  .node.landed rect { stroke: var(--hit); stroke-width: 4; }
+  .node.fresh { animation: pop 0.4s ease; transform-box: fill-box; transform-origin: center; }
+  .link { stroke: var(--tag-edge); stroke-width: 2; }
+  .more { fill: var(--muted); font-size: 12px; font-weight: 700; }
+  .hop { fill: none; stroke: var(--clash); stroke-width: 2.5; stroke-dasharray: 6 5; opacity: 0.85; }
+  .tombstone path { fill: var(--tomb); }
+  .tombstone text { fill: var(--surface); font-weight: 700; }
+  #token { fill: var(--accent); stroke: var(--surface); stroke-width: 3; }
+  #token-trail { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; opacity: 0.35; }
+  .machine { fill: var(--machine); }
+  .machine-ring { fill: none; stroke: var(--accent); stroke-width: 3; stroke-dasharray: 3 7; }
+  .m-label { fill: var(--machine-muted); font-size: 15px; }
+  .m-big { fill: var(--machine-ink); font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .m-small { fill: var(--machine-muted); font-size: 15px; font-variant-numeric: tabular-nums; }
+  .m-eq { fill: var(--tag); font-size: 17px; font-weight: 700; }
+
+  /* the input lives inside the hash() machine on wide screens */
+  .hash-box {
+    position: absolute; left: 50%; top: calc(50% - 15% * var(--zoom, 1)); transform: translateX(-50%);
+    width: calc(29% * var(--zoom, 1)); display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px 3px; align-items: center;
+  }
+  .hash-box .paren { font: 600 0.95rem var(--mono); color: var(--machine-muted); }
+  .hash-box input { width: 100%; text-align: center; background: var(--surface); padding: 5px 4px; }
+  .hash-box .primary { grid-column: 1 / -1; padding: 6px 10px; }
+  #m-key { display: none; }
+  @media (max-width: 560px) {
+    .hash-box { position: static; transform: none; width: 100%; margin-top: 10px; grid-template-columns: auto minmax(0, 1fr) auto auto; }
+    .hash-box .primary { grid-column: auto; margin-left: 6px; }
+    #m-key { display: inline; }
+  }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 10px; }
+  .stat { border-top: 2px solid var(--ink); padding-top: 6px; display: grid; gap: 0; }
+  .stat .big { font: 600 1.45rem/1.15 var(--mono); font-variant-numeric: tabular-nums; }
+  .stat .sub { font-size: 0.78rem; color: var(--muted); }
+  .meter { display: grid; gap: 4px; }
+  .meter-bar { position: relative; height: 16px; border-radius: 8px; background: var(--slot); border: 1px solid var(--line); display: flex; }
+  .meter-bar .live { background: var(--tag); border-radius: 8px 0 0 8px; transition: width 0.4s; }
+  .meter-bar .dead { background: repeating-linear-gradient(45deg, var(--tomb) 0 3px, transparent 3px 7px); transition: width 0.4s; }
+  .meter-bar .mark { position: absolute; top: -5px; bottom: -5px; width: 3px; margin-left: -1px; background: var(--clash); border-radius: 2px; }
+  .meter-cap { display: flex; justify-content: space-between; gap: 10px; font-size: 0.8rem; color: var(--muted); }
+  .meter-cap .mark-label { color: var(--clash); font-weight: 700; white-space: nowrap; }
+  .log {
+    margin: 0; padding: 12px 14px 12px 34px; min-height: 7.5em;
+    font: 0.9rem/1.5 var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    display: grid; gap: 3px; align-content: start;
+  }
+  .log li { animation: pop 0.25s ease; }
+  .log li::marker { color: var(--muted); }
+  .log .good { color: var(--hit); font-weight: 700; }
+  .log .bad { color: var(--clash); font-weight: 700; }
+  .log:empty::before { content: "Steps show up here."; color: var(--muted); margin-left: -20px; }
+
+  .mission {
+    background: var(--machine); color: var(--machine-ink); border-radius: 12px; padding: 12px 16px;
+    font-size: 0.95rem;
+  }
+  .mission:empty { display: none; }
+  .mission strong { color: var(--tag); }
+  .mission-steps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .mission-steps button {
+    font: 700 0.92rem var(--body); cursor: pointer; border: 0; border-radius: 999px; padding: 7px 15px;
+    background: var(--tag); color: var(--tag-ink);
+  }
+  .mission-steps button:disabled { cursor: progress; }
+  .mission-steps button.done { opacity: 0.6; }
+  .mission-steps button.done::after { content: " ✓"; }
+  .experiments { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .exp {
+    text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface);
+    border-radius: 12px; padding: 12px 14px; display: grid; gap: 2px;
+  }
+  .exp:hover { border-color: var(--accent); }
+  .exp b { font-family: var(--display); font-weight: 400; font-size: 1.1rem; }
+  .exp span { font-size: 0.85rem; color: var(--muted); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.84rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; border: 2px solid transparent; }
+
+  /* ---------- 3. side by side + languages ---------- */
+  .versus { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .versus svg { width: 100%; height: auto; display: block; }
+  .versus svg text { font-family: var(--mono); }
+  .langs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .lang {
+    border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; background: var(--ground);
+    display: grid; gap: 0;
+  }
+  .lang b { font-size: 0.95rem; }
+  .lang small { color: var(--muted); font-size: 0.78rem; }
+  .lang.switch { border-color: var(--accent); }
+
+  #lf-chart { width: 100%; height: auto; display: block; }
+  #lf-chart text { font-family: var(--mono); fill: var(--muted); font-size: 12px; }
+  .shrink-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .fact { border-left: 3px solid var(--tag); padding: 2px 0 2px 10px; display: grid; gap: 2px; }
+  .fact span { font-size: 0.88rem; color: var(--muted); }
+  .reveal { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+  .reveal summary { cursor: pointer; padding: 16px 20px; display: grid; gap: 2px; list-style: none; }
+  .reveal summary::-webkit-details-marker { display: none; }
+  .reveal summary h3::before { content: "▸ "; color: var(--accent); }
+  .reveal[open] summary h3::before { content: "▾ "; }
+  .reveal .body { padding: 0 20px 18px; display: grid; gap: 10px; }
+
+  @keyframes pop { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: none; } }
+  @keyframes moved { 0%, 40% { fill: var(--accent); } 100% { } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header>
+    <div class="label">Session 2 · How a dict works under the hood</div>
+    <h1>The Hash Ring</h1>
+    <p class="lede">Under every Python dict is a plain, fixed-size array. Each slot is called a <strong>bucket</strong>. So how does <code>d["greeting"]</code> find the right bucket right away, without searching?</p>
+  </header>
+
+  <!-- ----------------- 1. GOOD HASH FUNCTIONS ----------------- -->
+  <section aria-labelledby="traits-h">
+    <h2 id="traits-h">A good hash function is…</h2>
+    <div class="traits">
+
+      <div class="card trait">
+        <h3><span class="trait-num">1</span>Deterministic</h3>
+        <p class="muted">Same input, same output. Every time.</p>
+        <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="text" id="det-key" value="greeting" aria-label="Key to hash" style="flex:1">
+          <button class="btn" id="det-run" type="button">Run 3×</button>
+        </div>
+        <div class="runs">
+          <div class="col"><span class="label">hash(key)</span><div id="det-hash" style="display:grid;gap:4px"></div></div>
+          <div class="col"><span class="label">random.choice(key)</span><div id="det-rand" style="display:grid;gap:4px"></div></div>
+        </div>
+        <p class="aside">Try it: run <code>python3 -c "print(hash('greeting'))"</code> twice. Different numbers! Python salts string hashes freshly for <em>each run</em>. Within one run the hash never changes, and that's all a dict needs.</p>
+      </div>
+
+      <div class="card trait">
+        <h3><span class="trait-num">2</span>Fast</h3>
+        <p class="muted">Every <code>d[key]</code> starts by hashing <code>key</code>. Hashing is part of every lookup, so it has to be cheap.</p>
+        <button class="btn" id="fast-run" type="button" style="justify-self:start">Hash 1,000,000 keys in your browser</button>
+        <div class="bigstat" id="fast-out" aria-live="polite">—</div>
+        <div class="muted" id="fast-sub" style="font-size:0.9rem"></div>
+        <p class="aside">Password hashes like bcrypt are slow <em>on purpose</em>, around 0.1 s each, so attackers can't guess quickly. A dict that used one would need about 2 minutes to look up 1,000 keys.</p>
+      </div>
+
+      <div class="card trait wide">
+        <h3><span class="trait-num">3</span>Uniform</h3>
+        <p class="muted">Hashes spread keys evenly over the buckets, so no bucket gets crowded. (The word for this really is <strong>uniformity</strong>.)</p>
+        <div class="hist-controls">
+          <div><span class="label">Hash function</span>
+            <div class="seg" id="u-fn" role="group" aria-label="Hash function">
+              <button type="button" data-v="toy" aria-pressed="true">a real-ish hash</button>
+              <button type="button" data-v="len" aria-pressed="false">len(key)</button>
+              <button type="button" data-v="first" aria-pressed="false" title="ord(key[0]): the Unicode number of the key's first character">first letter's Unicode</button>
+            </div>
+          </div>
+          <div><span class="label">Keys</span>
+            <div class="seg" id="u-keys" role="group" aria-label="Key set">
+              <button type="button" data-v="words" aria-pressed="true">120 English words</button>
+              <button type="button" data-v="users" aria-pressed="false">user_1 … user_120</button>
+            </div>
+          </div>
+        </div>
+        <p class="muted" style="font-size:0.85rem"><span style="color:var(--accent);font-weight:700">- - -</span> perfectly even</p>
+        <svg id="hist" viewBox="0 0 640 230" role="img" aria-label="How many keys land in each of 8 buckets"></svg>
+        <p id="u-verdict" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------- 2. THE RING ----------------- -->
+  <section aria-labelledby="ring-h">
+    <h2 id="ring-h">Round and round the ring</h2>
+    <p class="muted">The array is bent into a ring around the hash function. The hash gives a big number. The number counts its way around the ring, lap after lap. Wherever it stops (the <strong>remainder</strong>, <code>hash % size</code>) is the bucket.</p>
+
+    <div class="experiments" id="experiments">
+      <button class="exp" type="button" data-exp="65"><b>65 in 8 buckets</b><span>Go 8 laps, then 1 step more</span></button>
+      <button class="exp" type="button" data-exp="collide"><b>Collision!</b><span>Two keys want the same bucket</span></button>
+      <button class="exp" type="button" data-exp="terrible"><b>A terrible hash</b><span>Everything in one bucket</span></button>
+      <button class="exp" type="button" data-exp="tomb"><b>The broken trail</b><span>Why deleting needs tombstones</span></button>
+      <button class="exp" type="button" data-exp="grow"><b>Watch it grow</b><span>2/3 full → a bigger array</span></button>
+      <button class="exp" type="button" data-exp="shrink"><b>Shrink?</b><span>Delete most keys, then insert</span></button>
+    </div>
+    <div class="mission" id="mission" aria-live="polite"></div>
+
+    <div class="ring-layout">
+      <div>
+        <div class="ring-wrap">
+          <svg id="ring" viewBox="24 24 712 712" role="img" aria-label="The buckets of a hash table drawn as a ring around the hash function"></svg>
+          <form class="hash-box" id="hash-form" autocomplete="off">
+            <span class="paren">hash(</span>
+            <input type="text" id="key" value="greeting" aria-label="Key to hash" spellcheck="false">
+            <span class="paren">)</span>
+            <button class="primary" type="submit" id="go">Hash it!</button>
+          </form>
+        </div>
+        <div class="legend">
+          <span><span class="sw" style="background:var(--tag);border-color:var(--tag-edge)"></span>holds a key</span>
+          <span><span class="sw" style="background:var(--slot);border-color:var(--clash)"></span>checked, taken</span>
+          <span><span class="sw" style="background:var(--slot);border-color:var(--hit)"></span>landed here</span>
+          <span><span class="sw" style="background:var(--slot);border:2px dashed var(--tomb)"></span>tombstone</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="actions">
+          <button class="btn" type="button" id="find">Find key</button>
+          <button class="btn" type="button" id="del">Delete key</button>
+          <button class="btn" type="button" id="collide">Suggest a colliding key</button>
+          <button class="btn" type="button" id="random">Add a random key</button>
+          <button class="btn" type="button" id="clear">Empty the dict</button>
+        </div>
+
+        <ol class="log" id="log" aria-live="polite"></ol>
+
+        <div class="stats" id="stats"></div>
+        <div class="meter" id="meter" aria-live="off"></div>
+
+        <div class="settings card">
+          <div class="setting">
+            <span class="label" id="size-label">Array size (buckets)</span>
+            <div class="size-row"><input type="range" id="size" min="2" max="32" value="8" aria-labelledby="size-label"><output id="size-out">8</output></div>
+          </div>
+          <div class="setting">
+            <span class="label">When two keys collide…</span>
+            <div class="seg" id="mode" role="group" aria-label="Collision strategy">
+              <button type="button" data-v="chain" aria-pressed="true">Separate chaining (linked list)</button>
+              <button type="button" data-v="open" aria-pressed="false">Open addressing (probe)</button>
+            </div>
+          </div>
+          <div class="setting" id="probe-setting" hidden>
+            <span class="label">Next bucket to try</span>
+            <div class="seg" id="probe" role="group" aria-label="Probing rule">
+              <button type="button" data-v="linear" aria-pressed="true">the next one (+1)</button>
+              <button type="button" data-v="python" aria-pressed="false">Python's jump</button>
+            </div>
+          </div>
+          <div class="setting" id="tomb-setting" hidden>
+            <span class="label">Deleting a key leaves…</span>
+            <div class="seg" id="tombs" role="group" aria-label="Deletion">
+              <button type="button" data-v="on" aria-pressed="true">a tombstone</button>
+              <button type="button" data-v="off" aria-pressed="false">an empty bucket</button>
+            </div>
+          </div>
+          <div class="setting">
+            <span class="label">Hash function</span>
+            <div class="seg" id="fn" role="group" aria-label="Hash function">
+              <button type="button" data-v="toy" aria-pressed="true">a real-ish hash</button>
+              <button type="button" data-v="len" aria-pressed="false">len(key) 😬</button>
+            </div>
+          </div>
+          <div class="setting">
+            <span class="label">Resize like CPython (at 2/3 full)?</span>
+            <div class="seg" id="grow" role="group" aria-label="Automatic resizing">
+              <button type="button" data-v="off" aria-pressed="true">no</button>
+              <button type="button" data-v="on" aria-pressed="false">yes</button>
+            </div>
+          </div>
+          <div class="setting">
+            <span class="label">Animation</span>
+            <div class="seg" id="speed" role="group" aria-label="Animation speed">
+              <button type="button" data-v="1.7" aria-pressed="false">slow</button>
+              <button type="button" data-v="1" aria-pressed="true">normal</button>
+              <button type="button" data-v="0.35" aria-pressed="false">fast</button>
+              <button type="button" data-v="0" aria-pressed="false">off</button>
+            </div>
+          </div>
+          <p class="muted" style="font-size:0.82rem">Numbers like <code>65</code> hash to themselves, just like in Python. Strings use a small stand-in hash (0–999) so you can count the laps. Python's real hashes are about 19 digits long.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------- 3. CHAINING vs OPEN ADDRESSING ----------------- -->
+  <section aria-labelledby="vs-h">
+    <h2 id="vs-h">Two ways to handle a collision</h2>
+    <p class="muted">Same five keys, same 8 buckets. Say <code>'thanking'</code> and <code>'apologizing'</code> both hash to bucket 0, which <code>'greeting'</code> already holds.</p>
+    <div class="versus">
+      <div class="card">
+        <h3>Separate chaining</h3>
+        <svg id="vs-chain" viewBox="0 0 400 200" role="img" aria-label="Chaining: colliding keys hang off bucket 0 in a linked list"></svg>
+        <p class="muted" style="font-size:0.92rem">Colliding keys form a linked list hanging off the bucket. Finding one means walking the list. If every key lands in one bucket, a lookup is a linear search: <strong>O(n)</strong>.</p>
+        <span class="label">Used by</span>
+        <div class="langs">
+          <span class="lang"><b>Java</b><small>HashMap. Long chains turn into trees</small></span>
+          <span class="lang"><b>C++</b><small>std::unordered_map</small></span>
+          <span class="lang"><b>C#</b><small>Dictionary</small></span>
+          <span class="lang"><b>JavaScript</b><small>Map, in V8 (Chrome, Node)</small></span>
+          <span class="lang"><b>PHP</b><small>arrays</small></span>
+          <span class="lang switch"><b>Go, before 1.24</b><small>buckets of 8, then overflow chains</small></span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Open addressing</h3>
+        <svg id="vs-open" viewBox="0 0 400 200" role="img" aria-label="Open addressing: colliding keys probe to other empty buckets in the same array"></svg>
+        <p class="muted" style="font-size:0.92rem">Every key lives in the array itself. If its bucket is taken, it <strong>probes</strong>: it tries another bucket by a fixed rule until one is empty. Finding it later means following the same trail.</p>
+        <span class="label">Used by</span>
+        <div class="langs">
+          <span class="lang"><b>Python</b><small>dict and set</small></span>
+          <span class="lang"><b>Rust</b><small>HashMap (a "Swiss table")</small></span>
+          <span class="lang"><b>Ruby</b><small>Hash, since 2.4</small></span>
+          <span class="lang"><b>Swift</b><small>Dictionary</small></span>
+          <span class="lang"><b>C++ (Google's Abseil library)</b><small>absl::flat_hash_map</small></span>
+          <span class="lang switch"><b>Go, 1.24 and later</b><small>switched sides in 2025!</small></span>
+        </div>
+      </div>
+    </div>
+
+    <details class="reveal">
+      <summary><h3>Why doesn't Python just do <code>+1</code>? (Clustering)</h3><span class="muted">Try "the next one (+1)" vs "Python's jump" on the ring first.</span></summary>
+      <div class="body">
+        <p>With +1, colliding keys pile up in a run of full neighboring buckets, called a <strong>cluster</strong>. Any key that lands anywhere in a cluster has to walk to the end of it, and the cluster grows. A bad enough cluster is a linear search, just like a long chain: O(n). Python's jump mixes in more of the hash every step, so the trail scatters around the ring:</p>
+        <pre class="log" style="min-height:0;padding-left:14px"><code>perturb = hash
+i = hash % size
+while bucket i is taken:
+    perturb >>= 5
+    i = (5*i + 1 + perturb) % size</code></pre>
+        <p class="muted">Once <code>perturb</code> shifts down to 0, <code>5*i + 1</code> still reaches every bucket, as long as the size is a power of 2. That's one reason a CPython dict's array size is always a power of 2 (8, 16, 32, …).</p>
+      </div>
+    </details>
+
+    <details class="reveal">
+      <summary><h3>When do the tombstones finally go away?</h3><span class="muted">Guess first. Then try "Watch it grow" or "Shrink?" on the ring.</span></summary>
+      <div class="body">
+        <p>When the array is <strong>resized</strong>. Every key gets re-hashed into a brand-new array, so every trail is rebuilt from scratch, and the tombstones are no longer needed. Until then they take up space: we spend space to keep lookups correct.</p>
+        <p class="muted">Same hash, new size, so a different remainder. That's why keys land in different buckets after a resize.</p>
+        <p class="muted">Separate chaining doesn't need tombstones: unlink the node and stitch the list back together. (Linked lists are made for that.)</p>
+        <p class="muted">"Tombstone" is a general programming word: <em>mark it deleted instead of deleting it</em>, so everything else keeps working. Databases like Cassandra (built at Facebook) do it, and your homework's transactions will need one too.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ----------------- 4. LOAD FACTOR, GROWING, SHRINKING ----------------- -->
+  <section aria-labelledby="lf-h">
+    <h2 id="lf-h">Load factor: how full before it grows?</h2>
+    <p class="muted"><strong>Load factor</strong> = keys ÷ buckets. A fuller array wastes less space but gets more collisions. Pick the rules, then drag through 1,000 inserts.</p>
+    <div class="card">
+      <div class="hist-controls">
+        <div><span class="label">Resize when the load factor passes</span>
+          <div class="seg" id="lf-max" role="group" aria-label="Maximum load factor">
+            <button type="button" data-v="0.5" aria-pressed="false">1/2</button>
+            <button type="button" data-v="0.6667" aria-pressed="true">2/3 (CPython)</button>
+            <button type="button" data-v="0.9" aria-pressed="false">9/10</button>
+          </div>
+        </div>
+        <div><span class="label">New size</span>
+          <div class="seg" id="lf-mult" role="group" aria-label="Growth factor">
+            <button type="button" data-v="2" aria-pressed="true">×2 (CPython)</button>
+            <button type="button" data-v="4" aria-pressed="false">×4</button>
+          </div>
+        </div>
+      </div>
+      <svg id="lf-chart" viewBox="0 0 760 290" role="img" aria-label="Buckets in the array as keys are inserted, with resizes as steps"></svg>
+      <div class="size-row">
+        <span class="label" id="lf-k-label" style="white-space:nowrap">Keys inserted</span>
+        <input type="range" id="lf-k" min="1" max="1000" value="300" aria-labelledby="lf-k-label">
+        <output id="lf-k-out" class="mono" style="min-width:9ch">300</output>
+      </div>
+      <div class="stats" id="lf-stats"></div>
+      <p class="muted" id="lf-note" style="font-size:0.88rem"></p>
+    </div>
+
+    <div class="card">
+      <h3>And shrinking?</h3>
+      <div class="shrink-facts">
+        <div class="fact"><b>Deleting never shrinks a dict.</b><span>Delete 1,000 keys one by one: same size in memory.</span></div>
+        <div class="fact"><b>Deleted slots stay used up.</b><span>They're tombstones until the next resize.</span></div>
+        <div class="fact"><b>Only an insert can resize.</b><span>When it finds 2/3 of the buckets used up.</span></div>
+        <div class="fact"><b>New size: power of 2 ≥ 3 × live keys.</b><span>Under ~1/6 full: it shrinks. Otherwise it stays the same or grows.</span></div>
+        <div class="fact"><b><code>d.clear()</code> shrinks right away.</b><span>Back to an empty dict.</span></div>
+      </div>
+      <p class="muted" style="font-size:0.9rem">So a dict with lots of room left can go from 1,000 keys down to 5 and stay big for another 1,361 inserts. Then it <em>grows</em>. Try it yourself:</p>
+      <pre class="log" style="min-height:0;padding-left:14px"><code>import sys
+d = {i: i for i in range(21)}   # 21 keys: 2/3 of 32 buckets, as full as allowed
+print(sys.getsizeof(d))
+for i in range(5, 21):
+    del d[i]                     # down to 5 keys...
+print(sys.getsizeof(d))          # ...same size!
+d["one more"] = 1                # an insert finds nothing usable left → resize
+print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></pre>
+      <button class="btn" type="button" id="try-shrink" style="justify-self:start">See it on the ring ↑</button>
+      <p class="muted" style="font-size:0.82rem">Measured in CPython 3.10, 3.11, 3.13 and 3.14.</p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const NS = "http://www.w3.org/2000/svg";
+
+  const WORDS = ("greeting farewell departing requesting thanking apologizing purchasing apple banana cherry dragon eagle falcon giraffe hippo iguana jaguar koala lemur moose narwhal otter penguin quokka raccoon salmon tiger urchin vulture walrus yak zebra anchor bridge castle desert engine forest garden harbor island jungle kettle lantern meadow needle orchard pepper quarry river saddle tunnel umbrella valley window yarn zipper amber bronze copper denim ebony fuchsia gold hazel indigo jade khaki lilac magenta navy olive peach ruby scarlet teal violet python lambda tuple string float integer boolean module import return yield class method object pickle bucket ring hash key value table probe chain array index cat dog owl fox bee ant elk emu gnu cow pig hen ram eel cod").split(" ");
+
+  // ---------- hashing ----------
+  const isIntKey = (s) => /^\d{1,7}$/.test(s);
+  const parseKey = (s) => { s = s.trim(); return isIntKey(s) ? Number(s) : s; };
+  const repr = (k) => typeof k === "number" ? String(k) : `'${k}'`;
+  function fnv(s) {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h >>> 0;
+  }
+  const toyHash = (k) => typeof k === "number" ? k : fnv(k) % 1000;
+  const lenHash = (k) => String(k).length;
+  const firstHash = (k) => String(k).charCodeAt(0);
+  const mod = (a, n) => ((a % n) + n) % n;
+
+  // ---------------------------------------------------------
+  // 1a. Deterministic
+  // ---------------------------------------------------------
+  function runDet() {
+    const key = $("det-key").value || "greeting";
+    const h = toyHash(parseKey(key));
+    const picks = Array.from({ length: 3 }, () => key[Math.floor(Math.random() * key.length)]);
+    $("det-hash").innerHTML = [0, 1, 2].map(() => `<span class="out same">${h}</span>`).join("") +
+      `<span class="verdict good">✓ deterministic</span>`;
+    const allSame = picks.every((p) => p === picks[0]);
+    $("det-rand").innerHTML = picks.map((p) => `<span class="out diff">'${p}'</span>`).join("") +
+      `<span class="verdict bad">${allSame ? "✗ same by luck. Run again!" : "✗ not deterministic"}</span>`;
+  }
+  $("det-run").addEventListener("click", runDet);
+  $("det-key").addEventListener("keydown", (e) => { if (e.key === "Enter") runDet(); });
+  runDet();
+
+  // ---------------------------------------------------------
+  // 1b. Fast
+  // ---------------------------------------------------------
+  $("fast-run").addEventListener("click", () => {
+    const keys = Array.from({ length: 1000 }, (_, i) => WORDS[i % WORDS.length] + i);
+    let sink = 0;
+    const t0 = performance.now();
+    for (let r = 0; r < 1000; r++) for (let i = 0; i < 1000; i++) sink ^= fnv(keys[i]);
+    const ms = performance.now() - t0;
+    $("fast-out").dataset.sink = sink;  // keeps the loop from being optimized away
+    $("fast-out").textContent = `${ms.toFixed(1)} ms`;
+    // ms for a million hashes is the same number as nanoseconds for one
+    $("fast-sub").textContent = `for 1,000,000 hashes. That's about ${Math.max(1, Math.round(ms))} nanoseconds each. Click again: it's even faster once the browser warms up.`;
+  });
+
+  // ---------------------------------------------------------
+  // 1c. Uniform: histogram
+  // ---------------------------------------------------------
+  const uState = { fn: "toy", keys: "words" };
+  const U_BUCKETS = 8;
+  (function buildHist() {
+    const W = 640, H = 230, left = 34, bottom = 34, top = 14;
+    let s = `<line id="h-ideal" x1="${left}" x2="${W - 6}" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 5"/>`;
+    const bw = (W - left - 6) / U_BUCKETS;
+    for (let b = 0; b < U_BUCKETS; b++) {
+      const x = left + b * bw + bw * 0.14;
+      s += `<rect class="bar" data-b="${b}" x="${x}" width="${bw * 0.72}" y="${H - bottom}" height="0" rx="4"/>`;
+      s += `<text class="count" data-c="${b}" x="${x + bw * 0.36}" y="${H - bottom - 6}" text-anchor="middle"></text>`;
+      s += `<text x="${x + bw * 0.36}" y="${H - bottom + 18}" text-anchor="middle">bucket ${b}</text>`;
+    }
+    s += `<line x1="${left}" x2="${W - 6}" y1="${H - bottom}" y2="${H - bottom}" stroke="var(--line)" stroke-width="2"/>`;
+    $("hist").innerHTML = s;
+    $("hist").dataset.geom = JSON.stringify({ H, bottom, top });
+  })();
+  function renderHist() {
+    const keys = uState.keys === "words" ? WORDS.slice(0, 120) : Array.from({ length: 120 }, (_, i) => `user_${i + 1}`);
+    const fn = { toy: toyHash, len: lenHash, first: firstHash }[uState.fn];
+    const counts = new Array(U_BUCKETS).fill(0);
+    keys.forEach((k) => counts[mod(fn(k), U_BUCKETS)]++);
+    const { H, bottom, top } = JSON.parse($("hist").dataset.geom);
+    const maxC = Math.max(...counts, 30);
+    const y = (v) => H - bottom - (H - bottom - top) * (v / maxC);
+    const ideal = keys.length / U_BUCKETS;  // 15
+    const worst = Math.max(...counts);
+    counts.forEach((c, b) => {
+      const bar = $("hist").querySelector(`[data-b="${b}"]`);
+      bar.setAttribute("y", y(c)); bar.setAttribute("height", y(0) - y(c));
+      bar.setAttribute("fill", c > ideal * 2 ? "var(--clash)" : "var(--tag)");
+      const t = $("hist").querySelector(`[data-c="${b}"]`);
+      t.setAttribute("y", y(c) - 6); t.textContent = c;
+    });
+    $("h-ideal").setAttribute("y1", y(ideal)); $("h-ideal").setAttribute("y2", y(ideal));
+    const empty = counts.filter((c) => c === 0).length;
+    $("u-verdict").innerHTML = worst <= ideal * 1.6
+      ? `<span class="verdict good">Nicely spread.</span> The most crowded bucket holds ${worst} keys, close to the perfectly even ${+ideal.toFixed(1)}.`
+      : `<span class="verdict bad">Lumpy!</span> One bucket holds <strong>${worst}</strong> of ${keys.length} keys${empty ? `, and ${empty} bucket${empty === 1 ? " sits" : "s sit"} empty` : ""}. Finding a key there could take ${worst} checks.`;
+  }
+  function wireSeg(id, onPick) {
+    $(id).addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      setSeg(id, b.dataset.v);
+      onPick(b.dataset.v);
+    });
+  }
+  function setSeg(id, v) {
+    $(id).querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.v === String(v))));
+  }
+  wireSeg("u-fn", (v) => { uState.fn = v; renderHist(); });
+  wireSeg("u-keys", (v) => { uState.keys = v; renderHist(); });
+  renderHist();
+
+  // ---------------------------------------------------------
+  // 2. The ring
+  // ---------------------------------------------------------
+  const TOMB = { tomb: true };
+  const st = {
+    N: 8, mode: "chain", probe: "linear", tombs: true, fn: "toy", grow: false, speed: 1,
+    keys: [],         // live keys, in insertion order
+    table: [],        // chain: arrays of keys; open: key | null | TOMB
+    hl: null,         // highlights for the current operation
+    busy: false,
+  };
+  const hashOf = (k) => (st.fn === "len" ? lenHash(k) : toyHash(k));
+  const freshHL = () => ({ checked: new Set(), landed: -1, miss: -1, nodes: new Map(), moved: new Set(), fresh: null });
+
+  function emptyTable() {
+    st.table = st.mode === "chain" ? Array.from({ length: st.N }, () => []) : new Array(st.N).fill(null);
+  }
+
+  // the probe trail for a hash: home bucket, then the rule
+  function* trail(h) {
+    let i = mod(h, st.N), perturb = h;
+    yield i;
+    for (let n = 0; n < st.N * 4; n++) {
+      if (st.probe === "linear") i = (i + 1) % st.N;
+      else { perturb = Math.floor(perturb / 32); i = (5 * i + 1 + perturb) % st.N; }
+      yield i;
+    }
+  }
+
+  // ---- pure table operations (they return the path so it can be animated) ----
+  function planInsert(key) {
+    const h = hashOf(key), home = mod(h, st.N);
+    if (st.mode === "chain") {
+      const chain = st.table[home];
+      const steps = chain.map((k, j) => ({ bucket: home, node: j, key: k }));
+      const dup = chain.indexOf(key);
+      return { h, home, steps: dup >= 0 ? steps.slice(0, dup + 1) : steps, dup: dup >= 0, at: home };
+    }
+    const steps = [];
+    for (const i of trail(h)) {
+      const slot = st.table[i];
+      steps.push({ bucket: i, slot });
+      if (slot === null) return { h, home, steps, at: i };
+      if (slot === key) return { h, home, steps, dup: true, at: i };
+    }
+    return { h, home, steps, full: true };
+  }
+  function planFind(key) {
+    const h = hashOf(key), home = mod(h, st.N);
+    if (st.mode === "chain") {
+      const chain = st.table[home];
+      const j = chain.indexOf(key);
+      const upto = j >= 0 ? j + 1 : chain.length;
+      return { h, home, steps: chain.slice(0, upto).map((k, n) => ({ bucket: home, node: n, key: k })), found: j >= 0, at: home, node: j };
+    }
+    const steps = [];
+    for (const i of trail(h)) {
+      const slot = st.table[i];
+      steps.push({ bucket: i, slot });
+      if (slot === null) return { h, home, steps, found: false, stoppedAt: i };
+      if (slot === key) return { h, home, steps, found: true, at: i };
+    }
+    return { h, home, steps, found: false, gaveUp: true };
+  }
+  function applyInsert(key, plan) {
+    if (st.mode === "chain") st.table[plan.at].push(key);
+    else st.table[plan.at] = key;
+    st.keys.push(key);
+  }
+  function applyDelete(key, plan) {
+    if (st.mode === "chain") st.table[plan.at].splice(plan.node, 1);
+    else st.table[plan.at] = st.tombs ? TOMB : null;
+    st.keys.splice(st.keys.indexOf(key), 1);
+  }
+  // re-insert every live key into a fresh array (tombstones vanish)
+  function rebuild() {
+    const old = st.keys.slice(), dropped = [];
+    st.keys = [];
+    emptyTable();
+    for (const k of old) {
+      const p = planInsert(k);
+      if (p.full) dropped.push(k); else applyInsert(k, p);
+    }
+    return dropped;
+  }
+  // buckets used up: live keys plus tombstones (deleted slots aren't reused until a resize)
+  function filled() {
+    return st.mode === "chain" ? st.keys.length : st.table.filter((s) => s !== null).length;
+  }
+  const usable = (n) => Math.floor((2 * n) / 3);       // CPython's USABLE_FRACTION
+  const tombCount = () => (st.mode === "open" ? st.table.filter((s) => s === TOMB).length : 0);
+
+  // ---- geometry ----
+  const C = 380, R1 = 150, R2 = 212, RMID = 181, RIDX = 232, RNODE = 264, NODE_STEP = 30;
+  const BASE_HALF = 356, CHAIN_CAP = 10;                         // CHAIN_CAP: most nodes drawn per chain
+  const shownIn = (len) => (len > CHAIN_CAP ? CHAIN_CAP - 1 : len);
+  const angleOf = (i) => -90 + (i * 360) / st.N;               // bucket 0 at the top, clockwise
+  const polar = (r, deg) => [C + r * Math.cos((deg * Math.PI) / 180), C + r * Math.sin((deg * Math.PI) / 180)];
+  function sector(i) {
+    const half = 180 / st.N, gap = Math.min(1.4, half * 0.12);
+    const a0 = angleOf(i) - half + gap, a1 = angleOf(i) + half - gap;
+    const large = a1 - a0 > 180 ? 1 : 0;
+    const [x0, y0] = polar(R2, a0), [x1, y1] = polar(R2, a1), [x2, y2] = polar(R1, a1), [x3, y3] = polar(R1, a0);
+    return `M${x0},${y0} A${R2},${R2} 0 ${large} 1 ${x1},${y1} L${x2},${y2} A${R1},${R1} 0 ${large} 0 ${x3},${y3} Z`;
+  }
+  const clip = (s, n) => (s.length > n ? s.slice(0, Math.max(1, n - 1)) + "…" : s);
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+  function renderRing() {
+    const hl = st.hl || freshHL();
+    const N = st.N;
+    let segs = "", items = "";
+    const arcMid = (2 * Math.PI * RMID) / N;
+    const fs = Math.max(9, Math.min(15, arcMid / 6.2));
+    const chars = Math.max(2, Math.floor(arcMid / (fs * 0.62)) - 1);
+    const nodeW = Math.max(30, Math.min(96, (2 * Math.PI * RNODE) / N - 8));
+    const nodeFs = Math.max(9, Math.min(13, nodeW / 6));
+    const nodeChars = Math.max(2, Math.floor(nodeW / (nodeFs * 0.62)) - 1);
+
+    // long chains zoom the ring out so every node stays on screen
+    const longest = st.mode === "chain" ? Math.max(0, ...st.table.map((c) => shownIn(c.length) + (c.length > CHAIN_CAP ? 1 : 0))) : 0;
+    const half = Math.max(BASE_HALF, RNODE + NODE_STEP * (longest - 1) + 24);
+    $("ring").setAttribute("viewBox", `${C - half} ${C - half} ${2 * half} ${2 * half}`);
+    $("ring").parentElement.style.setProperty("--zoom", BASE_HALF / half);
+
+    for (let i = 0; i < N; i++) {
+      const slot = st.table[i];
+      const cls = ["seg-slot"];
+      if (st.mode === "open" && slot === TOMB) cls.push("tomb");
+      else if (st.mode === "open" ? slot !== null : slot.length > 0) cls.push("full");
+      if (hl.checked.has(i)) cls.push("checked");
+      if (hl.landed === i) cls.push("landed");
+      if (hl.miss === i) cls.push("miss");
+      if (hl.moved.has(i)) cls.push("moved");
+      segs += `<path class="${cls.join(" ")}" d="${sector(i)}"><title>bucket ${i}</title></path>`;
+      const [ix, iy] = polar(RIDX, angleOf(i));
+      const hot = hl.landed === i || hl.checked.has(i);
+      if (st.mode === "open" || st.table[i].length === 0 || N <= 16) {
+        items += `<text class="idx ${hot ? "hot" : ""}" x="${ix}" y="${iy + 5}" text-anchor="middle" style="font-size:${N > 20 ? 11 : 14}px">${i}</text>`;
+      } else {
+        // with many buckets, tuck the index inside so chains have room
+        const [jx, jy] = polar(R1 - 12, angleOf(i));
+        items += `<text class="idx ${hot ? "hot" : ""}" x="${jx}" y="${jy + 4}" text-anchor="middle" style="font-size:11px">${i}</text>`;
+      }
+
+      if (st.mode === "open") {
+        const [mx, my] = polar(RMID, angleOf(i));
+        if (slot === TOMB) {
+          const s = Math.min(1, arcMid / 50);
+          items += `<g class="tombstone" transform="translate(${mx},${my}) scale(${s})"><path d="M-12,14 V-4 A12,12 0 0 1 12,-4 V14 Z"/><text y="5" text-anchor="middle" style="font-size:8px">RIP</text></g>`;
+        } else if (slot !== null) {
+          items += `<text class="slot-key" x="${mx}" y="${my + fs * 0.35}" text-anchor="middle" style="font-size:${fs}px">${esc(clip(repr(slot), chars))}</text>`;
+        }
+      } else {
+        const chain = st.table[i];
+        const shown = shownIn(chain.length);
+        const deg = angleOf(i);
+        if (chain.length) {
+          const [lx0, ly0] = polar(R2, deg), [lx1, ly1] = polar(RNODE + NODE_STEP * (shown - 1), deg);
+          items += `<line class="link" x1="${lx0}" y1="${ly0}" x2="${lx1}" y2="${ly1}"/>`;
+        }
+        for (let j = 0; j < shown; j++) {
+          const [nx, ny] = polar(RNODE + NODE_STEP * j, deg);
+          const ncls = ["node"];
+          const mark = hl.nodes.get(`${i}:${j}`);
+          if (mark) ncls.push(mark);
+          if (hl.fresh === `${i}:${j}`) ncls.push("fresh");
+          const rot = mod(deg, 360) < 180 ? deg - 90 : deg + 90;
+          items += `<g class="${ncls.join(" ")}" transform="translate(${nx},${ny}) rotate(${rot})"><rect x="${-nodeW / 2}" y="-11" width="${nodeW}" height="22" rx="11"/><text y="${nodeFs * 0.36}" text-anchor="middle" style="font-size:${nodeFs}px">${esc(clip(repr(chain[j]), nodeChars))}</text></g>`;
+        }
+        if (chain.length > shown) {
+          const [nx, ny] = polar(RNODE + NODE_STEP * shown, deg);
+          const anyHidden = [...hl.nodes.keys()].some((k) => k.startsWith(`${i}:`) && Number(k.split(":")[1]) >= shown);
+          items += `<text class="more" x="${nx}" y="${ny + 4}" text-anchor="middle" style="${anyHidden ? "fill:var(--clash)" : ""}">+${chain.length - shown}</text>`;
+        }
+      }
+    }
+    $("segs").innerHTML = segs;
+    $("items").innerHTML = items;
+    renderStats();
+  }
+
+  function buildRingSkeleton() {
+    $("ring").innerHTML = `
+      <g id="segs"></g>
+      <g id="items"></g>
+      <g id="hops"></g>
+      <circle class="machine" cx="${C}" cy="${C}" r="140"/>
+      <circle class="machine-ring" cx="${C}" cy="${C}" r="131"/>
+      <text class="m-label" id="m-key" x="${C}" y="${C - 60}" text-anchor="middle">hash( key )</text>
+      <text class="m-big" id="m-big" x="${C}" y="${C + 50}" text-anchor="middle"></text>
+      <text class="m-small" id="m-small" x="${C}" y="${C + 76}" text-anchor="middle"></text>
+      <text class="m-eq" id="m-eq" x="${C}" y="${C + 103}" text-anchor="middle"></text>
+      <path id="token-trail" d=""/>
+      <circle id="token" r="11" cx="${C}" cy="${C}" opacity="0"/>`;
+  }
+
+  function renderStats() {
+    const n = st.keys.length;
+    let total = 0, worst = 0;
+    for (const k of st.keys) {
+      const p = planFind(k);
+      const c = Math.max(1, p.steps.length);
+      total += c; worst = Math.max(worst, c);
+    }
+    const avg = n ? total / n : 0;
+    $("stats").innerHTML = `
+      <div class="stat"><span class="label">Keys</span><span class="big">${n}</span><span class="sub">in ${st.N} buckets</span></div>
+      <div class="stat"><span class="label">Load factor</span><span class="big">${st.N ? (n / st.N).toFixed(2) : 0}</span><span class="sub">keys ÷ buckets</span></div>
+      <div class="stat"><span class="label">Avg find</span><span class="big">${avg.toFixed(1)}</span><span class="sub">checks per key</span></div>
+      <div class="stat"><span class="label">Worst find</span><span class="big" style="${worst > 3 ? "color:var(--clash)" : ""}">${worst}</span><span class="sub">checks</span></div>`;
+    const tombs = tombCount();
+    const pct = (x) => Math.min(100, (100 * x) / st.N);
+    $("meter").innerHTML = `
+      <div class="meter-bar">
+        <span class="live" style="width:${pct(n)}%"></span><span class="dead" style="width:${Math.min(pct(tombs), 100 - pct(n))}%"></span>
+        <i class="mark" style="left:${(100 * 2) / 3}%"></i>
+      </div>
+      <div class="meter-cap"><span>${n} key${n === 1 ? "" : "s"}${tombs ? ` + ${tombs} tombstone${tombs === 1 ? "" : "s"}` : ""} in ${st.N} buckets${n > st.N ? ". More keys than buckets! Only chaining can do that." : ""}</span><span class="mark-label">2/3: CPython resizes here</span></div>`;
+  }
+
+  // ---- animation helpers ----
+  const sleep = (ms) => new Promise((r) => (st.speed === 0 || reduceMotion ? r() : setTimeout(r, ms * st.speed)));
+  const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  function placeToken(x, y) { const t = $("token"); t.setAttribute("cx", x); t.setAttribute("cy", y); t.setAttribute("opacity", 1); }
+  function hideToken() { $("token").setAttribute("opacity", 0); $("token-trail").setAttribute("d", ""); }
+
+  function spin(h) {
+    const N = st.N, steps = h;
+    const centerText = (s) => {
+      $("m-big").textContent = Math.floor(s).toLocaleString("en-US");
+      $("m-small").textContent = `lap ${Math.floor(s / N)}`;
+    };
+    if (st.speed === 0 || reduceMotion) {
+      centerText(steps);
+      placeToken(...polar(RMID, angleOf(mod(steps, N))));
+      return Promise.resolve();
+    }
+    const dur = Math.min(4200, Math.max(900, steps * 90)) * st.speed;
+    return new Promise((resolve) => {
+      const t0 = performance.now();
+      const frame = (now) => {
+        const t = Math.min(1, (now - t0) / dur);
+        const s = ease(t) * steps;
+        const deg = -90 + (s * 360) / N;
+        const [x, y] = polar(RMID, deg);
+        placeToken(x, y);
+        // a short comet tail behind the token
+        const tail = Math.min(s, N * 0.6) * (360 / N);
+        if (tail > 1) {
+          const [tx, ty] = polar(RMID, deg - tail);
+          $("token-trail").setAttribute("d", `M${tx},${ty} A${RMID},${RMID} 0 ${tail > 180 ? 1 : 0} 1 ${x},${y}`);
+        }
+        centerText(s);
+        if (t < 1) requestAnimationFrame(frame);
+        else { $("token-trail").setAttribute("d", ""); centerText(steps); resolve(); }
+      };
+      requestAnimationFrame(frame);
+    });
+  }
+
+  function hop(a, b) {
+    const [x0, y0] = polar(RMID, angleOf(a)), [x1, y1] = polar(RMID, angleOf(b));
+    // bow the curve toward the middle; neighbors get a gentler curve
+    const mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+    const pull = a === b ? 0 : 0.45;
+    const cx = mx + (C - mx) * pull, cy = my + (C - my) * pull;
+    const path = document.createElementNS(NS, "path");
+    path.setAttribute("class", "hop");
+    path.setAttribute("d", `M${x0},${y0} Q${cx},${cy} ${x1},${y1}`);
+    $("hops").appendChild(path);
+    if (st.speed === 0 || reduceMotion) { placeToken(x1, y1); return Promise.resolve(); }
+    const len = path.getTotalLength(), dur = 520 * st.speed;
+    return new Promise((resolve) => {
+      const t0 = performance.now();
+      const frame = (now) => {
+        const t = Math.min(1, (now - t0) / dur);
+        const p = path.getPointAtLength(ease(t) * len);
+        placeToken(p.x, p.y);
+        if (t < 1) requestAnimationFrame(frame); else resolve();
+      };
+      requestAnimationFrame(frame);
+    });
+  }
+
+  function nodeToken(bucket, j) { placeToken(...polar(RNODE + NODE_STEP * Math.min(j, CHAIN_CAP - 1), angleOf(bucket))); }
+
+  // ---- log ----
+  function log(html, cls) {
+    const li = document.createElement("li");
+    li.innerHTML = html;
+    if (cls) li.className = cls;
+    $("log").appendChild(li);
+  }
+  function startOp(key, verb) {
+    $("log").innerHTML = "";
+    $("hops").innerHTML = "";
+    st.hl = freshHL();
+    renderRing();
+    $("m-key").textContent = `hash(${clip(repr(key), 12)})`;
+    $("m-eq").textContent = "";
+    log(`${verb} <b>${esc(repr(key))}</b>`);
+  }
+  function landingLine(h) {
+    const N = st.N, laps = Math.floor(h / N), r = mod(h, N);
+    $("m-eq").textContent = `${h} % ${N} = ${r}`;
+    log(`hash = ${h}. That's ${laps} lap${laps === 1 ? "" : "s"} of ${N}, with <b>${r}</b> left over → bucket ${r}`);
+    const bits = Math.log2(N);
+    if (Number.isInteger(bits) && bits > 0) {
+      const b = h.toString(2).padStart(bits, "0");
+      log(`<span class="muted">shortcut: ${h} in binary is ${b.slice(0, -bits)}<b>${b.slice(-bits)}</b>. The last ${bits} bits are ${r} too. CPython uses <code>hash &amp; ${N - 1}</code>, which is faster than %.</span>`);
+    }
+  }
+
+  // walk an animated path. Returns nothing; marks highlights as it goes.
+  async function walk(plan, key) {
+    const hl = st.hl;
+    let prev = plan.home;
+    for (let n = 0; n < plan.steps.length; n++) {
+      const s = plan.steps[n];
+      if (st.mode === "chain") {
+        nodeToken(s.bucket, s.node);
+        const match = s.key === key;
+        hl.nodes.set(`${s.bucket}:${s.node}`, match ? "landed" : "checked");
+        renderRing();
+        log(`check node ${s.node + 1} of the chain: ${esc(repr(s.key))}${match ? " ✓" : " ✗"}`);
+        await sleep(match ? 250 : 520);
+      } else {
+        if (n > 0) await hop(prev, s.bucket);
+        prev = s.bucket;
+        const slot = s.slot;
+        if (slot === null) { renderRing(); break; }
+        if (slot === key) break;
+        hl.checked.add(s.bucket);
+        renderRing();
+        if (slot === TOMB) log(`bucket ${s.bucket}: a tombstone. Something used to be here, so keep going`);
+        else log(`bucket ${s.bucket}: taken by ${esc(repr(slot))} → probe`);
+        await sleep(380);
+      }
+    }
+  }
+
+  async function lock(fn) {
+    if (st.busy) return;
+    st.busy = true;
+    document.querySelectorAll("#go, .actions .btn, #experiments .exp, .mission-steps button").forEach((b) => (b.disabled = true));
+    try { await fn(); } finally {
+      st.busy = false;
+      document.querySelectorAll("#go, .actions .btn, #experiments .exp, .mission-steps button").forEach((b) => (b.disabled = false));
+    }
+  }
+
+  function readKey() {
+    const raw = $("key").value.trim();
+    if (!raw) { $("key").focus(); return null; }
+    return parseKey(raw);
+  }
+
+  async function doInsert(key) {
+    startOp(key, "Insert");
+    let plan = planInsert(key);
+    if (!plan.dup && st.grow && filled() >= usable(st.N)) {
+      await resize();
+      plan = planInsert(key);
+    }
+    await spin(plan.h);
+    landingLine(plan.h);
+    await sleep(350);
+    await walk(plan, key);
+    const hl = st.hl;
+    if (plan.dup) {
+      hl.landed = plan.at;
+      if (st.mode === "chain") hl.nodes.set(`${plan.at}:${plan.steps.length - 1}`, "landed");
+      renderRing();
+      log(`${esc(repr(key))} is already in the dict${st.mode === "chain" ? ` (node ${plan.steps.length} of bucket ${plan.at}'s chain)` : ` (bucket ${plan.at})`}. A real dict would just update its value.`, "good");
+      return;
+    }
+    if (plan.full) {
+      renderRing();
+      log(`No empty bucket anywhere on this trail. The dict is full! (Real dicts grow long before this.)`, "bad");
+      return;
+    }
+    applyInsert(key, plan);
+    hl.landed = plan.at;
+    if (st.mode === "chain") {
+      const j = st.table[plan.at].length - 1;
+      hl.nodes.set(`${plan.at}:${j}`, "landed");
+      hl.fresh = `${plan.at}:${j}`;
+      nodeToken(plan.at, j);
+      log(j === 0 ? `bucket ${plan.at} is empty → stored` : `added to the end of bucket ${plan.at}'s chain (node ${j + 1})`, "good");
+    } else {
+      const probes = plan.steps.length - 1;
+      log(`bucket ${plan.at} is empty → stored${probes ? ` (${probes} probe${probes === 1 ? "" : "s"} away from home)` : ""}`, "good");
+      if (st.probe === "linear" && probes >= 2) log(`Those full neighbors in a row are a <b>cluster</b>. Clusters keep growing with +1 probing.`);
+    }
+    renderRing();
+  }
+
+  // CPython: an insert that finds no usable bucket left triggers a resize to
+  // the smallest power of 2 that's at least 3 × the live keys. That can grow, keep the size, or shrink.
+  async function resize() {
+    const live = st.keys.length, tombs = tombCount();
+    let size = 8;
+    while (size < live * 3) size *= 2;
+    log(`No unused bucket left: ${usable(st.N)} of ${st.N} (2/3) are used up${tombs ? `, counting ${tombs} tombstone${tombs === 1 ? "" : "s"}` : ""}. Resize first!`);
+    log(`new size: 3 × ${live} live key${live === 1 ? "" : "s"} = ${live * 3} → next power of 2 is <b>${size}</b>`);
+    if (size > 32) { log(`…but this demo's ring stops at 32 buckets, so we'll squeeze in.`, "bad"); return; }
+    await sleep(900);
+    const before = new Map(st.keys.map((k) => [k, locate(k)]));
+    const old = st.N;
+    st.N = size;
+    $("size").value = size; $("size-out").textContent = size;
+    rebuild();
+    st.hl = freshHL();
+    $("hops").innerHTML = "";
+    hideToken();
+    $("m-big").textContent = size; $("m-small").textContent = "buckets now"; $("m-eq").textContent = "";
+    let moved = 0;
+    for (const k of st.keys) { const b = locate(k); if (b !== before.get(k)) { moved++; st.hl.moved.add(b); } }
+    renderRing();
+    const verb = size > old ? "Grow!" : size < old ? "Shrink!" : "Same size, but rebuilt.";
+    log(`${verb} ${old} → ${size} buckets. Every key is re-hashed into the new array: ${moved} of ${st.keys.length} moved${tombs ? `, and all ${tombs} tombstones are gone` : ""}.`, "good");
+    await sleep(900);
+  }
+  function locate(k) {
+    if (st.mode === "chain") return mod(hashOf(k), st.N);
+    return st.table.indexOf(k);
+  }
+
+  async function doFind(key, verb = "Find") {
+    startOp(key, verb);
+    const plan = planFind(key);
+    await spin(plan.h);
+    landingLine(plan.h);
+    await sleep(350);
+    await walk(plan, key);
+    const hl = st.hl, checks = Math.max(1, plan.steps.length);
+    if (plan.found) {
+      hl.landed = plan.at;
+      renderRing();
+      log(`found in bucket ${plan.at} after ${checks} check${checks === 1 ? "" : "s"}`, "good");
+      return plan;
+    }
+    if (st.mode === "chain") {
+      hl.miss = plan.home; renderRing();
+      log(`end of the chain → not in the dict (${checks} check${checks === 1 ? "" : "s"})`, "bad");
+    } else if (plan.gaveUp) {
+      renderRing();
+      log(`checked every bucket the trail can reach → not in the dict`, "bad");
+    } else {
+      hl.miss = plan.stoppedAt; renderRing();
+      log(`bucket ${plan.stoppedAt} is empty → stop. Not in the dict.`, "bad");
+      if (st.keys.includes(key)) {
+        log(`…but ${esc(repr(key))} IS in the dict! An empty bucket broke the trail that leads to it.`, "bad");
+      }
+    }
+    return plan;
+  }
+
+  async function doDelete(key) {
+    const plan = await doFind(key, "Delete");
+    if (!plan.found) return;
+    applyDelete(key, plan);
+    st.hl.landed = -1;
+    if (st.mode === "open") st.hl.miss = -1;
+    renderRing();
+    if (st.mode === "chain") log(`unlinked it from the chain`, "good");
+    else if (st.tombs) log(`left a <b>tombstone</b> in bucket ${plan.at}, so trails through it still work`, "good");
+    else log(`emptied bucket ${plan.at}. (Uh oh: is anyone's trail running through here?)`, "bad");
+  }
+
+  function collidingKey(target) {
+    const pool = WORDS.concat(WORDS.map((w) => w + "s"), WORDS.map((w) => w + "_2"));
+    return pool.find((w) => !st.keys.includes(w) && mod(hashOf(w), st.N) === target) || null;
+  }
+
+  // ---- wiring ----
+  $("hash-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const k = readKey(); if (k === null) return;
+    lock(() => doInsert(k));
+  });
+  $("find").addEventListener("click", () => { const k = readKey(); if (k !== null) lock(() => doFind(k)); });
+  $("del").addEventListener("click", () => { const k = readKey(); if (k !== null) lock(() => doDelete(k)); });
+  $("random").addEventListener("click", () => {
+    const options = WORDS.filter((w) => !st.keys.includes(w));
+    const k = options[Math.floor(Math.random() * options.length)];
+    $("key").value = k;
+    lock(() => doInsert(k));
+  });
+  $("collide").addEventListener("click", () => {
+    const last = st.keys[st.keys.length - 1];
+    if (last === undefined) { $("log").innerHTML = ""; log("Insert a key first, then I'll find one that lands in the same bucket."); return; }
+    const home = mod(hashOf(last), st.N);
+    const w = collidingKey(home);
+    $("log").innerHTML = "";
+    if (!w) { log(`Couldn't find a word for bucket ${home}. Try another size.`); return; }
+    $("key").value = w;
+    log(`${esc(repr(w))} also hashes to bucket <b>${home}</b>, just like ${esc(repr(last))}. Hit <b>Hash it!</b>`);
+  });
+  $("clear").addEventListener("click", () => { if (!st.busy) resetTable(); });
+
+  function resetTable(msg) {
+    st.keys = [];
+    emptyTable();
+    st.hl = freshHL();
+    $("hops").innerHTML = ""; hideToken();
+    $("m-big").textContent = ""; $("m-small").textContent = ""; $("m-eq").textContent = ""; $("m-key").textContent = "hash( key )";
+    $("log").innerHTML = "";
+    if (msg) log(msg);
+    renderRing();
+  }
+  function settingsChanged(note) {
+    const dropped = rebuild();
+    st.hl = freshHL();
+    $("hops").innerHTML = ""; hideToken();
+    $("log").innerHTML = "";
+    if (st.keys.length || dropped.length) log(note || "Rebuilt the table with the same keys.");
+    if (dropped.length) log(`${dropped.map(repr).join(", ")} didn't fit and fell out.`, "bad");
+    renderRing();
+  }
+
+  $("size").addEventListener("input", () => {
+    if (st.busy) { $("size").value = st.N; return; }
+    st.N = Number($("size").value);
+    $("size-out").textContent = st.N;
+    settingsChanged(`Same keys, ${st.N} buckets. Same hashes, new remainders, so keys moved.`);
+  });
+  const guarded = (fn) => (v) => { if (!st.busy) fn(v); };
+  function setMode(v) {
+    st.mode = v; setSeg("mode", v);
+    $("probe-setting").hidden = $("tomb-setting").hidden = v !== "open";
+  }
+  wireSeg("mode", guarded((v) => { setMode(v); settingsChanged(v === "chain" ? "Same keys, now chained." : "Same keys, now open addressing."); }));
+  wireSeg("probe", guarded((v) => { st.probe = v; settingsChanged("Same keys, new probing rule."); }));
+  wireSeg("tombs", (v) => { st.tombs = v === "on"; });
+  wireSeg("fn", guarded((v) => { st.fn = v; settingsChanged(v === "len" ? "Every key re-hashed with len(key). Uh oh." : "Every key re-hashed with the real-ish hash."); }));
+  wireSeg("grow", (v) => { st.grow = v === "on"; });
+  wireSeg("speed", (v) => { st.speed = Number(v); });
+  // keep the button groups in sync if someone clicks while an animation runs
+  ["mode", "probe", "fn"].forEach((id) => $(id).addEventListener("click", () => {
+    if (st.busy) setSeg(id, { mode: st.mode, probe: st.probe, fn: st.fn }[id]);
+  }));
+
+  // ---- experiments ----
+  function configure({ N = 8, mode = "chain", probe = "linear", tombs = true, fn = "toy", grow = false }) {
+    st.N = N; $("size").value = N; $("size-out").textContent = N;
+    setMode(mode);
+    st.probe = probe; setSeg("probe", probe);
+    st.tombs = tombs; setSeg("tombs", tombs ? "on" : "off");
+    st.fn = fn; setSeg("fn", fn);
+    st.grow = grow; setSeg("grow", grow ? "on" : "off");
+  }
+  function quietInsert(k) { const p = planInsert(k); if (!p.full && !p.dup) applyInsert(k, p); }
+  function mission(html, steps = []) {
+    $("mission").innerHTML = `<div>${html}</div>` + (steps.length ? `<div class="mission-steps">${steps.map((s, i) => `<button type="button" data-i="${i}">${s.label}</button>`).join("")}</div>` : "");
+    $("mission").querySelectorAll(".mission-steps button").forEach((btn) => btn.addEventListener("click", () => {
+      if (st.busy) return;
+      const s = steps[Number(btn.dataset.i)];
+      if (!s.repeat) btn.classList.add("done");
+      s.run();
+    }));
+  }
+
+  // a few keys the experiments reuse
+  function collidingPair() {
+    const a = "greeting";
+    quietInsert(a);
+    return [a, collidingKey(mod(hashOf(a), st.N))];
+  }
+  const step = (label, key, op, opts = {}) => ({ label, repeat: opts.repeat, run: () => {
+    if (key !== null) $("key").value = typeof key === "function" ? key() : key;
+    return op();
+  } });
+
+  const EXPERIMENTS = {
+    "65": () => {
+      configure({ N: 8 });
+      resetTable();
+      $("key").value = "65";
+      mission(`<strong>65 in 8 buckets.</strong> Watch the lap counter: 8 laps of 8 is 64, plus 1 more step lands in bucket 1. Then try the same 65 in a different size.`, [
+        step("① Hash 65 into 8 buckets", "65", () => { configure({ N: 8 }); resetTable(); return lock(() => doInsert(65)); }),
+        step("② Hash 65 into 12 buckets", "65", () => { configure({ N: 12 }); resetTable(); return lock(() => doInsert(65)); }),
+      ]);
+    },
+    collide: () => {
+      const setup = (mode) => { configure({ N: 8, mode }); resetTable(); return collidingPair()[1]; };
+      const w = setup("chain");
+      renderRing();
+      $("key").value = w;
+      mission(`<strong>${repr(w)}</strong> wants bucket ${mod(hashOf(w), st.N)}, the same bucket as 'greeting'. Where does it go?`, [
+        step(`① Hash ${repr(w)} with separate chaining`, w, () => { setup("chain"); return lock(() => doInsert(w)); }),
+        step(`② Hash ${repr(w)} with open addressing`, w, () => { setup("open"); return lock(() => doInsert(w)); }),
+      ]);
+    },
+    terrible: () => {
+      configure({ N: 8, mode: "chain", fn: "len" });
+      resetTable();
+      const sixes = WORDS.filter((w) => w.length === 6).slice(0, 7);
+      const last = sixes.pop();
+      sixes.forEach(quietInsert);
+      renderRing();
+      $("key").value = last;
+      mission(`The hash here is <strong>len(key)</strong>, so every 6-letter word lands in bucket 6. Six are already chained there. Finding a key means checking the nodes one by one: a linear search, O(n).`, [
+        step(`① Hash ${repr(last)}`, last, () => lock(() => doInsert(last))),
+        step(`② Find ${repr(last)}`, last, () => lock(() => doFind(last))),
+        step(`③ Switch to the real-ish hash`, null, () => {
+          st.fn = "toy"; setSeg("fn", "toy");
+          settingsChanged("Every key re-hashed with the real-ish hash. The chain spreads out.");
+        }),
+      ]);
+    },
+    tomb: () => {
+      const setup = (tombs) => { configure({ N: 8, mode: "open", probe: "linear", tombs }); resetTable(); const pair = collidingPair(); quietInsert(pair[1]); renderRing(); return pair; };
+      const [a, b] = setup(false);
+      $("key").value = a;
+      const home = mod(hashOf(a), st.N);
+      const trail = `${repr(b)} wanted bucket ${home}, but 'greeting' was already there, so it probed one bucket over. To find ${repr(b)} later, we walk that same trail: start at bucket ${home}, then step over.`;
+      const withTombs = () => {
+        setup(true);
+        mission(`Same two keys, but this time deleting leaves a <strong>tombstone</strong>.`, [
+          step(`① Delete 'greeting'`, a, () => lock(() => doDelete(a))),
+          step(`② Find ${repr(b)}`, b, () => lock(() => doFind(b))),
+        ]);
+      };
+      mission(`${trail} What happens if deleting 'greeting' leaves <strong>an empty bucket</strong>?`, [
+        step(`① Delete 'greeting'`, a, () => lock(() => doDelete(a))),
+        step(`② Find ${repr(b)}`, b, () => lock(() => doFind(b))),
+        step(`③ Start over, with tombstones`, null, withTombs),
+      ]);
+    },
+    grow: () => {
+      configure({ N: 8, mode: "open", probe: "python", grow: true });
+      resetTable();
+      $("key").value = "";
+      mission(`Add keys and watch the <strong>load factor</strong> meter. When an insert finds 2/3 of the buckets used up, CPython picks a new size (the next power of 2 that's at least 3 × the keys) and re-hashes everything. Delete a key or two before it grows, and watch the tombstones vanish.`, [
+        step(`Add a random key`, null, () => $("random").click(), { repeat: true }),
+        step(`Delete the newest key`, () => st.keys[st.keys.length - 1] ?? "", () => {
+          const k = st.keys[st.keys.length - 1];
+          return k === undefined ? null : lock(() => doDelete(k));
+        }, { repeat: true }),
+      ]);
+    },
+  };
+  EXPERIMENTS.shrink = () => {
+    const setup = (keep) => {
+      configure({ N: 32, mode: "open", probe: "python", tombs: true, grow: true });
+      resetTable();
+      const keys = WORDS.slice(7, 7 + usable(32));
+      keys.forEach(quietInsert);
+      renderRing();
+      $("key").value = "";
+      const doomed = keys.slice(keep);
+      mission(`This 32-bucket dict holds ${keys.length} keys: 2/3 full, as full as CPython allows. Delete all but ${keep}, then insert one more. Does it shrink?`, [
+        step(`① Delete ${doomed.length} keys`, null, () => {
+          doomed.filter((k) => st.keys.includes(k)).forEach((k) => applyDelete(k, planFind(k)));
+          st.hl = freshHL(); $("log").innerHTML = ""; renderRing();
+          log(`Deleted ${doomed.length} keys. Still ${st.N} buckets: deleting never shrinks a dict. Their slots are tombstones now, still used up.`);
+        }),
+        step(`② Insert one key`, "greeting", () => lock(() => doInsert("greeting"))),
+        step(keep === 5 ? `③ Start over, but keep 8` : `③ Start over, but keep 5`, null, () => setup(keep === 5 ? 8 : 5)),
+      ]);
+    };
+    setup(5);
+  };
+  $("experiments").addEventListener("click", (e) => {
+    const b = e.target.closest(".exp"); if (!b || st.busy) return;
+    EXPERIMENTS[b.dataset.exp]();
+    $("ring").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
+  });
+
+  // ---------------------------------------------------------
+  // 3. Static side-by-side pictures (hand-placed to match the caption)
+  // ---------------------------------------------------------
+  function drawVersus() {
+    const keys = ["greeting", "departing", "requesting", "thanking", "apologizing"];
+    const homes = { greeting: 0, departing: 4, requesting: 5, thanking: 0, apologizing: 0 };
+    const cell = 44, x0 = 24, y0 = 40;
+    const box = (i, fill, stroke, dash = "") => `<rect x="${x0 + i * cell}" y="${y0}" width="${cell - 4}" height="40" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="1.5" ${dash}/>`;
+    const idx = (i) => `<text x="${x0 + i * cell + (cell - 4) / 2}" y="${y0 - 8}" text-anchor="middle" font-size="12" fill="var(--muted)">${i}</text>`;
+    const label = (x, y, t, size = 10) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" font-weight="700" fill="var(--tag-ink)">${t}</text>`;
+    const short = { greeting: "greet", departing: "depart", requesting: "request", thanking: "thank", apologizing: "apolog" };
+
+    // chaining
+    let s = "";
+    for (let i = 0; i < 8; i++) {
+      const used = Object.entries(homes).some(([k, h]) => h === i && k !== "thanking" && k !== "apologizing");
+      s += idx(i) + box(i, used ? "var(--tag)" : "var(--slot)", used ? "var(--tag-edge)" : "var(--line)");
+    }
+    keys.slice(0, 3).forEach((k) => { s += label(x0 + homes[k] * cell + 20, y0 + 24, short[k]); });
+    const cx = x0 + 20;
+    s += `<line x1="${cx}" y1="${y0 + 40}" x2="${cx}" y2="${y0 + 128}" stroke="var(--tag-edge)" stroke-width="2"/>`;
+    ["thanking", "apologizing"].forEach((k, j) => {
+      const y = y0 + 58 + j * 44;
+      s += `<rect x="${cx - 32}" y="${y}" width="64" height="26" rx="13" fill="var(--tag)" stroke="var(--clash)" stroke-width="2"/>`;
+      s += label(cx, y + 17, short[k]);
+    });
+    s += `<text x="${cx + 44}" y="${y0 + 92}" font-size="12" fill="var(--muted)">← a linked list grows down</text>`;
+    s += `<text x="${cx + 44}" y="${y0 + 108}" font-size="12" fill="var(--muted)">from bucket 0</text>`;
+    $("vs-chain").innerHTML = s;
+
+    // open addressing, linear probing
+    const placed = { 0: "greeting", 4: "departing", 5: "requesting", 1: "thanking", 2: "apologizing" };
+    s = "";
+    for (let i = 0; i < 8; i++) {
+      const k = placed[i];
+      const probed = k === "thanking" || k === "apologizing";
+      s += idx(i) + box(i, k ? "var(--tag)" : "var(--slot)", probed ? "var(--clash)" : k ? "var(--tag-edge)" : "var(--line)", probed ? 'stroke-dasharray="0"' : "");
+      if (k) s += label(x0 + i * cell + 20, y0 + 24, short[k]);
+    }
+    const arc = (a, b, lift, color) => {
+      const xa = x0 + a * cell + 20, xb = x0 + b * cell + 20, yb = y0 + 44;
+      return `<path d="M${xa},${yb} Q${(xa + xb) / 2},${yb + lift} ${xb},${yb}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ah)"/>`;
+    };
+    s = `<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--clash)"/></marker></defs>` + s;
+    s += arc(0, 1, 34, "var(--clash)");
+    s += arc(0, 1, 70, "var(--clash)") + arc(1, 2, 70, "var(--clash)");
+    s += `<text x="${x0}" y="${y0 + 120}" font-size="12" fill="var(--muted)">'thanking': 0 taken → 1 ✓</text>`;
+    s += `<text x="${x0}" y="${y0 + 140}" font-size="12" fill="var(--muted)">'apologizing': 0 taken → 1 taken → 2 ✓</text>`;
+    s += `<text x="${x0}" y="${y0 + 158}" font-size="12" fill="var(--muted)">(using +1 as the probing rule)</text>`;
+    $("vs-open").innerHTML = s;
+  }
+  drawVersus();
+
+  // ---------------------------------------------------------
+  // 4. Load factor explorer
+  // ---------------------------------------------------------
+  const lf = { max: 0.6667, mult: 2, k: 300, MAXK: 1000 };
+  function simulate() {
+    // start at 8 buckets; when an insert would pass the max load factor, resize first
+    const sizes = new Array(lf.MAXK + 1), resizes = [];
+    let N = 8;
+    sizes[0] = N;
+    for (let k = 1; k <= lf.MAXK; k++) {
+      while (k > Math.floor(lf.max * N)) { N *= lf.mult; resizes.push({ k, N }); }
+      sizes[k] = N;
+    }
+    return { sizes, resizes };
+  }
+  // average checks with well-scattered probing (like Python's) at load factor a
+  const hitChecks = (a) => (1 / a) * Math.log(1 / (1 - a));
+  const missChecks = (a) => 1 / (1 - a);
+
+  function renderLF() {
+    const { sizes, resizes } = simulate();
+    const W = 760, H = 290, left = 74, right = 14, top = 30, bottom = 40;
+    const maxN = sizes[lf.MAXK];
+    const yMaxExp = Math.log2(maxN);
+    const x = (k) => left + ((W - left - right) * k) / lf.MAXK;
+    const y = (v) => H - bottom - ((H - top - bottom) * (Math.log2(Math.max(v, 8)) - 3)) / (yMaxExp - 3);
+    let svg = "";
+    for (let e = 3; e <= yMaxExp; e++) {
+      svg += `<line x1="${left}" x2="${W - right}" y1="${y(2 ** e)}" y2="${y(2 ** e)}" stroke="var(--line)"/>`;
+      svg += `<text x="${left - 8}" y="${y(2 ** e) + 4}" text-anchor="end">${2 ** e}</text>`;
+    }
+    for (let t = 0; t <= lf.MAXK; t += 200) svg += `<text x="${x(t)}" y="${H - bottom + 18}" text-anchor="middle">${t}</text>`;
+    svg += `<text x="${(left + W) / 2}" y="${H - 4}" text-anchor="middle">keys inserted</text>`;
+    svg += `<text transform="translate(16 ${(top + H - bottom) / 2}) rotate(-90)" text-anchor="middle">buckets (log scale)</text>`;
+
+    // buckets as steps, keys as a curve; the gap between them is empty space
+    let stepPath = `M${x(0)},${y(sizes[0])}`;
+    for (let k = 1; k <= lf.MAXK; k++) if (sizes[k] !== sizes[k - 1]) stepPath += ` H${x(k)} V${y(sizes[k])}`;
+    stepPath += ` H${x(lf.MAXK)}`;
+    let keyPath = "";
+    for (let k = 8; k <= lf.MAXK; k += 4) keyPath += `${keyPath ? "L" : "M"}${x(k)},${y(k)} `;
+    svg += `<path d="${stepPath} L${x(lf.MAXK)},${y(lf.MAXK)} ${keyPath.trim().split(" ").reverse().map((p) => p.replace(/^[ML]/, "L")).join(" ")} L${x(8)},${y(8)} Z" fill="var(--slot)" stroke="none"/>`;
+    svg += `<path d="${keyPath}" fill="none" stroke="var(--tag-edge)" stroke-width="2.5"/>`;
+    svg += `<path d="${stepPath}" fill="none" stroke="var(--accent)" stroke-width="3"/>`;
+    resizes.forEach((r) => { svg += `<circle cx="${x(r.k)}" cy="${y(r.N)}" r="4" fill="var(--accent)"/>`; });
+    svg += `<text x="${W - right}" y="${y(maxN) - 8}" text-anchor="end" style="fill:var(--accent);font-weight:700">buckets</text>`;
+    svg += `<text x="${W - right}" y="${y(lf.MAXK) + 18}" text-anchor="end" style="fill:var(--tag-edge);font-weight:700">keys</text>`;
+
+    // the scrubber
+    const k = lf.k, N = sizes[k];
+    svg += `<line x1="${x(k)}" x2="${x(k)}" y1="${top}" y2="${H - bottom}" stroke="var(--ink)" stroke-dasharray="3 4"/>`;
+    svg += `<circle cx="${x(k)}" cy="${y(N)}" r="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="3"/>`;
+    $("lf-chart").innerHTML = svg;
+
+    $("lf-k-out").textContent = `${k} keys`;
+    const before = resizes.filter((r) => r.k <= k).length;
+    $("lf-stats").innerHTML = `
+      <div class="stat"><span class="label">Buckets now</span><span class="big">${N.toLocaleString("en-US")}</span><span class="sub">${(N - k).toLocaleString("en-US")} empty</span></div>
+      <div class="stat"><span class="label">Load factor now</span><span class="big">${(k / N).toFixed(2)}</span><span class="sub">${k} ÷ ${N}</span></div>
+      <div class="stat"><span class="label">Resizes so far</span><span class="big">${before}</span><span class="sub">each copies every key</span></div>
+      <div class="stat"><span class="label">Find, when fullest</span><span class="big">≈${hitChecks(lf.max).toFixed(1)}</span><span class="sub">checks for a key that's there</span></div>
+      <div class="stat"><span class="label">Miss, when fullest</span><span class="big" style="${missChecks(lf.max) > 5 ? "color:var(--clash)" : ""}">≈${missChecks(lf.max).toFixed(0)}</span><span class="sub">checks to learn it's not there</span></div>`;
+    const firsts = resizes.slice(0, 6).map((r) => r.k).join(", ");
+    $("lf-note").innerHTML = lf.max === 0.6667 && lf.mult === 2
+      ? `These rules resize when the dict reaches ${firsts}… keys. That's exactly what the notebook's <code>sys.getsizeof</code> loop prints for real Python.`
+      : `These rules resize at ${firsts}… keys. CPython's (2/3, ×2) resize at 6, 11, 22, 43, 86, 171…`;
+  }
+  wireSeg("lf-max", (v) => { lf.max = Number(v); renderLF(); });
+  wireSeg("lf-mult", (v) => { lf.mult = Number(v); renderLF(); });
+  $("lf-k").addEventListener("input", () => { lf.k = Number($("lf-k").value); renderLF(); });
+  renderLF();
+  $("try-shrink").addEventListener("click", () => {
+    if (st.busy) return;
+    EXPERIMENTS.shrink();
+    $("ring-h").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  });
+
+  // ---- go ----
+  buildRingSkeleton();
+  emptyTable();
+  renderRing();
+})();
+</script>
+</body>
+</html>
