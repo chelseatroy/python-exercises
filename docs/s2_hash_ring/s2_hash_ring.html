@@ -368,6 +368,7 @@
       <button class="exp" type="button" data-exp="collide"><b>Collision!</b><span>Two keys want the same bucket</span></button>
       <button class="exp" type="button" data-exp="terrible"><b>A terrible hash</b><span>Everything in one bucket</span></button>
       <button class="exp" type="button" data-exp="tomb"><b>The broken trail</b><span>Why deleting needs tombstones</span></button>
+      <button class="exp" type="button" data-exp="reuse"><b>Reusing a tombstone</b><span>Search the whole trail first</span></button>
       <button class="exp" type="button" data-exp="grow"><b>Watch it grow</b><span>2/3 full → a bigger array</span></button>
       <button class="exp" type="button" data-exp="shrink"><b>Shrink?</b><span>Delete most keys, then insert</span></button>
     </div>
@@ -514,6 +515,7 @@ while bucket i is taken:             <span class="cmt"># collision: try somewher
       <div class="body">
         <p>When the array is <strong>resized</strong>. Every key gets re-hashed into a brand-new array, so every trail is rebuilt from scratch, and the tombstones are no longer needed. Until then they take up space: we spend space to keep lookups correct.</p>
         <p class="muted">Same hash, new size, so a different remainder. That's why keys land in different buckets after a resize.</p>
+        <p class="muted">A new key <em>can</em> move into a tombstone's bucket, but only after the insert searches the whole trail to make sure the key isn't already further along. (Try "Reusing a tombstone" on the ring.) Even then, the deleted key's room still counts toward the 2/3 limit until the next resize.</p>
         <p class="muted">Separate chaining doesn't need tombstones: unlink the node and stitch the list back together. (Linked lists are made for that.)</p>
         <p class="muted">"Tombstone" is a general programming word: <em>mark it deleted instead of deleting it</em>, so everything else keeps working. Databases like Cassandra (built at Facebook) do it, and your homework's transactions will need one too.</p>
       </div>
@@ -554,7 +556,7 @@ while bucket i is taken:             <span class="cmt"># collision: try somewher
       <h3>And shrinking?</h3>
       <div class="shrink-facts">
         <div class="fact"><b>Deleting never shrinks a dict.</b><span>Delete 1,000 keys one by one: same size in memory.</span></div>
-        <div class="fact"><b>Deleted slots stay used up.</b><span>They're tombstones until the next resize.</span></div>
+        <div class="fact"><b>Deleted keys stay used up.</b><span>A new key can reuse a tombstone's bucket, but the room isn't given back until the next resize.</span></div>
         <div class="fact"><b>Only an insert can resize.</b><span>When it finds 2/3 of the buckets used up.</span></div>
         <div class="fact"><b>New size: power of 2 ≥ 3 × live keys.</b><span>Under ~1/6 full: it shrinks. Otherwise it stays the same or grows.</span></div>
         <div class="fact"><b><code>d.clear()</code> shrinks right away.</b><span>Back to an empty dict.</span></div>
@@ -691,6 +693,7 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
     N: 8, mode: "chain", probe: "linear", tombs: true, fn: "toy", grow: false, speed: 1,
     keys: [],         // live keys, in insertion order
     table: [],        // chain: arrays of keys; open: key | null | TOMB
+    usedUp: 0,        // open: inserts since the last rebuild. Deletes never give room back (CPython's dk_nentries)
     hl: null,         // highlights for the current operation
     busy: false,
   };
@@ -698,6 +701,7 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
   const freshHL = () => ({ checked: new Set(), landed: -1, miss: -1, nodes: new Map(), moved: new Set(), fresh: null });
 
   function emptyTable() {
+    st.usedUp = 0;
     st.table = st.mode === "chain" ? Array.from({ length: st.N }, () => []) : new Array(st.N).fill(null);
   }
 
@@ -721,13 +725,18 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
       const dup = chain.indexOf(key);
       return { h, home, steps: dup >= 0 ? steps.slice(0, dup + 1) : steps, dup: dup >= 0, at: home };
     }
+    // CPython searches the whole trail first (the key might be further along),
+    // then stores a new key in the first tombstone it passed, if there was one
     const steps = [];
+    let firstTomb = -1;
     for (const i of trail(h)) {
       const slot = st.table[i];
       steps.push({ bucket: i, slot });
-      if (slot === null) return { h, home, steps, at: i };
-      if (slot === key) return { h, home, steps, dup: true, at: i };
+      if (slot === TOMB && firstTomb < 0) firstTomb = i;
+      if (slot === null) return { h, home, steps, firstTomb, at: firstTomb >= 0 ? firstTomb : i, reused: firstTomb >= 0, emptyAt: i };
+      if (slot === key) return { h, home, steps, firstTomb, dup: true, at: i };
     }
+    if (firstTomb >= 0) return { h, home, steps, firstTomb, at: firstTomb, reused: true, emptyAt: -1 };
     return { h, home, steps, full: true };
   }
   function planFind(key) {
@@ -749,7 +758,7 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
   }
   function applyInsert(key, plan) {
     if (st.mode === "chain") st.table[plan.at].push(key);
-    else st.table[plan.at] = key;
+    else { st.table[plan.at] = key; st.usedUp++; }
     st.keys.push(key);
   }
   function applyDelete(key, plan) {
@@ -768,10 +777,13 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
     }
     return dropped;
   }
-  // buckets used up: live keys plus tombstones (deleted slots aren't reused until a resize)
+  // room used up toward the 2/3 limit. With open addressing that's every insert since the
+  // last rebuild: a delete never gives its room back, even after a new key reuses its bucket
   function filled() {
-    return st.mode === "chain" ? st.keys.length : st.table.filter((s) => s !== null).length;
+    return st.mode === "chain" ? st.keys.length : st.usedUp;
   }
+  const deadCount = () => (st.mode === "open" ? Math.max(0, st.usedUp - st.keys.length) : 0);
+  const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
   const usable = (n) => Math.floor((2 * n) / 3);       // CPython's USABLE_FRACTION
   const tombCount = () => (st.mode === "open" ? st.table.filter((s) => s === TOMB).length : 0);
 
@@ -894,14 +906,14 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
       <div class="stat"><span class="label">Load factor</span><span class="big">${st.N ? (n / st.N).toFixed(2) : 0}</span><span class="sub">keys ÷ buckets</span></div>
       <div class="stat"><span class="label">Avg find</span><span class="big">${avg.toFixed(1)}</span><span class="sub">checks per key</span></div>
       <div class="stat"><span class="label">Worst find</span><span class="big" style="${worst > 3 ? "color:var(--clash)" : ""}">${worst}</span><span class="sub">checks</span></div>`;
-    const tombs = tombCount();
+    const dead = deadCount();
     const pct = (x) => Math.min(100, (100 * x) / st.N);
     $("meter").innerHTML = `
       <div class="meter-bar">
-        <span class="live" style="width:${pct(n)}%"></span><span class="dead" style="width:${Math.min(pct(tombs), 100 - pct(n))}%"></span>
+        <span class="live" style="width:${pct(n)}%"></span><span class="dead" style="width:${Math.min(pct(dead), 100 - pct(n))}%"></span>
         <i class="mark" style="left:${(100 * 2) / 3}%"></i>
       </div>
-      <div class="meter-cap"><span>${n} key${n === 1 ? "" : "s"}${tombs ? ` + ${tombs} tombstone${tombs === 1 ? "" : "s"}` : ""} in ${st.N} buckets${n > st.N ? ". More keys than buckets! Only chaining can do that." : ""}</span><span class="mark-label">2/3: CPython resizes here</span></div>`;
+      <div class="meter-cap"><span>${n} key${n === 1 ? "" : "s"}${dead ? ` + ${plural(dead, "deleted key")} still using room` : ""} in ${st.N} buckets${n > st.N ? ". More keys than buckets! Only chaining can do that." : ""}</span><span class="mark-label">2/3: CPython resizes here</span></div>`;
   }
 
   // ---- animation helpers ----
@@ -1018,7 +1030,8 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
         if (slot === key) break;
         hl.checked.add(s.bucket);
         renderRing();
-        if (slot === TOMB) log(`bucket ${s.bucket}: a tombstone. Something used to be here, so keep going`);
+        if (slot === TOMB && plan.firstTomb === s.bucket) log(`bucket ${s.bucket}: a tombstone. Remember it, but keep going: ${esc(repr(key))} might be further along`);
+        else if (slot === TOMB) log(`bucket ${s.bucket}: a tombstone. Something used to be here, so keep going`);
         else log(`bucket ${s.bucket}: taken by ${esc(repr(slot))} → probe`);
         await sleep(380);
       }
@@ -1058,6 +1071,7 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
       if (st.mode === "chain") hl.nodes.set(`${plan.at}:${plan.steps.length - 1}`, "landed");
       renderRing();
       log(`${esc(repr(key))} is already in the dict${st.mode === "chain" ? ` (node ${plan.steps.length} of bucket ${plan.at}'s chain)` : ` (bucket ${plan.at})`}. A real dict would just update its value.`, "good");
+      if (plan.firstTomb >= 0) log(`Good thing we didn't stop at the tombstone in bucket ${plan.firstTomb}: storing it there would have put ${esc(repr(key))} in the dict twice.`);
       return;
     }
     if (plan.full) {
@@ -1074,9 +1088,19 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
       nodeToken(plan.at, j);
       log(j === 0 ? `bucket ${plan.at} is empty → stored` : `added to the end of bucket ${plan.at}'s chain (node ${j + 1})`, "good");
     } else {
-      const probes = plan.steps.length - 1;
-      log(`bucket ${plan.at} is empty → stored${probes ? ` (${probes} probe${probes === 1 ? "" : "s"} away from home)` : ""}`, "good");
-      if (st.probe === "linear" && probes >= 2) log(`Those full neighbors in a row are a <b>cluster</b>. Clusters keep growing with +1 probing.`);
+      if (plan.reused) {
+        log(plan.emptyAt >= 0
+          ? `bucket ${plan.emptyAt} is empty, so ${esc(repr(key))} isn't in the dict. Go back to the first tombstone on the trail.`
+          : `no empty bucket on this trail, so ${esc(repr(key))} isn't in the dict. Go back to the first tombstone on the trail.`);
+        const last = plan.steps[plan.steps.length - 1].bucket;
+        if (last !== plan.at) await hop(last, plan.at);
+        log(`bucket ${plan.at}: tombstone reused → stored`, "good");
+        log(`<span class="muted">The bucket is reused, but CPython still appends the new entry to its entries array. The deleted key's room isn't given back until the next resize.</span>`);
+      } else {
+        const probes = plan.steps.length - 1;
+        log(`bucket ${plan.at} is empty → stored${probes ? ` (${probes} probe${probes === 1 ? "" : "s"} away from home)` : ""}`, "good");
+        if (st.probe === "linear" && probes >= 2) log(`Those full neighbors in a row are a <b>cluster</b>. Clusters keep growing with +1 probing.`);
+      }
     }
     renderRing();
   }
@@ -1084,10 +1108,10 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
   // CPython: an insert that finds no usable bucket left triggers a resize to
   // the smallest power of 2 that's at least 3 × the live keys. That can grow, keep the size, or shrink.
   async function resize() {
-    const live = st.keys.length, tombs = tombCount();
+    const live = st.keys.length, tombs = tombCount(), dead = deadCount();
     let size = 8;
     while (size < live * 3) size *= 2;
-    log(`No unused bucket left: ${usable(st.N)} of ${st.N} (2/3) are used up${tombs ? `, counting ${tombs} tombstone${tombs === 1 ? "" : "s"}` : ""}. Resize first!`);
+    log(`No room left: ${usable(st.N)} of ${st.N} (2/3) are used up${dead ? `, counting ${plural(dead, "deleted key")}` : ""}. Resize first!`);
     log(`new size: 3 × ${live} live key${live === 1 ? "" : "s"} = ${live * 3} → next power of 2 is <b>${size}</b>`);
     if (size > 32) { log(`…but this demo's ring stops at 32 buckets, so we'll squeeze in.`, "bad"); return; }
     await sleep(900);
@@ -1154,9 +1178,9 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
     else log(`emptied bucket ${plan.at}. (Uh oh: is anyone's trail running through here?)`, "bad");
   }
 
-  function collidingKey(target) {
+  function collidingKey(target, skip = []) {
     const pool = WORDS.concat(WORDS.map((w) => w + "s"), WORDS.map((w) => w + "_2"));
-    return pool.find((w) => !st.keys.includes(w) && mod(hashOf(w), st.N) === target) || null;
+    return pool.find((w) => !st.keys.includes(w) && !skip.includes(w) && mod(hashOf(w), st.N) === target) || null;
   }
 
   // ---- wiring ----
@@ -1312,6 +1336,27 @@ print(sys.getsizeof(d))          # smaller: 3 × 5 = 15 → 16 buckets</code></p
         step(`① Delete 'greeting'`, a, () => lock(() => doDelete(a))),
         step(`② Find ${repr(b)}`, b, () => lock(() => doFind(b))),
         step(`③ Start over, with tombstones`, null, withTombs),
+      ]);
+    },
+    reuse: () => {
+      const setup = () => {
+        configure({ N: 8, mode: "open", probe: "linear", tombs: true });
+        resetTable();
+        const [a, b] = collidingPair();
+        quietInsert(b);
+        applyDelete(a, planFind(a));
+        renderRing();
+        return [a, b];
+      };
+      const [a, b] = setup();
+      const home = mod(hashOf(a), st.N);
+      const c = collidingKey(home, [a]);
+      $("key").value = b;
+      mission(`'greeting' and ${repr(b)} both hash to bucket ${home}, so ${repr(b)} probed one bucket over. Then 'greeting' was deleted, leaving a <strong>tombstone</strong> in bucket ${home}. When we insert a key whose trail starts here, why not drop it into the tombstone right away?`, [
+        step(`① Insert ${repr(b)} again`, b, () => lock(() => doInsert(b))),
+        step(`② Insert a new key, ${repr(c)}`, c, () => lock(() => doInsert(c))),
+        step(`③ Find ${repr(c)}`, c, () => lock(() => doFind(c))),
+        step(`④ Start over`, null, () => { setup(); $("key").value = b; $("log").innerHTML = ""; }, { repeat: true }),
       ]);
     },
     grow: () => {
