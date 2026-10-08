@@ -27,25 +27,22 @@
     - name: Cindy Yao
       library: scikit-learn
       video: ""
-    - name: Yuhsiang Wu
-      library: os and sys
-      video: ""
-    - name: Jinqi Liu
-      library: math and random
+    - name: Zyad Elmasri
+      library: json and csv
       video: ""
 
 - week: 6
   due: Wednesday, November 4, 1:59 PM CT
   bonus: 2
   presenters:
-    - name: Zyad Elmasri
-      library: json and csv
-      video: ""
     - name: XiPu Wang
       library: collections and itertools
       video: ""
-    - name: Alejandro Orihuela Mesias
-      library: pathlib and logging
+    - name: Yuhsiang Wu
+      library: os and sys
+      video: ""
+    - name: Jinqi Liu
+      library: math and random
       video: ""
 
 - week: 7
@@ -58,6 +55,6 @@
     - name: James Jin
       library: Flask and FastAPI
       video: ""
-    - name: Nicholas Choi
-      library: PyTorch
+    - name: Alejandro Orihuela Mesias
+      library: pathlib and logging
       video: ""
