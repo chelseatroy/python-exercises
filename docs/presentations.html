@@ -1,0 +1,52 @@
+---
+title: Presentations
+permalink: /presentations/
+---
+{% assign edit_url = "https://github.com/chelseatroy/python-exercises/edit/main/docs/_data/presentations.yml" %}
+<header class="page-head">
+  <p class="eyebrow">{{ site.course_number }} · {{ site.term }}</p>
+  <h1>Library Presentations</h1>
+  <p class="lede">Who's presenting what, and when. Each week's videos are due one minute before that week's session, and that session's homework is to watch them. The <a href="{{ '/syllabus/#presentation' | relative_url }}">syllabus</a> has the requirements.</p>
+</header>
+
+{% for wk in site.data.presentations %}
+<section class="pres-week" id="week-{{ wk.week }}" aria-labelledby="week-{{ wk.week }}-h">
+  <h2 id="week-{{ wk.week }}-h">Week {{ wk.week }}</h2>
+  <p class="pres-meta">
+    <span>Due <strong>{{ wk.due }}</strong>, before Session {{ wk.week }}</span>
+    <span class="pres-bonus">{% if wk.bonus > 0 %}+{{ wk.bonus }} bonus points{% else %}No bonus points{% endif %}</span>
+  </p>
+  <div class="table-scroll">
+  <table class="schedule">
+    <thead>
+      <tr><th scope="col">Presenter</th><th scope="col">Library</th><th scope="col">Video</th></tr>
+    </thead>
+    <tbody>
+      {% for p in wk.presenters %}
+      <tr>
+        <th scope="row">{{ p.name }}</th>
+        <td>{{ p.library }}</td>
+        <td>{% if p.video != "" %}<a href="{{ p.video }}" target="_blank" rel="noopener">Watch</a>{% else %}<span class="est">Not posted yet</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endfor %}
+
+<section class="prose" id="submit">
+  <h2>Posting your video</h2>
+  <ol>
+    <li>Upload your video to Panopto or YouTube. Check that your classmates can watch it: on YouTube, "Unlisted" works; on Panopto, let anyone at the University of Chicago with the link view it.</li>
+    <li><a href="{{ edit_url }}" target="_blank" rel="noopener"><strong>Open the presentations list on GitHub</strong></a> and sign in. If GitHub asks, let it make a copy (a "fork") of the repository for you.</li>
+    <li>Find your name. Paste your video's link between the quotes on the <code>video:</code> line right under it, like this:
+<pre><code>    - name: Your Name
+      library: your library
+      video: "https://youtu.be/your-video"</code></pre>
+      Change nothing else.</li>
+    <li>Click <strong>Commit changes…</strong> (or <strong>Propose changes</strong>), then <strong>Create pull request</strong>.</li>
+  </ol>
+  <p>Chelsea will merge it, and your link will show up here a few minutes later.</p>
+  <p>Bonus points are added to your presentation score, and they aren't capped at full credit: a 30/30 plus 3 bonus points keeps all 3 toward your final grade.</p>
+</section>

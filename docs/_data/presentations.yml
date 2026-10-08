@@ -1,0 +1,63 @@
+# Library presentation assignments, shown on the Presentations page (docs/presentations.html).
+#
+# Students: to add your video, paste its link between the quotes after `video:` on
+# your own entry, then propose the change as a pull request. Change nothing else.
+
+- week: 4
+  due: Wednesday, October 21, 1:59 PM CT
+  bonus: 4
+  presenters:
+    - name: Mary Henry
+      library: time and datetime
+      video: ""
+    - name: Cynthia Di
+      library: re and string
+      video: ""
+    - name: Yuhsiang Wu
+      library: os and sys
+      video: ""
+    - name: Jinqi Liu
+      library: math and random
+      video: ""
+
+- week: 5
+  due: Wednesday, October 28, 1:59 PM CT
+  bonus: 3
+  presenters:
+    - name: Candace Wade
+      library: unittest and Pytest
+      video: ""
+    - name: Aurora Liu
+      library: NumPy and Pandas
+      video: ""
+    - name: Cindy Yao
+      library: scikit-learn
+      video: ""
+
+- week: 6
+  due: Wednesday, November 4, 1:59 PM CT
+  bonus: 2
+  presenters:
+    - name: Zyad Elmasri
+      library: json and csv
+      video: ""
+    - name: XiPu Wang
+      library: collections and itertools
+      video: ""
+    - name: Alejandro Orihuela Mesias
+      library: pathlib and logging
+      video: ""
+
+- week: 7
+  due: Wednesday, November 11, 1:59 PM CT
+  bonus: 0
+  presenters:
+    - name: Ran Jing
+      library: Matplotlib or Plotly
+      video: ""
+    - name: James Jin
+      library: Flask and FastAPI
+      video: ""
+    - name: Nicholas Choi
+      library: PyTorch
+      video: ""

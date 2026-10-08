@@ -63,6 +63,7 @@ https://chelseatroy.github.io/python-exercises/ is the course website: the sylla
 - Syllabus: `docs/syllabus.md`
 - Session agendas: `docs/_sessions/s01.md` through `s09.md`. The front matter at the top of each file sets the topic shown on the schedule, the homework time estimate, and (for Session 1) the interactive demos. Each agenda's homework heading ends in `{#homework}`, which the schedule links to.
 - Home page and schedule: `docs/index.html` and `docs/schedule.html`, built from the sessions' front matter
+- Presentations: `docs/presentations.html`, built from `docs/_data/presentations.yml`. Students add their video links to that data file by pull request.
 - Layouts and styles: `docs/_layouts/` and `docs/assets/css/site.css`
 - Due-date calendar (on the schedule and in the syllabus): `docs/_includes/due-calendar.html`. It's HTML, not an image, so a date can be changed by moving a box to another week. Each label's arrow points at the box whose `id` matches the label's `data-to`.
 - Images: `docs/assets/img/`
