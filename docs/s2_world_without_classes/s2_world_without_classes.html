@@ -1,0 +1,850 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A World Without Classes</title>
+<style>
+  :root {
+    --ground: #F6F1E7;
+    --surface: #FFFDF8;
+    --ink: #1F1B2D;
+    --muted: #6A6377;
+    --line: #E0D8C8;
+    --accent: #3B5BDB;
+    --accent-ink: #FFFFFF;
+    --tag: #F2C14E;
+    --tag-edge: #C99A1E;
+    --tag-ink: #3A2A00;
+    --hit: #2B8A3E;
+    --clash: #D9480F;
+    --machine: #2B2540;
+    --machine-ink: #F6F1E7;
+    --slot: #EDE6D8;
+    --display: Georgia, "Times New Roman", serif;
+    --body: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #15131C;
+      --surface: #1E1B28;
+      --ink: #ECE8F4;
+      --muted: #A49DB3;
+      --line: #34303F;
+      --accent: #7C93F5;
+      --accent-ink: #0F1020;
+      --tag: #D9AA3A;
+      --tag-edge: #A97F1C;
+      --tag-ink: #241A00;
+      --hit: #51CF66;
+      --clash: #FF8A4C;
+      --machine: #0D0B14;
+      --machine-ink: #ECE8F4;
+      --slot: #2A2636;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #15131C;
+    --surface: #1E1B28;
+    --ink: #ECE8F4;
+    --muted: #A49DB3;
+    --line: #34303F;
+    --accent: #7C93F5;
+    --accent-ink: #0F1020;
+    --tag: #D9AA3A;
+    --tag-edge: #A97F1C;
+    --tag-ink: #241A00;
+    --hit: #51CF66;
+    --clash: #FF8A4C;
+    --machine: #0D0B14;
+    --machine-ink: #ECE8F4;
+    --slot: #2A2636;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 16px/1.55 var(--body);
+  }
+  .page {
+    padding-inline: clamp(16px, 4vw, 72px);
+    padding-block: 40px 72px;
+    display: grid;
+    gap: 44px;
+    max-width: 1280px;
+    margin-inline: auto;
+  }
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.3rem, 7vw, 3.6rem); line-height: 1.02; }
+  h2 { font-size: 1.7rem; line-height: 1.15; }
+  h3 { font-size: 1.25rem; line-height: 1.2; }
+  p { margin: 0; }
+  .muted { color: var(--muted); }
+  code { font-family: var(--mono); font-size: 0.92em; }
+  .label {
+    font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase;
+    font-weight: 700; color: var(--muted);
+  }
+  section { display: grid; gap: 16px; min-width: 0; }
+  header { display: grid; gap: 14px; }
+  .lede { font-size: 1.15rem; max-width: 62ch; }
+
+  button { font: inherit; color: inherit; }
+  button:focus-visible, input:focus-visible, summary:focus-visible, .fn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+  .seg button, .btn {
+    font: 600 0.9rem var(--body); cursor: pointer;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    border-radius: 999px; padding: 6px 13px;
+  }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+  .btn:hover, .seg button:hover { border-color: var(--muted); }
+  .btn.mono { font-family: var(--mono); font-weight: 600; }
+  .primary {
+    font: 700 0.95rem var(--body); cursor: pointer;
+    background: var(--accent); color: var(--accent-ink);
+    border: 0; border-radius: 999px; padding: 8px 18px;
+  }
+  .primary:disabled, .btn:disabled { opacity: 0.5; cursor: default; }
+  input[type="number"] {
+    font: 600 1rem var(--mono); padding: 6px 8px; width: 6.5em;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink);
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px; display: grid; gap: 12px; align-content: start; min-width: 0;
+  }
+  .row-ctl { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+  .row-ctl label { display: inline-flex; gap: 6px; align-items: center; font: 600 0.95rem var(--mono); }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; align-items: start; }
+  .aside { font-size: 0.88rem; color: var(--muted); border-left: 3px solid var(--tag); padding-left: 10px; }
+
+  /* code blocks */
+  .code {
+    margin: 0; padding: 12px 14px; overflow-x: auto;
+    font: 0.88rem/1.55 var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  }
+  .card .code { background: var(--ground); }
+  .cmt { color: var(--muted); }
+  .out { color: var(--hit); font-weight: 700; }
+  .err { color: var(--clash); font-weight: 700; }
+  .fresh { animation: pop 0.35s ease; }
+
+  /* a dict drawn as a box of rows */
+  .dict {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px 12px; font: 0.88rem/1.5 var(--mono); display: grid; gap: 2px; min-width: 0;
+    transition: box-shadow 0.25s, border-color 0.25s;
+  }
+  .card .dict { background: var(--ground); }
+  .dict .dname { font-weight: 700; overflow-wrap: anywhere; }
+  .dict .row {
+    display: flex; flex-wrap: wrap; gap: 3px 8px; align-items: center;
+    padding: 2px 6px 2px 1.4em; border-radius: 6px; transition: background 0.25s;
+  }
+  .dict .row .k { white-space: nowrap; }
+  .dict.searching { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  .dict.missed { border-color: var(--clash); box-shadow: 0 0 0 2px var(--clash); }
+  .dict .row.found { background: color-mix(in oklab, var(--hit) 24%, transparent); }
+  .dict .row.followed { background: color-mix(in oklab, var(--accent) 22%, transparent); }
+  .dict .row.added { animation: pop 0.45s ease; }
+  .dict .row.gone { opacity: 0.55; }
+  .dict .row.gone .k, .dict .row.gone .fn { text-decoration: line-through; }
+  .fn {
+    display: inline-flex; gap: 6px; align-items: baseline; cursor: default;
+    background: var(--slot); border: 1px solid var(--line); border-radius: 6px; padding: 0 6px;
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+  .fn small { color: var(--muted); font-size: 0.78em; }
+  .fn.lit { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  .ref { color: var(--accent); font-weight: 700; }
+  .badge {
+    font: 700 0.68rem/1.6 var(--body); letter-spacing: 0.03em; border-radius: 999px; padding: 0 8px; white-space: nowrap;
+  }
+  .badge.own { background: color-mix(in oklab, var(--accent) 18%, transparent); color: var(--ink); }
+  .badge.shared, .badge.copied { background: var(--tag); color: var(--tag-ink); }
+  .badge.over { border: 1px solid var(--clash); color: var(--clash); }
+  .badge.ptr { border: 1px solid var(--accent); color: var(--accent); }
+  .badge.new { background: var(--hit); color: var(--surface); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.84rem; color: var(--muted); align-items: center; }
+
+  .circles { display: grid; gap: 12px; }
+  .callrow { display: flex; flex-wrap: wrap; gap: 6px; }
+  .callout { font: 0.85rem/1.5 var(--mono); overflow-wrap: anywhere; min-height: 1.5em; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+  .stat { border-top: 2px solid var(--ink); padding-top: 6px; display: grid; gap: 0; }
+  .stat .big { font: 600 1.45rem/1.15 var(--mono); font-variant-numeric: tabular-nums; }
+  .stat .sub { font-size: 0.78rem; color: var(--muted); }
+
+  .mission {
+    background: var(--machine); color: var(--machine-ink); border-radius: 12px; padding: 12px 16px;
+    font-size: 0.95rem;
+  }
+  .mission strong { color: var(--tag); }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .step {
+    text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface);
+    border-radius: 12px; padding: 12px 14px; display: grid; gap: 2px;
+  }
+  .step:hover { border-color: var(--accent); }
+  .step[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  .step b { font-family: var(--display); font-weight: 400; font-size: 1.1rem; }
+  .step span { font-size: 0.85rem; color: var(--muted); }
+
+  .race { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 16px; align-items: start; }
+  .parent { max-width: 460px; width: 100%; justify-self: center; }
+  .log {
+    margin: 0; padding: 10px 12px 10px 32px; min-height: 6em;
+    font: 0.86rem/1.5 var(--mono); background: var(--ground); border: 1px solid var(--line); border-radius: 10px;
+    display: grid; gap: 2px; align-content: start; overflow-wrap: anywhere;
+  }
+  .log li { animation: pop 0.25s ease; }
+  .log li::marker { color: var(--muted); }
+  .log:empty::before { content: "Look something up to see the steps."; color: var(--muted); margin-left: -20px; }
+
+  .map { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  .map th, .map td { text-align: left; padding: 8px 10px; border-top: 1px solid var(--line); vertical-align: top; }
+  .map th { font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); border-top: 0; }
+  .map td code { overflow-wrap: anywhere; }
+  .table-wrap { overflow-x: auto; }
+
+  .reasons { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+  .reason { border-left: 3px solid var(--tag); padding: 2px 0 2px 10px; display: grid; gap: 2px; }
+  .reason span { font-size: 0.88rem; color: var(--muted); }
+  .reveal { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+  .reveal summary { cursor: pointer; padding: 16px 20px; display: grid; gap: 2px; list-style: none; }
+  .reveal summary::-webkit-details-marker { display: none; }
+  .reveal summary h3::before { content: "▸ "; color: var(--accent); }
+  .reveal[open] summary h3::before { content: "▾ "; }
+  .reveal .body { padding: 0 20px 18px; display: grid; gap: 12px; min-width: 0; }
+
+  @keyframes pop { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header>
+    <div class="label">Session 2 · State and behavior, without classes</div>
+    <h1>A World Without Classes</h1>
+    <p class="lede">Suppose a programming language had no classes. Just ints, strings, booleans, lists, and <strong>dictionaries</strong>. Could we still bundle what a thing <em>is</em> (its <strong>state</strong>) with what it can <em>do</em> (its <strong>behavior</strong>)? Let's build some shapes and find out.</p>
+  </header>
+
+  <details class="reveal">
+    <summary><h3>What are classes for, anyway?</h3><span class="muted">Answer in the chat first.</span></summary>
+    <div class="body">
+      <div class="reasons">
+        <div class="reason"><b>Keep state together</b><span>An order has a buyer, a seller, a price, a product, and order and ship dates. A class keeps them all in one place.</span></div>
+        <div class="reason"><b>Pass it around as one thing</b><span>Like keeping beads sorted in a bag per color. You carry the bag, not each bead.</span></div>
+        <div class="reason"><b>Attach behavior that guards the state</b><span>If the only way to ship an order is <code>mark_shipped()</code>, that method can refuse a ship date before the order date. Then you can trust the data.</span></div>
+      </div>
+      <p class="muted">Not everyone wants this. Plenty of Haskell (and some Rust) programmers will tell you state and behavior don't belong together. We'll take up that argument in a later session.</p>
+    </div>
+  </details>
+
+  <!-- ----------------- 1. A BAG OF STATE ----------------- -->
+  <section aria-labelledby="state-h">
+    <h2 id="state-h">1. A bag of state</h2>
+    <p class="muted">A circle's state is just its radius. Put it in a dict. Then calculate things about the circle with expressions.</p>
+    <div class="card">
+      <div class="row-ctl">
+        <label for="s1-r">radius</label>
+        <input type="number" id="s1-r" value="3.0" step="any" min="0">
+      </div>
+      <pre class="code" id="s1-code" aria-live="polite"></pre>
+      <p class="aside">It works, but the formulas live loose in your code. Every place that wants a circle's area has to retype <code>math.pi * (radius**2)</code>, and get it right.</p>
+    </div>
+  </section>
+
+  <!-- ----------------- 2. A BAG OF BEHAVIOR ----------------- -->
+  <section aria-labelledby="behavior-h">
+    <h2 id="behavior-h">2. A bag of behavior</h2>
+    <p class="muted">Functions are values too, so they can go in a dict. <code>lambda</code> makes a function without giving it a name. Put every circle function in one bag, then copy the bag into each new circle with <code>update</code>.</p>
+
+    <div class="two">
+      <div class="card">
+        <span class="label">Written once</span>
+        <pre class="code"><code>circle_behavior = {
+    "area": lambda radius: math.pi * (radius**2),
+    "circumference": lambda radius: math.pi * (radius * 2),
+    "diameter": lambda radius: radius * 2,
+}</code></pre>
+        <div id="s2-behavior"></div>
+        <div class="row-ctl">
+          <label for="s2-r">radius</label>
+          <input type="number" id="s2-r" value="7" step="any" min="0">
+          <button class="primary" type="button" id="s2-make">Make a circle</button>
+          <button class="btn" type="button" id="s2-clear">Start over</button>
+        </div>
+        <pre class="code" id="s2-code" aria-live="polite"></pre>
+        <div class="stats" id="s2-stats"></div>
+      </div>
+
+      <div class="circles" id="s2-circles" aria-live="polite"></div>
+    </div>
+    <div class="legend">
+      <span><span class="badge own">own state</span> different in every circle</span>
+      <span><span class="badge shared">shared</span> the very same function object. Hover one to see where else it lives</span>
+    </div>
+
+    <details class="reveal">
+      <summary><h3>Why not do it all in one line?</h3><span class="muted">What does <code>update</code> give back? Guess first.</span></summary>
+      <div class="body">
+        <pre class="code"><code>another_circle = {"radius": 7}.update(circle_behavior)
+print(another_circle)   <span class="cmt"># </span><span class="err">None</span></code></pre>
+        <p><code>update</code> changes the dict <strong>in place</strong>. In-place operations in Python, like <code>list.sort()</code> and <code>dict.update()</code>, return <code>None</code>, not the changed object. Make the dict first, then update it.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ----------------- 3. THE CLUNKY CALL ----------------- -->
+  <section aria-labelledby="clunky-h">
+    <h2 id="clunky-h">3. Rectangles, and the clunky call</h2>
+    <p class="muted">Same trick for rectangles. A rectangle's area needs two pieces of state, length and width. And every rectangle's corners are 90°.</p>
+    <div class="two">
+      <div class="card">
+        <pre class="code"><code>rectangle_behavior = {
+    "area": lambda length, width: length * width,
+    "perimeter": lambda length, width: (2 * length) + (2 * width),
+    "angle_size": 90,
+}</code></pre>
+        <div class="row-ctl">
+          <label for="s3-l">length</label><input type="number" id="s3-l" value="4" step="any" min="0">
+          <label for="s3-w">width</label><input type="number" id="s3-w" value="6" step="any" min="0">
+        </div>
+        <pre class="code" id="s3-code"></pre>
+        <details class="reveal">
+          <summary><h3>What's inside <code>new_rectangle</code> now?</h3><span class="muted">Guess first.</span></summary>
+          <div class="body" id="s3-dict"></div>
+        </details>
+      </div>
+      <div class="card">
+        <h3>Now ask for the area</h3>
+        <span class="label">With a dict</span>
+        <pre class="code" id="s3-dictcall"></pre>
+        <p class="muted" style="font-size:0.92rem">It works, but look at it. You dig the function out of the rectangle, dig the state out of the <em>same</em> rectangle, and hand the state back to the function.</p>
+        <span class="label">With a class</span>
+        <pre class="code" id="s3-classcall"></pre>
+        <p class="muted" style="font-size:0.92rem">A method already knows which rectangle it belongs to. How Python pulls that off is in section 6.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------- 4. A SQUARE IS A RECTANGLE ----------------- -->
+  <section aria-labelledby="square-h">
+    <h2 id="square-h">4. A square is a rectangle, mostly</h2>
+    <p class="muted">A square is a rectangle with length = width. It has different formulas, since one side length is enough, but everything else should come from rectangle. How do we write <code>square_behavior</code> without starting over?</p>
+    <div class="steps" id="s4-steps" role="group" aria-label="Ways to build square_behavior">
+      <button class="step" type="button" data-s="0" aria-pressed="true"><b>1. Just the differences</b><span>Write only what's new for a square</span></button>
+      <button class="step" type="button" data-s="1" aria-pressed="false"><b>2. Copy one by hand</b><span>Bring rectangle's missing piece over</span></button>
+      <button class="step" type="button" data-s="2" aria-pressed="false"><b>3. Copy everything, then override</b><span>Start from rectangle, change what differs</span></button>
+    </div>
+    <div class="two">
+      <pre class="code" id="s4-code"></pre>
+      <div style="display:grid;gap:12px">
+        <div id="s4-dict" aria-live="polite"></div>
+        <p class="aside" id="s4-note"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------- 5. COPY DOWN OR LOOK UP ----------------- -->
+  <section aria-labelledby="race-h">
+    <h2 id="race-h">5. Copy down, or look up?</h2>
+    <p class="muted">Copy-down copies rectangle's entries <em>at the moment you build the square</em>. The other option: give the square a <code>"super"</code> entry that points at <code>rectangle_behavior</code>, and when the square doesn't have something, go look there. Same square, built both ways.</p>
+
+    <div class="mission" id="s5-mission"></div>
+
+    <div class="card">
+      <div class="row-ctl">
+        <span class="label">Look up</span>
+        <div class="seg" id="s5-names" role="group" aria-label="Name to look up">
+          <button type="button" class="mono" data-n="area">"area"</button>
+          <button type="button" class="mono" data-n="angle_size">"angle_size"</button>
+          <button type="button" class="mono" data-n="diagonal">"diagonal"</button>
+        </div>
+        <button class="primary" type="button" id="s5-add">Add "diagonal" to rectangle_behavior</button>
+        <button class="btn" type="button" id="s5-reset">Reset</button>
+      </div>
+      <pre class="code" id="s5-addcode" hidden><code>rectangle_behavior["diagonal"] = lambda length, width: math.sqrt(length**2 + width**2)</code></pre>
+      <div class="parent" id="s5-parent"></div>
+      <div class="race">
+        <div class="card">
+          <h3>Copy down</h3>
+          <pre class="code"><code>square_behavior[name]</code></pre>
+          <div id="s5-cd"></div>
+          <ol class="log" id="s5-cd-log" aria-live="polite"></ol>
+          <div class="stats" id="s5-cd-stats"></div>
+        </div>
+        <div class="card">
+          <h3>Look up through <code>"super"</code></h3>
+          <pre class="code"><code>def look_up(behavior, name):
+    while behavior is not None:
+        if name in behavior:
+            return behavior[name]
+        behavior = behavior.get("super")
+    raise KeyError(name)</code></pre>
+          <div id="s5-lu"></div>
+          <ol class="log" id="s5-lu-log" aria-live="polite"></ol>
+          <div class="stats" id="s5-lu-stats"></div>
+        </div>
+      </div>
+    </div>
+
+    <details class="reveal">
+      <summary><h3>Which one does Python do?</h3><span class="muted">Answer in the chat first. Then say why.</span></summary>
+      <div class="body">
+        <p><strong>Python looks up.</strong> A class keeps a reference to its parent, and when it doesn't have a name, Python goes and checks the parent, then the parent's parent, and so on.</p>
+        <p>It has to, because Python lets you add things to a class <em>after</em> you've made it, like this: <code>Rectangle.diagonal = lambda self: ...</code>. Every subclass sees the change right away. With copy-down, subclasses made earlier would never see it. That's exactly what happened to "diagonal" above.</p>
+        <p class="muted">JavaScript works the same way. Its "prototype chain" is this same <code>"super"</code> pointer.</p>
+      </div>
+    </details>
+
+    <details class="reveal">
+      <summary><h3>So why would anyone copy down?</h3><span class="muted">Think speed, space, simplicity, capability.</span></summary>
+      <div class="body">
+        <div class="reasons">
+          <div class="reason"><b>Speed: copy-down wins</b><span>Every lookup searches one dict. No hopping. Each hop up the chain is another dict to search, and chains can be long.</span></div>
+          <div class="reason"><b>Space: look-up wins</b><span>Copy-down stores its own copy of every inherited entry, in every subclass.</span></div>
+          <div class="reason"><b>Capability: look-up wins</b><span>Change the parent, and every child sees it, even children made earlier.</span></div>
+        </div>
+        <p>Copy-down is one of the oldest ways to build inheritance, because it's fast: everything a subclass needs sits together, ready to go. Statically typed languages like Java and C++ lean this way. Each class gets a table of its methods with the parent's entries copied in. Those languages don't let you add methods to a class after the fact, so the copy never goes stale.</p>
+        <p>Python chose the capability and paid for it in speed. This is one reason Python has a reputation for being slow. It keeps choosing flexibility, like <strong>dynamic typing</strong>: types are checked as the program runs, not before.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ----------------- 6. CLASSES ARE DICTS ----------------- -->
+  <section aria-labelledby="real-h">
+    <h2 id="real-h">6. Meanwhile, in a world with classes</h2>
+    <p class="muted">Here are the same shapes as real Python classes.</p>
+    <div class="two">
+      <pre class="code"><code>class Rectangle:
+    angle_size = 90
+
+    def __init__(self, length, width):
+        self.length = length
+        self.width = width
+
+    def area(self):
+        return self.length * self.width
+
+    def perimeter(self):
+        return (2 * self.length) + (2 * self.width)
+
+class Square(Rectangle):
+    def __init__(self, side_length):
+        super().__init__(side_length, side_length)
+
+    def area(self):
+        return self.length ** 2
+
+    def perimeter(self):
+        return 4 * self.length</code></pre>
+      <details class="reveal">
+        <summary><h3>Look underneath</h3><span class="muted">Where's the state? Where's the behavior? Where's the parent? Guess first.</span></summary>
+        <div class="body">
+          <pre class="code"><code>&gt;&gt;&gt; sq = Square(4)
+&gt;&gt;&gt; sq.__dict__                  <span class="cmt"># the bag of state</span>
+<span class="out">{'length': 4, 'width': 4}</span>
+&gt;&gt;&gt; [k for k in Square.__dict__ if not k.startswith("__")]
+<span class="out">['area', 'perimeter']</span>          <span class="cmt"># the bag of behavior</span>
+&gt;&gt;&gt; Square.__bases__             <span class="cmt"># the "super" pointer</span>
+<span class="out">(&lt;class '__main__.Rectangle'&gt;,)</span>
+&gt;&gt;&gt; sq.angle_size                <span class="cmt"># not in Square, so look up</span>
+<span class="out">90</span>
+&gt;&gt;&gt; import math
+&gt;&gt;&gt; Rectangle.diagonal = lambda self: math.sqrt(self.length**2 + self.width**2)
+&gt;&gt;&gt; sq.diagonal()                <span class="cmt"># added after sq was made, still found</span>
+<span class="out">5.656854249492381</span>
+&gt;&gt;&gt; Rectangle.__bases__          <span class="cmt"># the chain ends at object</span>
+<span class="out">(&lt;class 'object'&gt;,)</span>
+&gt;&gt;&gt; sq.area() == Square.__dict__["area"](sq)
+<span class="out">True</span>                         <span class="cmt"># the clunky call, done for you</span></code></pre>
+          <p class="muted" style="font-size:0.82rem">Run in CPython 3.10. <code>Square.__dict__</code> also holds housekeeping entries like <code>__init__</code>, <code>__module__</code>, and <code>__doc__</code>. The list above leaves those out.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h3>Our dicts, and what Python calls them</h3>
+      <div class="table-wrap">
+        <table class="map">
+          <thead><tr><th>A world without classes</th><th>Python's classes</th></tr></thead>
+          <tbody>
+            <tr><td><code>{"length": 4, "width": 6}</code></td><td><code>rect.__dict__</code>: each instance's own bag of state</td></tr>
+            <tr><td><code>rectangle_behavior</code></td><td><code>Rectangle.__dict__</code>: one bag of behavior, shared by every instance</td></tr>
+            <tr><td><code>"super": rectangle_behavior</code></td><td><code>Square.__bases__</code>: the pointer up to the parent</td></tr>
+            <tr><td><code>look_up(square_behavior, "angle_size")</code></td><td><code>sq.angle_size</code>: Python follows the chain for you</td></tr>
+            <tr><td><code>r["area"](r["length"], r["width"])</code></td><td><code>rect.area()</code>: Python passes <code>rect</code> in as <code>self</code>, and the method reads its own state</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="aside">Under the hood, classes and instances really are dictionaries plus a pointer. That's a big reason it's worth knowing how dicts work.</p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, reduceMotion ? 0 : ms));
+
+  // ---------- Python-looking numbers ----------
+  // a float that happens to be whole prints as 3.0 in Python, not 3
+  const pyFloat = (x) => Number.isInteger(x) ? x.toFixed(1) : String(x);
+  const pyNum = (n) => n.isFloat ? pyFloat(n.v) : String(n.v);
+  function readNum(input, fallback) {
+    const s = input.value.trim(), v = Number(s);
+    if (!s || !Number.isFinite(v) || v < 0) return fallback;
+    return { v, isFloat: /[.e]/i.test(s) };
+  }
+  // int op int stays an int; anything with a float is a float
+  const result = (v, ...ns) => ({ v, isFloat: ns.some((n) => n.isFloat) || !Number.isInteger(v) });
+
+  // ---------- function objects, with a fake id() so sharing is visible ----------
+  let addr = 0x7f3a1c2e40;
+  const fnObj = (label, impl) => ({ fn: true, label, impl, id: "0x" + (addr += 0x1a0).toString(16) });
+
+  const CIRCLE = {
+    area: fnObj("area", (r) => Math.PI * (r ** 2)),
+    circumference: fnObj("circumference", (r) => Math.PI * (r * 2)),
+    diameter: fnObj("diameter", (r) => r * 2),
+  };
+  const RECT = {
+    area: fnObj("area", (l, w) => l * w),
+    perimeter: fnObj("perimeter", (l, w) => (2 * l) + (2 * w)),
+    diagonal: fnObj("diagonal", (l, w) => Math.sqrt(l ** 2 + w ** 2)),
+  };
+  const SQUARE = {
+    area: fnObj("area", (s) => s ** 2),
+    perimeter: fnObj("perimeter", (s) => 4 * s),
+  };
+
+  // ---------- drawing a dict ----------
+  function valHTML(v) {
+    if (v && v.fn) return `<span class="fn" data-fid="${v.id}" tabindex="0">λ ${v.label} <small>id ${v.id}</small></span>`;
+    if (v && v.ref) return `<span class="ref">→ ${v.ref}</span>`;
+    return `<span>${v}</span>`;
+  }
+  function dictHTML(name, rows, opts = {}) {
+    const body = rows.map((r) =>
+      `<div class="row ${r.cls || ""}" data-k="${r.k}"><span class="k">"${r.k}":</span> ${valHTML(r.v)}` +
+      (r.badge ? ` <span class="badge ${r.badgeCls}">${r.badge}</span>` : "") + `</div>`).join("");
+    return `<div class="dict ${opts.cls || ""}" ${opts.id ? `id="${opts.id}"` : ""}>` +
+      `<div class="dname">${name} = {</div>${body}<div class="dname">}</div></div>`;
+  }
+
+  // hovering or focusing a function lights up every place that same object lives
+  function light(fid) {
+    document.querySelectorAll(".fn.lit").forEach((el) => el.classList.remove("lit"));
+    if (fid) document.querySelectorAll(`.fn[data-fid="${fid}"]`).forEach((el) => el.classList.add("lit"));
+  }
+  document.addEventListener("mouseover", (e) => { const f = e.target.closest(".fn"); light(f && f.dataset.fid); });
+  document.addEventListener("focusin", (e) => { const f = e.target.closest(".fn"); light(f && f.dataset.fid); });
+
+  // ---------------------------------------------------------
+  // 1. A bag of state
+  // ---------------------------------------------------------
+  function render1() {
+    const r = readNum($("s1-r"), { v: 3, isFloat: true });
+    const area = result(CIRCLE.area.impl(r.v), r, { isFloat: true });
+    const circ = result(CIRCLE.circumference.impl(r.v), r, { isFloat: true });
+    const diam = result(CIRCLE.diameter.impl(r.v), r);
+    $("s1-code").innerHTML =
+`import math
+
+new_circle = {"radius": ${pyNum(r)}}
+
+math.pi * (new_circle["radius"]**2)     <span class="cmt"># area</span>
+<span class="out">${pyNum(area)}</span>
+math.pi * (new_circle["radius"] * 2)    <span class="cmt"># circumference</span>
+<span class="out">${pyNum(circ)}</span>
+new_circle["radius"] * 2                <span class="cmt"># diameter</span>
+<span class="out">${pyNum(diam)}</span>`;
+  }
+  $("s1-r").addEventListener("input", render1);
+  render1();
+
+  // ---------------------------------------------------------
+  // 2. A bag of behavior
+  // ---------------------------------------------------------
+  const MAX_CIRCLES = 3;
+  let circles = [], made = 0;
+  const behaviorRows = () => Object.entries(CIRCLE).map(([k, v]) => ({ k, v }));
+  $("s2-behavior").innerHTML = dictHTML("circle_behavior", behaviorRows());
+
+  function render2(fresh) {
+    $("s2-circles").innerHTML = circles.map((c, i) => `
+      <div class="card ${c === fresh ? "fresh" : ""}">
+        ${dictHTML(c.name, [
+          { k: "radius", v: pyNum(c.r), badge: "own state", badgeCls: "own" },
+          ...behaviorRows().map((row) => ({ ...row, badge: "shared", badgeCls: "shared" })),
+        ])}
+        <div class="callrow">
+          ${Object.keys(CIRCLE).map((k) => `<button class="btn mono" type="button" data-i="${i}" data-call="${k}">${k}</button>`).join("")}
+        </div>
+        <div class="callout" data-out="${i}">${c.out || ""}</div>
+      </div>`).join("") ||
+      `<div class="card"><p class="muted">No circles yet. Make one, then make another with a different radius.</p></div>`;
+
+    const last = circles[circles.length - 1];
+    $("s2-code").innerHTML = last
+      ? `${last.name} = {"radius": ${pyNum(last.r)}}\n${last.name}.update(circle_behavior)\n\n` +
+        `${last.name}["area"] is circle_behavior["area"]\n<span class="out">True</span>   <span class="cmt"># not a copy: the same function</span>`
+      : `<span class="cmt"># make a circle to see the code</span>`;
+    $("s2-stats").innerHTML = `
+      <div class="stat"><span class="big">${made}</span><span class="sub">circles made</span></div>
+      <div class="stat"><span class="big">${made}</span><span class="sub">radius values stored</span></div>
+      <div class="stat"><span class="big">3</span><span class="sub">function objects, no matter how many circles</span></div>`;
+  }
+  $("s2-make").addEventListener("click", () => {
+    const r = readNum($("s2-r"), { v: 7, isFloat: false });
+    made++;
+    const c = { name: `circle_${made}`, r };
+    circles.push(c);
+    if (circles.length > MAX_CIRCLES) circles.shift();
+    render2(c);
+    $("s2-r").value = String(r.v + 3);
+  });
+  $("s2-clear").addEventListener("click", () => { circles = []; made = 0; $("s2-r").value = "7"; render2(); });
+  $("s2-circles").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-call]");
+    if (!b) return;
+    const c = circles[Number(b.dataset.i)], k = b.dataset.call;
+    const val = result(CIRCLE[k].impl(c.r.v), c.r, { isFloat: k !== "diameter" });
+    c.out = `${c.name}["${k}"](${c.name}["radius"])\n<span class="out">${pyNum(val)}</span>`.replace("\n", "<br>");
+    b.closest(".card").querySelector("[data-out]").innerHTML = c.out;
+  });
+  render2();
+
+  // ---------------------------------------------------------
+  // 3. Rectangles, and the clunky call
+  // ---------------------------------------------------------
+  function render3() {
+    const l = readNum($("s3-l"), { v: 4, isFloat: false }), w = readNum($("s3-w"), { v: 6, isFloat: false });
+    const area = result(RECT.area.impl(l.v, w.v), l, w);
+    $("s3-code").innerHTML = `new_rectangle = {"length": ${pyNum(l)}, "width": ${pyNum(w)}}\nnew_rectangle.update(rectangle_behavior)`;
+    $("s3-dict").innerHTML = dictHTML("new_rectangle", [
+      { k: "length", v: pyNum(l), badge: "own state", badgeCls: "own" },
+      { k: "width", v: pyNum(w), badge: "own state", badgeCls: "own" },
+      { k: "area", v: RECT.area, badge: "shared", badgeCls: "shared" },
+      { k: "perimeter", v: RECT.perimeter, badge: "shared", badgeCls: "shared" },
+      { k: "angle_size", v: "90", badge: "shared", badgeCls: "shared" },
+    ]);
+    $("s3-dictcall").innerHTML = `new_rectangle["area"](new_rectangle["length"], new_rectangle["width"])\n<span class="out">${pyNum(area)}</span>`;
+    $("s3-classcall").innerHTML = `rect = Rectangle(${pyNum(l)}, ${pyNum(w)})\nrect.area()\n<span class="out">${pyNum(area)}</span>`;
+  }
+  $("s3-l").addEventListener("input", render3);
+  $("s3-w").addEventListener("input", render3);
+  render3();
+
+  // ---------------------------------------------------------
+  // 4. A square is a rectangle, mostly
+  // ---------------------------------------------------------
+  const OWN = { badge: "square's own", badgeCls: "own" };
+  const STEPS = [
+    {
+      code:
+`square_behavior = {
+    "area": lambda side_length: side_length ** 2,
+    "perimeter": lambda side_length: 4 * side_length,
+}
+
+new_square = {"side_length": new_rectangle["length"]}
+new_square.update(square_behavior)`,
+      name: "new_square",
+      rows: [
+        { k: "side_length", v: "4", badge: "own state", badgeCls: "own" },
+        { k: "area", v: SQUARE.area, ...OWN },
+        { k: "perimeter", v: SQUARE.perimeter, ...OWN },
+        { k: "angle_size", v: "", cls: "gone", badge: "missing!", badgeCls: "over" },
+      ],
+      note: "Close! But every rectangle's angles are 90°, and a square is a rectangle. Where did <code>\"angle_size\"</code> go? We never brought it over.",
+    },
+    {
+      code:
+`square_behavior = {
+    "area": lambda side_length: side_length ** 2,
+    "perimeter": lambda side_length: 4 * side_length,
+    "angle_size": rectangle_behavior["angle_size"],
+}
+
+new_square = {"side_length": new_rectangle["length"]}
+new_square.update(square_behavior)`,
+      name: "new_square",
+      rows: [
+        { k: "side_length", v: "4", badge: "own state", badgeCls: "own" },
+        { k: "area", v: SQUARE.area, ...OWN },
+        { k: "perimeter", v: SQUARE.perimeter, ...OWN },
+        { k: "angle_size", v: "90", badge: "copied from rectangle", badgeCls: "copied" },
+      ],
+      note: "That works. But <code>rectangle_behavior</code> has three entries. What if it had thirty? Copying them one at a time is tedious, and sooner or later you'll forget one.",
+    },
+    {
+      code:
+`square_behavior = dict(rectangle_behavior)   <span class="cmt"># copy everything rectangle has...</span>
+square_behavior.update({                     <span class="cmt"># ...then overwrite what's different</span>
+    "area": lambda side_length: side_length ** 2,
+    "perimeter": lambda side_length: 4 * side_length,
+})`,
+      name: "square_behavior",
+      rows: [
+        { k: "area", v: RECT.area, cls: "gone", badge: "rectangle's, overwritten", badgeCls: "over" },
+        { k: "area", v: SQUARE.area, ...OWN },
+        { k: "perimeter", v: RECT.perimeter, cls: "gone", badge: "rectangle's, overwritten", badgeCls: "over" },
+        { k: "perimeter", v: SQUARE.perimeter, ...OWN },
+        { k: "angle_size", v: "90", badge: "copied from rectangle", badgeCls: "copied" },
+      ],
+      note: "This is <strong>copy-down inheritance</strong>: when you make the subclass, copy everything down from the parent, then override what's different. It's fast, because everything a square needs is right there in one dict. But notice <em>when</em> the copying happens: once, right now.",
+    },
+  ];
+  function render4(s) {
+    const step = STEPS[s];
+    document.querySelectorAll("#s4-steps .step").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.s === String(s))));
+    $("s4-code").innerHTML = `<code>${step.code}</code>`;
+    $("s4-dict").innerHTML = dictHTML(step.name, step.rows, { cls: "fresh" });
+    $("s4-note").innerHTML = step.note;
+  }
+  $("s4-steps").addEventListener("click", (e) => { const b = e.target.closest(".step"); if (b) render4(Number(b.dataset.s)); });
+  render4(0);
+
+  // ---------------------------------------------------------
+  // 5. Copy down, or look up?
+  // ---------------------------------------------------------
+  let diagonalAdded = false, busy = false, tried = new Set();
+
+  function rectRows() {
+    const rows = [
+      { k: "area", v: RECT.area },
+      { k: "perimeter", v: RECT.perimeter },
+      { k: "angle_size", v: "90" },
+    ];
+    if (diagonalAdded) rows.push({ k: "diagonal", v: RECT.diagonal, cls: "added", badge: "new", badgeCls: "new" });
+    return rows;
+  }
+  // the copy-down square was built before anything was added, so it never changes
+  const CD_ROWS = [
+    { k: "area", v: SQUARE.area, ...OWN },
+    { k: "perimeter", v: SQUARE.perimeter, ...OWN },
+    { k: "angle_size", v: "90", badge: "copied from rectangle", badgeCls: "copied" },
+  ];
+  const LU_ROWS = [
+    { k: "area", v: SQUARE.area, ...OWN },
+    { k: "perimeter", v: SQUARE.perimeter, ...OWN },
+    { k: "super", v: { ref: "rectangle_behavior" }, badge: "pointer", badgeCls: "ptr" },
+  ];
+
+  function render5() {
+    $("s5-parent").innerHTML = dictHTML("rectangle_behavior", rectRows(), { id: "d-rect" });
+    $("s5-cd").innerHTML = dictHTML("square_behavior", CD_ROWS, { id: "d-cd" });
+    $("s5-lu").innerHTML = dictHTML("square_behavior", LU_ROWS, { id: "d-lu" });
+    $("s5-add").disabled = diagonalAdded || busy;
+    $("s5-add").textContent = diagonalAdded ? '✓ "diagonal" added' : 'Add "diagonal" to rectangle_behavior';
+    $("s5-addcode").hidden = !diagonalAdded;
+    document.querySelectorAll("#s5-names button").forEach((b) => { b.disabled = busy; });
+    let m;
+    if (!tried.has("angle_size")) m = `Look up <strong>"angle_size"</strong>. The square never wrote it. Both still find it, but count the dicts each one searches.`;
+    else if (!diagonalAdded) m = `Now the twist. The squares already exist. <strong>Add "diagonal" to rectangle_behavior</strong>.`;
+    else if (!tried.has("diagonal")) m = `Rectangles have a diagonal now, and squares are rectangles. Look up <strong>"diagonal"</strong> on both squares.`;
+    else m = `Copy-down copied once, before "diagonal" existed, so it'll never see it. Look-up checks the parent every time, so it sees every change. <strong>Which one do you think Python does?</strong> Answer below.`;
+    $("s5-mission").innerHTML = m;
+  }
+
+  function stats(side, searched, found) {
+    $(`s5-${side}-stats`).innerHTML = `
+      <div class="stat"><span class="big">${searched}</span><span class="sub">dicts searched</span></div>
+      <div class="stat"><span class="big" style="color:var(--${found ? "hit" : "clash"})">${found ? "found" : "KeyError"}</span><span class="sub">result</span></div>`;
+  }
+  const say = (side, html) => { const li = document.createElement("li"); li.innerHTML = html; $(`s5-${side}-log`).appendChild(li); };
+  const clearMarks = () => document.querySelectorAll("#race-h ~ * .dict").forEach((d) => {
+    d.classList.remove("searching", "missed");
+    d.querySelectorAll(".row").forEach((r) => r.classList.remove("found", "followed"));
+  });
+  const shown = (v) => v && v.fn ? `λ ${v.label}` : v;
+
+  async function search(side, dictId, rows, name, label) {
+    const box = $(dictId);
+    say(side, `search ${label}…`);
+    box.classList.add("searching");
+    await sleep(650);
+    box.classList.remove("searching");
+    const hit = rows.find((r) => r.k === name);
+    if (hit) {
+      box.querySelector(`.row[data-k="${name}"]`).classList.add("found");
+      say(side, `<span class="out">found: ${shown(hit.v)}</span>`);
+      return true;
+    }
+    box.classList.add("missed");
+    say(side, `not here`);
+    await sleep(350);
+    return false;
+  }
+
+  async function copyDown(name) {
+    $("s5-cd-log").innerHTML = "";
+    say("cd", `<span class="cmt">square_behavior["${name}"]</span>`);
+    const found = await search("cd", "d-cd", CD_ROWS, name, "square_behavior");
+    if (!found) say("cd", `<span class="err">KeyError: '${name}'</span>${name === "diagonal" ? ` <span class="cmt"># copied before it existed</span>` : ""}`);
+    stats("cd", 1, found);
+  }
+  async function lookUp(name) {
+    $("s5-lu-log").innerHTML = "";
+    say("lu", `<span class="cmt">look_up(square_behavior, "${name}")</span>`);
+    let found = await search("lu", "d-lu", LU_ROWS, name, "square_behavior"), searched = 1;
+    if (!found) {
+      $("d-lu").querySelector('.row[data-k="super"]').classList.add("followed");
+      say("lu", `follow "super" → rectangle_behavior`);
+      await sleep(450);
+      found = await search("lu", "d-rect", rectRows(), name, "rectangle_behavior");
+      searched = 2;
+      if (!found) say("lu", `no "super" here. <span class="err">KeyError: '${name}'</span>`);
+    }
+    stats("lu", searched, found);
+  }
+
+  $("s5-names").addEventListener("click", async (e) => {
+    const b = e.target.closest("button[data-n]");
+    if (!b || busy) return;
+    busy = true; render5(); clearMarks();
+    const name = b.dataset.n;
+    // the copy-down side is one search, so it finishes first. That's the point.
+    await Promise.all([copyDown(name), lookUp(name)]);
+    tried.add(name);
+    busy = false;
+    // redraw controls without wiping the highlights
+    $("s5-add").disabled = diagonalAdded;
+    document.querySelectorAll("#s5-names button").forEach((x) => { x.disabled = false; });
+    const keepCd = $("s5-cd").innerHTML, keepLu = $("s5-lu").innerHTML, keepRect = $("s5-parent").innerHTML;
+    render5();
+    $("s5-cd").innerHTML = keepCd; $("s5-lu").innerHTML = keepLu; $("s5-parent").innerHTML = keepRect;
+  });
+  $("s5-add").addEventListener("click", () => {
+    diagonalAdded = true;
+    $("s5-cd-log").innerHTML = ""; $("s5-lu-log").innerHTML = "";
+    $("s5-cd-stats").innerHTML = ""; $("s5-lu-stats").innerHTML = "";
+    render5();
+  });
+  $("s5-reset").addEventListener("click", () => {
+    if (busy) return;
+    diagonalAdded = false; tried = new Set();
+    $("s5-cd-log").innerHTML = ""; $("s5-lu-log").innerHTML = "";
+    $("s5-cd-stats").innerHTML = ""; $("s5-lu-stats").innerHTML = "";
+    render5();
+  });
+  render5();
+})();
+</script>
+</body>
+</html>
