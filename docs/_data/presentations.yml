@@ -13,25 +13,25 @@
     - name: Cynthia Di
       library: re and string
       video: ""
-    - name: Yuhsiang Wu
-      library: os and sys
-      video: ""
-    - name: Jinqi Liu
-      library: math and random
+    - name: Candace Wade
+      library: unittest and Pytest
       video: ""
 
 - week: 5
   due: Wednesday, October 28, 1:59 PM CT
   bonus: 3
   presenters:
-    - name: Candace Wade
-      library: unittest and Pytest
-      video: ""
     - name: Aurora Liu
       library: NumPy and Pandas
       video: ""
     - name: Cindy Yao
       library: scikit-learn
+      video: ""
+    - name: Yuhsiang Wu
+      library: os and sys
+      video: ""
+    - name: Jinqi Liu
+      library: math and random
       video: ""
 
 - week: 6
