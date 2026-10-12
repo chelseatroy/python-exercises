@@ -77,7 +77,7 @@ async function callApi(options) {
 }
 
 // A plain-string body goes out as text/plain, which skips the CORS preflight
-// request that Apps Script can't answer.
+// request.
 function submitVote(pollId, choice) {
   return callApi({ method: "POST", body: JSON.stringify({ poll: pollId, voter: voterId, choice }) });
 }

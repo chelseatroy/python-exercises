@@ -83,32 +83,56 @@ python3 tools/build_downloads.py --check  # only reports; exits 1 if something i
 
 The list of downloads and where each comes from is `DOWNLOADS` at the top of `tools/build_downloads.py`. Zips include only files tracked by git, without Jupyter checkpoints or `__pycache__`.
 
+## Class Backend (Cloudflare)
+
+The pages that collect answers from students (the intro polls and the list resize board) share one small backend in `backend/`. It's a Cloudflare Worker with a D1 database, on Cloudflare's free plan, served at https://python-exercises-backend.chelseatroy.workers.dev/. The pages read that URL from `docs/s1_polls/config.js`.
+
+- Code: `backend/src/index.js`
+- Database tables: `backend/migrations/`. To change a table, add a new numbered `.sql` file rather than editing an old one.
+- Config: `backend/wrangler.jsonc`
+
+### Deploying
+
+Pushing a change under `backend/` to `main` on this repo deploys it, through `.github/workflows/deploy-backend.yml`. That workflow applies any new migrations and then deploys the Worker. It uses two repository secrets: `CLOUDFLARE_API_TOKEN` (a Cloudflare API token from the "Edit Cloudflare Workers" template, plus D1 Write) and `CLOUDFLARE_ACCOUNT_ID`. You can also run it by hand from the Actions tab.
+
+To deploy from your own machine instead, run `npx wrangler login` once, then from `backend/`:
+
+```
+npx wrangler d1 migrations apply python-exercises-backend --remote
+npx wrangler deploy
+```
+
+### Trying changes locally
+
+From `backend/`, run `npx wrangler d1 migrations apply python-exercises-backend --local` once, then `npx wrangler dev`. That serves the Worker at http://localhost:8787/ with a local copy of the database. To point the pages at it, change the URL in `docs/s1_polls/config.js` (don't commit that change).
+
+### Looking at or clearing data
+
+Use the D1 console in the Cloudflare dashboard (**Storage & Databases > D1 > python-exercises-backend > Console**), or run SQL from `backend/`:
+
+```
+npx wrangler d1 execute python-exercises-backend --remote --command "SELECT * FROM votes"
+npx wrangler d1 execute python-exercises-backend --remote --command "DELETE FROM resize"
+```
+
+### Free plan limits
+
+The free plan allows 100,000 requests a day, plus 5 million database rows read and 100,000 written. The pages re-fetch every 5 seconds while open, so a full class uses a good share of the request limit in a session. Each Worker instance reuses what it last read from the database for 3 seconds, which keeps rows read well under the limit. Going over a limit makes requests fail until midnight UTC; it never charges you.
+
 ## Intro Examples Polls (GitHub Pages)
 
-`docs/s1_polls/` holds a one-page poll site for the Session 1 intro examples (`s1_Intro_Examples.ipynb`). Students answer each poll, and only after answering can they open that poll's results. Votes are stored in a Google Sheet through a small Apps Script web app (`polls-backend.gs`). Only votes from the last 24 hours count, so the page resets itself between quarters.
+`docs/s1_polls/` holds a one-page poll site for the Session 1 intro examples (`s1_Intro_Examples.ipynb`). Students answer each poll, and only after answering can they open that poll's results. Votes are stored by the class backend (above). Only votes from the last 24 hours count, so the page resets itself between quarters. It's served at https://chelseatroy.github.io/python-exercises/s1_polls/s1_polls.html.
 
 - Questions and answer choices: `docs/s1_polls/polls.js`
-- Backend script: `polls-backend.gs`
 - Backend URL: `docs/s1_polls/config.js`
-
-### One-time setup
-
-1. Create a new Google Sheet (any name). Open **Extensions > Apps Script**.
-2. Replace the contents of `Code.gs` with `polls-backend.gs` from this repo, and save.
-3. Click **Deploy > New deployment**. Under *Select type*, choose **Web app**. Set *Execute as* to **Me** and *Who has access* to **Anyone**. Click **Deploy** and approve the permission prompts. Google warns that the app is unverified because you wrote it yourself: choose *Advanced > Go to (project name)*.
-4. Copy the web app URL (it ends in `/exec`) into `docs/s1_polls/config.js` and commit.
-5. On GitHub: **Settings > Pages > Build and deployment**, choose *Deploy from a branch*, branch `main`, folder `/docs`.
-
-The poll page is served at https://chelseatroy.github.io/python-exercises/s1_polls/s1_polls.html.
-
-If you change `polls-backend.gs` later, paste it in again and use **Deploy > Manage deployments > Edit > Version: New version**. That keeps the same URL. A *New deployment* gets a new URL.
 
 ### How it works
 
-- Each browser gets a random id in `localStorage`. The script accepts one vote per id per poll per 24 hours. If the same id votes again, it gets back its original answer.
-- Votes are rows on the sheet's `votes` tab. The first vote creates that tab. Votes older than 24 hours are left out of the results and deleted on the next vote. To clear results by hand, delete every row except the header.
+- Each browser gets a random id in `localStorage`. The backend accepts one vote per id per poll per 24 hours. If the same id votes again, it gets back its original answer.
+- Votes are rows in the `votes` table. Votes older than 24 hours are left out of the results and deleted on the next vote.
 - While a poll's results are open, the page re-fetches the counts every 5 seconds.
 
+`polls-backend.gs` is the earlier Google Sheets version of the backend. It isn't used anymore.
 
 ## Binary Envelopes Demo (GitHub Pages)
 
@@ -134,16 +158,11 @@ An interactive page for Session 3 showing how a CPython list stores pointers in 
 A shared board for the Session 3 list experiment. Students submit the lengths and `sys.getsizeof` values they measured, along with the element type, how they built the list, and their Python version. The page overlays everyone's results and groups the ones that follow the same pattern. It's served at https://chelseatroy.github.io/python-exercises/s3_resize_board/s3_resize_board.html. Add `?demo` to the URL to try it with made-up results; nothing is saved in demo mode.
 
 - The page: `docs/s3_resize_board/s3_resize_board.html` and `docs/s3_resize_board/board.js`
-- Backend: the same Apps Script web app as the polls (`polls-backend.gs`). Requests marked `board=resize` go to the handlers at the bottom of that file, and submissions are stored on the sheet's `resize` tab.
-- Backend URL: shared with the polls, in `docs/s1_polls/config.js`
-
-### Setup
-
-The board needs the updated `polls-backend.gs`. Paste it into the Apps Script project, save, and use **Deploy > Manage deployments > Edit > Version: New version**. The URL stays the same, so nothing else changes. The first submission creates the `resize` tab.
+- Backend: the class backend (above). Requests marked `board=resize` go to the handlers at the bottom of `backend/src/index.js`, and submissions are stored in the `resize` table.
 
 ### How it works
 
-- Like poll votes, submissions count for 24 hours and are then deleted. To clear the board by hand, delete every row of the `resize` tab except the header.
+- Like poll votes, submissions count for 24 hours and are then deleted. To clear the board by hand, delete the rows of the `resize` table (see "Looking at or clearing data" above).
 - Each browser can make up to 12 submissions in 24 hours, and can remove its own. Browser ids stay on the server, so nobody can remove someone else's submission.
 - The page re-fetches results every 5 seconds while it's open.
 

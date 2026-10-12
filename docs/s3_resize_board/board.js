@@ -86,7 +86,7 @@ function fetchSubmissions() {
 }
 
 // A plain-string body goes out as text/plain, which skips the CORS preflight
-// request that Apps Script can't answer.
+// request.
 function postToBoard(body) {
   if (DEMO) return demoBackend.post(body);
   return callApi(POLL_API_URL, { method: "POST", body: JSON.stringify({ board: "resize", voter: voterId, ...body }) });
