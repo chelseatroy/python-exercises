@@ -122,3 +122,28 @@ An interactive page for Session 1 that uses a bank teller's envelopes to show wh
 A bonus page for Session 1 showing how ENIAC stored each decimal digit in a ring of 10 flip-flops, and how many of those switches' patterns go unused compared to binary. It's served at https://chelseatroy.github.io/python-exercises/s1_eniac_demo/s1_eniac_demo.html.
 
 - The page: `docs/s1_eniac_demo/s1_eniac_demo.html` (one self-contained file)
+
+## The Growing List (GitHub Pages)
+
+An interactive page for Session 3 showing how a CPython list stores pointers in a separate block of slots, and how that block grows and shrinks. You can switch between the resize rules from CPython 3.8 and earlier, 3.9 through 3.15.0, the newest change (gh-158592, October 2026), and a hypothetical list with no spare room. It's served at https://chelseatroy.github.io/python-exercises/s3_list_resize/s3_list_resize.html.
+
+- The page: `docs/s3_list_resize/s3_list_resize.html` (one self-contained file)
+
+## List Resize Board (GitHub Pages)
+
+A shared board for the Session 3 list experiment. Students submit the lengths and `sys.getsizeof` values they measured, along with the element type, how they built the list, and their Python version. The page overlays everyone's results and groups the ones that follow the same pattern. It's served at https://chelseatroy.github.io/python-exercises/s3_resize_board/s3_resize_board.html. Add `?demo` to the URL to try it with made-up results; nothing is saved in demo mode.
+
+- The page: `docs/s3_resize_board/s3_resize_board.html` and `docs/s3_resize_board/board.js`
+- Backend: the same Apps Script web app as the polls (`polls-backend.gs`). Requests marked `board=resize` go to the handlers at the bottom of that file, and submissions are stored on the sheet's `resize` tab.
+- Backend URL: shared with the polls, in `docs/s1_polls/config.js`
+
+### Setup
+
+The board needs the updated `polls-backend.gs`. Paste it into the Apps Script project, save, and use **Deploy > Manage deployments > Edit > Version: New version**. The URL stays the same, so nothing else changes. The first submission creates the `resize` tab.
+
+### How it works
+
+- Like poll votes, submissions count for 24 hours and are then deleted. To clear the board by hand, delete every row of the `resize` tab except the header.
+- Each browser can make up to 12 submissions in 24 hours, and can remove its own. Browser ids stay on the server, so nobody can remove someone else's submission.
+- The page re-fetches results every 5 seconds while it's open.
+

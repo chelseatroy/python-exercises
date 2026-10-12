@@ -1,0 +1,976 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Growing List</title>
+<style>
+  :root {
+    --ground: #F6F1E7;
+    --surface: #FFFDF8;
+    --ink: #1F1B2D;
+    --muted: #6A6377;
+    --line: #E0D8C8;
+    --accent: #3B5BDB;
+    --accent-ink: #FFFFFF;
+    --tag: #F2C14E;
+    --tag-edge: #C99A1E;
+    --tag-ink: #3A2A00;
+    --hit: #2B8A3E;
+    --clash: #D9480F;
+    --machine: #2B2540;
+    --machine-ink: #F6F1E7;
+    --machine-muted: #B9B2CC;
+    --slot: #EDE6D8;
+    --obj: #DCE4FB;
+    --obj-edge: #7B8FD6;
+    --display: Georgia, "Times New Roman", serif;
+    --body: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #15131C;
+      --surface: #1E1B28;
+      --ink: #ECE8F4;
+      --muted: #A49DB3;
+      --line: #34303F;
+      --accent: #7C93F5;
+      --accent-ink: #0F1020;
+      --tag: #D9AA3A;
+      --tag-edge: #A97F1C;
+      --tag-ink: #241A00;
+      --hit: #51CF66;
+      --clash: #FF8A4C;
+      --machine: #0D0B14;
+      --machine-ink: #ECE8F4;
+      --machine-muted: #8F88A3;
+      --slot: #2A2636;
+      --obj: #27304F;
+      --obj-edge: #6F86E0;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #15131C;
+    --surface: #1E1B28;
+    --ink: #ECE8F4;
+    --muted: #A49DB3;
+    --line: #34303F;
+    --accent: #7C93F5;
+    --accent-ink: #0F1020;
+    --tag: #D9AA3A;
+    --tag-edge: #A97F1C;
+    --tag-ink: #241A00;
+    --hit: #51CF66;
+    --clash: #FF8A4C;
+    --machine: #0D0B14;
+    --machine-ink: #ECE8F4;
+    --machine-muted: #8F88A3;
+    --slot: #2A2636;
+    --obj: #27304F;
+    --obj-edge: #6F86E0;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 16px/1.55 var(--body);
+  }
+  .page {
+    padding-inline: clamp(16px, 4vw, 72px);
+    padding-block: 40px 72px;
+    display: grid;
+    gap: 44px;
+  }
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.3rem, 7vw, 3.6rem); line-height: 1.02; }
+  h2 { font-size: 1.7rem; line-height: 1.15; }
+  h3 { font-size: 1.25rem; line-height: 1.2; }
+  p { margin: 0; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); }
+  code { font-family: var(--mono); font-size: 0.92em; }
+  .label {
+    font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase;
+    font-weight: 700; color: var(--muted);
+  }
+  section { display: grid; gap: 16px; }
+  header { display: grid; gap: 14px; }
+  .lede { font-size: 1.15rem; max-width: 70ch; }
+
+  button { font: inherit; color: inherit; }
+  button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+  .seg button, .btn {
+    font: 600 0.9rem var(--body); cursor: pointer;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    border-radius: 999px; padding: 6px 13px;
+  }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+  .btn:hover, .seg button:hover { border-color: var(--muted); }
+  .btn code { font-size: 0.85rem; }
+  .primary {
+    font: 700 0.95rem var(--body); cursor: pointer;
+    background: var(--accent); color: var(--accent-ink);
+    border: 0; border-radius: 999px; padding: 8px 18px;
+  }
+  .primary:disabled, .btn:disabled, .seg button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px; display: grid; gap: 12px; align-content: start;
+  }
+
+  .experiments { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .exp {
+    text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--surface);
+    border-radius: 12px; padding: 12px 14px; display: grid; gap: 2px;
+  }
+  .exp:hover { border-color: var(--accent); }
+  .exp:disabled { cursor: progress; opacity: 0.6; }
+  .exp b { font-family: var(--display); font-weight: 400; font-size: 1.1rem; }
+  .exp span { font-size: 0.85rem; color: var(--muted); }
+  .mission {
+    background: var(--machine); color: var(--machine-ink); border-radius: 12px; padding: 12px 16px;
+    font-size: 0.95rem;
+  }
+  .mission:empty { display: none; }
+  .mission strong { color: var(--tag); }
+  .mission code { color: var(--tag); }
+
+  .toolbar { gap: 14px; }
+  .tool-row { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: start; }
+  .stage { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px; overflow-x: auto; }
+  #mem { width: 100%; max-width: 1100px; min-width: 560px; height: auto; display: block; margin-inline: auto; }
+  .below { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr); gap: 16px; align-items: start; }
+  .below .code-panel { grid-column: 1 / -1; }
+  @media (max-width: 640px) { .below { grid-template-columns: minmax(0, 1fr); } }
+  #mem text { font-family: var(--mono); }
+  .settings { display: grid; gap: 12px; }
+  .setting { display: grid; gap: 5px; }
+  .setting[hidden] { display: none; }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* memory picture */
+  .name-box { fill: var(--machine); }
+  .name-txt { fill: var(--machine-ink); font-size: 17px; font-weight: 700; }
+  .hdr { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+  .hdr-title { fill: var(--muted); font-size: 11px; }
+  .hdr-key { fill: var(--muted); font-size: 12.5px; }
+  .hdr-val { fill: var(--ink); font-size: 13.5px; font-weight: 700; }
+  .hdr-val.flash { animation: flash 1.4s ease; }
+  .ref { fill: none; stroke: var(--ink); stroke-width: 1.8; }
+  .ref.item { stroke: var(--obj-edge); stroke-width: 1.2; opacity: 0.45; }
+  .ref.item.hot { opacity: 1; stroke-width: 2.2; }
+  .slot { fill: var(--slot); stroke: var(--line); stroke-width: 1.5; }
+  .slot.full { fill: var(--tag); stroke: var(--tag-edge); }
+  .slot.fresh { animation: pop 0.35s ease; transform-box: fill-box; transform-origin: center; }
+  .slot-idx { fill: var(--muted); font-size: 9.5px; }
+  .slot-dot { fill: var(--tag-ink); }
+  .block-frame { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 4; }
+  .block-frame.moving { stroke: var(--clash); stroke-width: 2.5; stroke-dasharray: none; }
+  .block-cap { fill: var(--muted); font-size: 11px; }
+  .block-cap.moving { fill: var(--clash); font-weight: 700; }
+  .ghost rect { fill: none; stroke: var(--clash); stroke-dasharray: 4 3; }
+  .ghost text { fill: var(--clash); font-size: 11px; font-weight: 700; }
+  .ghost { animation: fade 1.6s ease forwards; }
+  .heap-frame { fill: none; stroke: var(--line); stroke-width: 1.5; }
+  .heap-cap { fill: var(--muted); font-size: 11px; }
+  .obj rect { fill: var(--obj); stroke: var(--obj-edge); stroke-width: 1.3; }
+  .obj .v { fill: var(--ink); font-size: 12px; font-weight: 700; }
+  .obj .b { fill: var(--muted); font-size: 9.5px; }
+  .obj.fresh { animation: pop 0.35s ease; transform-box: fill-box; transform-origin: center; }
+  .obj.hot rect { stroke-width: 2.6; }
+
+  .log {
+    margin: 0; padding: 12px 14px 12px 34px; min-height: 7.5em; max-height: 15em; overflow-y: auto;
+    font: 0.86rem/1.5 var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    display: grid; gap: 3px; align-content: start;
+  }
+  .log li { animation: pop 0.25s ease; }
+  .log li::marker { color: var(--muted); }
+  .log .cmt { color: var(--muted); }
+  .log .good { color: var(--hit); font-weight: 700; }
+  .log .bad { color: var(--clash); font-weight: 700; }
+  .log:empty::before { content: "Steps show up here."; color: var(--muted); margin-left: -20px; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .stat .label { overflow-wrap: anywhere; }
+  .stat { border-top: 2px solid var(--ink); padding-top: 6px; display: grid; gap: 0; }
+  .stat .big { font: 600 1.4rem/1.15 var(--mono); font-variant-numeric: tabular-nums; }
+  .stat .sub { font-size: 0.78rem; color: var(--muted); }
+
+  .code-panel { background: var(--machine); color: var(--machine-ink); border-radius: 12px; padding: 12px 0; overflow-x: auto; }
+  .code-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; padding: 0 16px 8px; font-size: 0.85rem; color: var(--machine-muted); }
+  .code-head a { color: var(--tag); }
+  .code { margin: 0; font: 0.82rem/1.6 var(--mono); }
+  .code .ln { display: grid; grid-template-columns: 3.5em max-content; gap: 0 12px; padding: 0 16px; }
+  .code .ln .note { grid-column: 2; }
+  .code .n { color: var(--machine-muted); text-align: right; user-select: none; }
+  .code .t { white-space: pre; }
+  .code .note { color: var(--tag); font-weight: 700; white-space: pre; }
+  .code .ln.hot { background: color-mix(in oklab, var(--tag) 22%, transparent); }
+  .code .ln.cmt .t { color: var(--machine-muted); }
+
+  #stair { width: 100%; height: auto; display: block; }
+  #stair text { font-family: var(--mono); fill: var(--muted); font-size: 11px; }
+  #stair .grid { stroke: var(--line); stroke-width: 1; }
+  #stair .path { fill: none; stroke: var(--accent); stroke-width: 2; }
+  #stair .now { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.84rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; border: 2px solid transparent; }
+
+  .reveal { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+  .reveal summary { cursor: pointer; padding: 16px 20px; display: grid; gap: 2px; list-style: none; }
+  .reveal summary::-webkit-details-marker { display: none; }
+  .reveal summary h3::before { content: "▸ "; color: var(--accent); }
+  .reveal[open] summary h3::before { content: "▾ "; }
+  .reveal .body { padding: 0 20px 18px; display: grid; gap: 10px; max-width: 75ch; }
+  .reveal pre { margin: 0; padding: 12px 14px; background: var(--slot); border-radius: 8px; overflow-x: auto; font: 0.86rem/1.5 var(--mono); }
+  .board-link { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+  .board-link .primary { text-decoration: none; display: inline-block; }
+
+  @keyframes pop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: none; } }
+  @keyframes fade { 0%, 45% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes flash { 0%, 50% { fill: var(--clash); } 100% { } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header>
+    <div class="label">Session 3 · How a list works under the hood</div>
+    <h1>The Growing List</h1>
+    <p class="lede">A Python list is two things: a small <strong>header</strong> that every name points to, and a separate <strong>block of slots</strong> that the header points to. Each slot holds a pointer to an object, never the object itself. When the block runs out of slots, CPython gets a bigger block. What happens to the names when it does?</p>
+  </header>
+
+  <section aria-labelledby="mem-h">
+    <h2 id="mem-h">Inside a list</h2>
+    <p class="muted">Pick an experiment, or use the buttons to append and pop on your own. Watch <code>allocated</code> (how many slots the block has) and <code>sys.getsizeof(a)</code>.</p>
+
+    <div class="experiments" id="experiments">
+      <button class="exp" type="button" data-exp="fill"><b>Fill it up</b><span>Append 17 ints and count the jumps</span></button>
+      <button class="exp" type="button" data-exp="types"><b>Does the type matter?</b><span>An int, a str, None, a list, a huge str</span></button>
+      <button class="exp" type="button" data-exp="alias"><b>Two names, one list</b><span><code>b = a</code>, then grow it through <code>b</code></span></button>
+      <button class="exp" type="button" data-exp="copy"><b>A copy is a new list</b><span><code>c = a.copy()</code>, then grow <code>c</code></span></button>
+      <button class="exp" type="button" data-exp="shrink"><b>Pop below half</b><span>When does the block shrink?</span></button>
+      <button class="exp" type="button" data-exp="exact"><b>No spare room</b><span>What if lists never over-allocated?</span></button>
+    </div>
+    <div class="mission" id="mission" aria-live="polite"></div>
+
+    <div class="toolbar card">
+      <div class="tool-row">
+        <div class="setting" id="target-setting" hidden>
+          <span class="label">Run it through</span>
+          <div class="seg" id="target" role="group" aria-label="Which name to use"></div>
+        </div>
+        <div class="setting">
+          <span class="label">Do</span>
+          <div class="actions">
+            <button class="primary" type="button" id="append">append</button>
+            <button class="btn" type="button" id="append8">append ×8</button>
+            <button class="btn" type="button" id="pop">pop</button>
+            <button class="btn" type="button" id="alias">b = a</button>
+            <button class="btn" type="button" id="copy">c = a.copy()</button>
+            <button class="btn" type="button" id="reset">Start over</button>
+          </div>
+        </div>
+        <div class="setting">
+          <span class="label">Append what?</span>
+          <div class="seg" id="kind" role="group" aria-label="What to append">
+            <button type="button" data-v="int" aria-pressed="true">an int</button>
+            <button type="button" data-v="str" aria-pressed="false">a str</button>
+            <button type="button" data-v="none" aria-pressed="false">None</button>
+            <button type="button" data-v="list" aria-pressed="false">a list</button>
+            <button type="button" data-v="big" aria-pressed="false">a 500-char str</button>
+          </div>
+        </div>
+      </div>
+      <div class="tool-row">
+        <div class="setting">
+          <span class="label">Resize rules from…</span>
+          <div class="seg" id="rules" role="group" aria-label="Which CPython resize rules to use">
+            <button type="button" data-v="old" aria-pressed="false">CPython ≤ 3.8</button>
+            <button type="button" data-v="modern" aria-pressed="true">3.9 – 3.15.0</button>
+            <button type="button" data-v="newest" aria-pressed="false">newest (Oct 2026)</button>
+            <button type="button" data-v="exact" aria-pressed="false">no spare room</button>
+          </div>
+        </div>
+        <div class="setting">
+          <span class="label">Animation</span>
+          <div class="seg" id="speed" role="group" aria-label="Animation speed">
+            <button type="button" data-v="1.7" aria-pressed="false">slow</button>
+            <button type="button" data-v="1" aria-pressed="true">normal</button>
+            <button type="button" data-v="0.35" aria-pressed="false">fast</button>
+            <button type="button" data-v="0" aria-pressed="false">off</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <svg id="mem" viewBox="0 0 760 400" role="img" aria-label="Names pointing to list headers, each header pointing to a block of slots, each slot pointing to an object"></svg>
+    </div>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--machine)"></span>a name</span>
+      <span><span class="sw" style="background:var(--surface);border-color:var(--ink)"></span>list header (<code>PyListObject</code>)</span>
+      <span><span class="sw" style="background:var(--tag);border-color:var(--tag-edge)"></span>slot in use (8 bytes)</span>
+      <span><span class="sw" style="background:var(--slot);border-color:var(--line)"></span>spare slot</span>
+      <span><span class="sw" style="background:var(--obj);border-color:var(--obj-edge)"></span>object</span>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="below">
+      <div class="code-panel" aria-live="polite">
+        <div class="code-head"><span id="code-title"></span><a id="code-link" target="_blank" rel="noopener">view on GitHub</a></div>
+        <div class="code" id="code"></div>
+      </div>
+      <ol class="log" id="log" aria-live="polite"></ol>
+      <div class="card">
+        <span class="label">sys.getsizeof(a) as a changes</span>
+        <svg id="stair" viewBox="0 0 320 150" role="img" aria-label="Staircase of sys.getsizeof against len for the list a"></svg>
+      </div>
+    </div>
+    <p class="muted" style="font-size:0.85rem;max-width:80ch"><code>sys.getsizeof</code> here is 56 bytes for the header plus 8 bytes per slot, which is what a 64-bit CPython 3.8 or newer reports. It counts the slots, not the objects they point to. Addresses are made up, but they change when real ones would.</p>
+  </section>
+
+  <section aria-labelledby="why-h">
+    <h2 id="why-h">Questions to argue about</h2>
+
+    <details class="reveal">
+      <summary><h3>Why not grow by exactly one slot each time?</h3><span class="muted">Guess first. Then try "No spare room" and watch <em>pointers copied</em>.</span></summary>
+      <div class="body">
+        <p>Every time the block moves, every pointer in it gets copied to the new block. If the list grew by exactly one slot per append, appending item number <em>n</em> would copy <em>n − 1</em> pointers. Building a list of 1,000 items that way copies about 500,000 pointers.</p>
+        <p>Growing by about one eighth plus a little (CPython's rule) means the moves get rarer as the list gets longer. The total copying stays proportional to the length of the list, so each append costs a constant amount <em>on average</em>. That's what "amortized O(1)" means.</p>
+        <p>The price is space: about one slot in nine can sit empty. That's the same space-for-speed trade as caching.</p>
+      </div>
+    </details>
+
+    <details class="reveal">
+      <summary><h3>Why wait until the list is half empty to shrink?</h3><span class="muted">Look at the check on line 44 of the code your instructor links, then try "Pop below half".</span></summary>
+      <div class="body">
+        <p>The check is <code>allocated >= newsize &amp;&amp; newsize >= (allocated >> 1)</code>: "there's already room, and we're still using at least half of it." When that's true, CPython only changes the length. Nothing moves.</p>
+        <p>Imagine shrinking as soon as there was <em>any</em> spare room instead. A list sitting right at a boundary that alternates <code>append</code>, <code>pop</code>, <code>append</code>, <code>pop</code> would move its whole block on every single call. Waiting until it's half empty leaves a wide gap between "grow" and "shrink", so that back-and-forth costs nothing.</p>
+        <p>Since October 2026 (gh-158592), CPython also never shrinks a block of 32 slots or fewer. Moving a small block costs more than the memory it gives back. Switch the rules to "newest" and pop again.</p>
+      </div>
+    </details>
+
+    <details class="reveal">
+      <summary><h3>The growth pattern changed. When, and why?</h3><span class="muted">Compare "CPython ≤ 3.8" with "3.9 – 3.15.0" after filling to 30.</span></summary>
+      <div class="body">
+        <p>The code linked from class is from 2018. Its comment says the growth pattern is <code>0, 4, 8, 16, 25, 35, 46, 58, 72, 88</code>. Run the experiment on a current Python and you'll get <code>0, 4, 8, 16, 24, 32, 40, 52, 64, 76</code>. Somebody changed it. The commit history can tell you who, when, and why:</p>
+        <pre>git log -L:list_resize:Objects/listobject.c</pre>
+        <p>The same command, pointed at <code>list_sort_impl</code>, is how we'll look at sorting next.</p>
+      </div>
+    </details>
+  </section>
+
+  <section aria-labelledby="board-h">
+    <h2 id="board-h">Now measure a real one</h2>
+    <div class="board-link">
+      <p class="muted" style="max-width:60ch">Write your own experiment in Python with <code>sys.getsizeof</code>. Try a different element type than your neighbor, or a different way of building the list. Then put your numbers on the class board.</p>
+      <a class="primary" href="../s3_resize_board/s3_resize_board.html">Open the resize board</a>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const HEADER_BYTES = 56;
+  const SLOT_BYTES = 8;
+  const MAX_LEN = 40;
+  const COLS = 12;
+
+  // ---------- resize rules ----------
+  // Each rule mirrors one version of list_resize() in Objects/listobject.c.
+  const RULES = {
+    old: {
+      title: "CPython ≤ 3.8: list_resize()",
+      link: "https://github.com/python/cpython/blob/e42b705188271da108de42b55d9344642170aa2b/Objects/listobject.c#L44-L59",
+      lines: [
+        [33, "static int"],
+        [34, "list_resize(PyListObject *self, Py_ssize_t newsize)"],
+        [44, "if (allocated >= newsize && newsize >= (allocated >> 1)) {", "check"],
+        [46, "    Py_SIZE(self) = newsize;"],
+        [47, "    return 0;"],
+        [48, "}"],
+        [59, "new_allocated = newsize + (newsize >> 3) + (newsize < 9 ? 3 : 6);", "grow"],
+        [65, "if (newsize == 0) new_allocated = 0;", "zero"],
+        [68, "items = PyMem_Realloc(self->ob_item, num_allocated_bytes);", "move"],
+      ],
+      fits: (alloc, n) => alloc >= n && n >= (alloc >> 1),
+      fitsNote: (alloc, n) => `${alloc} >= ${n} && ${n} >= ${alloc >> 1}`,
+      grow(n) {
+        const extra = n < 9 ? 3 : 6;
+        return { value: n === 0 ? 0 : n + (n >> 3) + extra, note: `${n} + ${n >> 3} + ${extra}` };
+      },
+    },
+    modern: {
+      title: "CPython 3.9 – 3.15.0: list_resize()",
+      link: "https://github.com/python/cpython/blob/v3.15.0/Objects/listobject.c#L113-L175",
+      lines: [
+        [113, "if (allocated >= newsize && newsize >= (allocated >> 1)) {", "check"],
+        [115, "    Py_SET_SIZE(self, newsize);"],
+        [116, "    return 0;"],
+        [117, "}"],
+        [129, "new_allocated = ((size_t)newsize + (newsize >> 3) + 6) & ~(size_t)3;", "grow"],
+        [136, "if (newsize == 0) new_allocated = 0;", "zero"],
+        [175, "items = PyMem_Realloc(self->ob_item, target_bytes);", "move"],
+      ],
+      fits: (alloc, n) => alloc >= n && n >= (alloc >> 1),
+      fitsNote: (alloc, n) => `${alloc} >= ${n} && ${n} >= ${alloc >> 1}`,
+      grow(n) {
+        const raw = n + (n >> 3) + 6;
+        return { value: n === 0 ? 0 : raw & ~3, note: `(${n} + ${n >> 3} + 6) & ~3  →  ${raw} & ~3` };
+      },
+    },
+    newest: {
+      title: "CPython main, Oct 2026 (gh-158592): list_resize()",
+      link: "https://github.com/python/cpython/blob/0babcdd54775bd1cc6bc745767c13d5baa3aedcc/Objects/listobject.c#L111-L156",
+      lines: [
+        [94, "#define LIST_SMALL_ALLOCATED 32", "cmt"],
+        [121, "if (allocated >= newsize", "check"],
+        [122, "    && (newsize >= (allocated >> 1) || allocated <= LIST_SMALL_ALLOCATED))", "check2"],
+        [125, "    Py_SET_SIZE(self, newsize);"],
+        [126, "    return 0;"],
+        [148, "new_allocated = ((size_t)newsize + (newsize >> 3) + 6) & ~(size_t)3;", "grow"],
+        [155, "if (newsize == 0) new_allocated = 0;", "zero"],
+      ],
+      fits: (alloc, n) => alloc >= n && (n >= (alloc >> 1) || alloc <= 32),
+      fitsNote: (alloc, n) => `${alloc} >= ${n} && (${n} >= ${alloc >> 1} || ${alloc} <= 32)`,
+      grow(n) {
+        const raw = n + (n >> 3) + 6;
+        return { value: n === 0 ? 0 : raw & ~3, note: `(${n} + ${n >> 3} + 6) & ~3  →  ${raw} & ~3` };
+      },
+    },
+    exact: {
+      title: "Hypothetical: never over-allocate",
+      link: null,
+      lines: [
+        [1, "// not real CPython: what if a list kept no spare room?", "cmt"],
+        [2, "if (allocated == newsize) {", "check"],
+        [3, "    Py_SET_SIZE(self, newsize);"],
+        [4, "    return 0;"],
+        [5, "}"],
+        [6, "new_allocated = newsize;", "grow"],
+        [7, "items = PyMem_Realloc(self->ob_item, new_allocated * sizeof(PyObject *));", "move"],
+      ],
+      fits: (alloc, n) => alloc === n,
+      fitsNote: (alloc, n) => `${alloc} == ${n}`,
+      grow: (n) => ({ value: n, note: `${n}` }),
+    },
+  };
+
+  // ---------- state ----------
+  let rule = "modern";
+  let speed = 1;
+  let kind = "int";
+  let busy = false;
+  let nextAddr = 0x7f3a2c0010a0;
+  let nextObj = 1;
+  let counters = {};
+  let state, history, stats, hot, notes, codeHot, fresh;
+
+  function addr(bytes) {
+    const a = nextAddr;
+    nextAddr += Math.max(32, bytes) + 0x40;
+    return a;
+  }
+  const hex = (a) => "0x" + a.toString(16);
+  const shortHex = (a) => "0x…" + a.toString(16).slice(-4);
+
+  function reset() {
+    nextAddr = 0x7f3a2c0010a0;
+    nextObj = 1;
+    counters = { int: 0, str: 0, list: 0 };
+    state = {
+      objects: new Map(),
+      lists: new Map([["L1", { id: "L1", hdr: addr(HEADER_BYTES), block: null, allocated: 0, items: [] }]]),
+      names: [{ name: "a", list: "L1" }],
+      ghost: null,
+    };
+    history = [[0, HEADER_BYTES]];
+    stats = { appends: 0, moves: 0, copied: 0 };
+    hot = { obj: null, slot: null, list: null };
+    notes = {};
+    codeHot = null;
+    fresh = { slot: null, obj: null, flash: null };
+    target = "a";
+  }
+
+  function listOf(name) {
+    const entry = state.names.find((n) => n.name === name);
+    return entry ? state.lists.get(entry.list) : null;
+  }
+
+  function makeObject() {
+    const id = "o" + nextObj++;
+    let repr, bytes;
+    if (kind === "int") { counters.int += 1; repr = String(counters.int); bytes = 28; }
+    else if (kind === "str") { repr = "'" + "abcdefghijklmnopqrstuvwxyz"[counters.str++ % 26] + "'"; bytes = 50; }
+    else if (kind === "none") { repr = "None"; bytes = 16; }
+    else if (kind === "list") { counters.list += 1; repr = `[${counters.list}]`; bytes = 64; }
+    else { repr = "'x'*500"; bytes = 549; }
+    // None is a singleton: every None slot points at the same object.
+    if (kind === "none") {
+      for (const o of state.objects.values()) if (o.repr === "None") return o.id;
+    }
+    state.objects.set(id, { id, repr, bytes });
+    return id;
+  }
+
+  function dropUnreferenced() {
+    const used = new Set();
+    for (const l of state.lists.values()) for (const o of l.items) used.add(o);
+    for (const id of [...state.objects.keys()]) if (!used.has(id)) state.objects.delete(id);
+  }
+
+  // ---------- timing ----------
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms * speed));
+  const logEl = document.getElementById("log");
+  function log(html, cls) {
+    const li = document.createElement("li");
+    li.innerHTML = html;
+    if (cls) li.className = cls;
+    logEl.append(li);
+    while (logEl.children.length > 60) logEl.firstChild.remove();
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  // ---------- the resize itself ----------
+  // Returns after animating. `list` is the PyListObject; newsize the length it needs.
+  async function resize(list, newsize, verb) {
+    const R = RULES[rule];
+    const alloc = list.allocated;
+    notes = { check: `${R.fitsNote(alloc, newsize)}  →  ${R.fits(alloc, newsize) ? "yes" : "no"}` };
+    if (rule === "newest") {
+      notes = {
+        check: `${alloc} >= ${newsize}  →  ${alloc >= newsize ? "yes" : "no"}`,
+        check2: `${newsize} >= ${alloc >> 1} || ${alloc} <= 32  →  ${(newsize >= (alloc >> 1) || alloc <= 32) ? "yes" : "no"}`,
+      };
+    }
+    codeHot = rule === "newest" ? ["check", "check2"] : ["check"];
+    render();
+    await sleep(500);
+    if (R.fits(alloc, newsize)) {
+      log(`<span class="cmt"># ${alloc} slots is fine for length ${newsize}: nothing moves</span>`);
+      return;
+    }
+    const g = R.grow(newsize);
+    notes.grow = `${g.note}  =  ${g.value}`;
+    codeHot = ["grow"];
+    render();
+    const growing = g.value > alloc;
+    log(`${growing ? "need more room" : "too much spare room"}: <b>${alloc} → ${g.value}</b> slots`, growing ? "bad" : "good");
+    await sleep(700);
+
+    // realloc(): a new block, the pointers copied over, the old block freed.
+    const oldBlock = list.block;
+    const keep = Math.min(list.items.length, newsize);
+    state.ghost = oldBlock === null ? null : { list: list.id, allocated: alloc, addr: oldBlock };
+    list.allocated = g.value;
+    list.block = g.value === 0 ? null : addr(g.value * SLOT_BYTES);
+    fresh.flash = list.id;
+    // Leave every line that ran highlighted, with its numbers, until the next step.
+    codeHot = ["check", "check2", "grow", "move"];
+    notes.move = oldBlock === null ? "first block" : `moved ${shortHex(oldBlock)} → ${shortHex(list.block || 0)}`;
+    if (oldBlock !== null) {
+      stats.moves += 1;
+      stats.copied += keep;
+      log(`realloc(): copied ${keep} pointer${keep === 1 ? "" : "s"} to ${list.block ? shortHex(list.block) : "nothing"}<span class="cmt">  (the header stays at ${shortHex(list.hdr)})</span>`);
+    } else {
+      log(`<span class="cmt"># first block for this list at ${shortHex(list.block)}</span>`);
+    }
+    render();
+    await sleep(900);
+    state.ghost = null;
+    fresh.flash = null;
+  }
+
+  async function doAppend(name) {
+    const list = listOf(name);
+    if (list.items.length >= MAX_LEN) { log(`<span class="cmt"># stopping at ${MAX_LEN} items so the picture fits</span>`); return; }
+    const obj = makeObject();
+    const o = state.objects.get(obj);
+    log(`<b>${name}.append(${esc(o.repr)})</b>`);
+    await resize(list, list.items.length + 1);
+    list.items.push(obj);
+    stats.appends += 1;
+    fresh = { ...fresh, slot: [list.id, list.items.length - 1], obj };
+    hot = { obj, slot: list.items.length - 1, list: list.id };
+    afterChange();
+    await sleep(350);
+    fresh.slot = null; fresh.obj = null;
+  }
+
+  async function doPop(name) {
+    const list = listOf(name);
+    if (list.items.length === 0) { log(`${name}.pop()  <span class="bad">IndexError: pop from empty list</span>`); return; }
+    const obj = state.objects.get(list.items[list.items.length - 1]);
+    log(`<b>${name}.pop()</b>  <span class="cmt">→ ${esc(obj.repr)}</span>`);
+    list.items.pop();
+    hot = { obj: null, slot: null, list: null };
+    dropUnreferenced();
+    render();
+    await resize(list, list.items.length);
+    afterChange();
+  }
+
+  function afterChange() {
+    const a = listOf("a");
+    const last = history[history.length - 1];
+    const point = [a.items.length, HEADER_BYTES + SLOT_BYTES * a.allocated];
+    if (last[0] !== point[0] || last[1] !== point[1]) history.push(point);
+    render();
+  }
+
+  function doAlias() {
+    if (listOf("b")) return;
+    state.names.splice(1, 0, { name: "b", list: listOf("a").id });
+    log(`<b>b = a</b>  <span class="cmt"># a second name for the same header</span>`);
+    log(`<span class="cmt">id(a) == id(b): both ${shortHex(listOf("a").hdr)}</span>`);
+    afterChange();
+  }
+
+  async function doCopy() {
+    if (listOf("c")) return;
+    const a = listOf("a");
+    // list.copy() makes a slice of the whole list, which allocates exactly len(a) slots.
+    const c = { id: "L2", hdr: addr(HEADER_BYTES), block: a.items.length ? addr(a.items.length * SLOT_BYTES) : null, allocated: a.items.length, items: [...a.items] };
+    state.lists.set(c.id, c);
+    state.names.push({ name: "c", list: c.id });
+    log(`<b>c = a.copy()</b>  <span class="cmt"># a new header and a new block, exactly ${c.allocated} slot${c.allocated === 1 ? "" : "s"}</span>`);
+    log(`<span class="cmt">the slots still point at the same ${a.items.length} object${a.items.length === 1 ? "" : "s"} (a shallow copy)</span>`);
+    fresh.flash = c.id;
+    afterChange();
+    await sleep(900);
+    fresh.flash = null;
+  }
+
+  // ---------- drawing ----------
+  const svg = document.getElementById("mem");
+  const NS = "http://www.w3.org/2000/svg";
+  const SLOT_W = 34, SLOT_H = 30, SLOT_GAP = 4;
+  const SLOTS_X = 282;
+  const HDR_X = 84, HDR_W = 168, HDR_H = 104;
+
+  function render() {
+    const parts = [];
+    let y = 16;
+    const slotPos = new Map(); // "listId:i" -> [x, y]
+    const hdrPos = new Map();
+    const listsInOrder = [];
+    for (const n of state.names) if (!listsInOrder.includes(n.list)) listsInOrder.push(n.list);
+
+    for (const lid of listsInOrder) {
+      const list = state.lists.get(lid);
+      const names = state.names.filter((n) => n.list === lid).map((n) => n.name);
+      const rows = Math.max(1, Math.ceil(Math.max(list.allocated, state.ghost && state.ghost.list === lid ? state.ghost.allocated : 0) / COLS));
+      const blockH = rows * (SLOT_H + SLOT_GAP) - SLOT_GAP;
+      const rowH = Math.max(HDR_H, blockH + 34, names.length * 40 + 10);
+      const hy = y;
+      hdrPos.set(lid, [HDR_X, hy]);
+
+      // names
+      names.forEach((name, i) => {
+        const ny = hy + 10 + i * 40;
+        parts.push(`<rect class="name-box" x="12" y="${ny}" width="40" height="30" rx="7"/>`);
+        parts.push(`<text class="name-txt" x="32" y="${ny + 21}" text-anchor="middle">${name}</text>`);
+        parts.push(`<path class="ref" marker-end="url(#arrow)" d="M52 ${ny + 15} C ${66} ${ny + 15}, ${70} ${hy + 30}, ${HDR_X - 4} ${hy + 30}"/>`);
+      });
+
+      // header
+      const flash = fresh.flash === lid ? " flash" : "";
+      parts.push(`<rect class="hdr" x="${HDR_X}" y="${hy}" width="${HDR_W}" height="${HDR_H}" rx="8"/>`);
+      parts.push(`<text class="hdr-title" x="${HDR_X + 10}" y="${hy + 17}">PyListObject @ ${shortHex(list.hdr)}</text>`);
+      const rowsTxt = [["ob_size", list.items.length, ""], ["allocated", list.allocated, flash], ["ob_item", list.block === null ? "NULL" : shortHex(list.block), flash]];
+      rowsTxt.forEach(([k, v, cls], i) => {
+        const ty = hy + 42 + i * 23;
+        parts.push(`<text class="hdr-key" x="${HDR_X + 10}" y="${ty}">${k}</text>`);
+        parts.push(`<text class="hdr-val${cls}" x="${HDR_X + HDR_W - 10}" y="${ty}" text-anchor="end">${v}</text>`);
+      });
+
+      // block of slots
+      const by = hy + 20;
+      if (list.allocated > 0) {
+        parts.push(`<path class="ref" marker-end="url(#arrow)" d="M${HDR_X + HDR_W - 4} ${hy + 88} C ${HDR_X + HDR_W + 18} ${hy + 88}, ${SLOTS_X - 22} ${by + SLOT_H / 2}, ${SLOTS_X - 8} ${by + SLOT_H / 2}"/>`);
+        const cols = Math.min(COLS, list.allocated);
+        const bw = cols * (SLOT_W + SLOT_GAP) - SLOT_GAP;
+        const bRows = Math.ceil(list.allocated / COLS);
+        const bh = bRows * (SLOT_H + SLOT_GAP) - SLOT_GAP;
+        const moving = fresh.flash === lid ? " moving" : "";
+        parts.push(`<rect class="block-frame${moving}" x="${SLOTS_X - 5}" y="${by - 5}" width="${bw + 10}" height="${bh + 10}" rx="6"/>`);
+        parts.push(`<text class="block-cap${moving}" x="${SLOTS_X - 5}" y="${by - 9}">block @ ${shortHex(list.block)} · ${list.allocated} slots × 8 B = ${list.allocated * 8} B</text>`);
+        for (let i = 0; i < list.allocated; i++) {
+          const sx = SLOTS_X + (i % COLS) * (SLOT_W + SLOT_GAP);
+          const sy = by + Math.floor(i / COLS) * (SLOT_H + SLOT_GAP);
+          const full = i < list.items.length;
+          const isFresh = fresh.slot && fresh.slot[0] === lid && fresh.slot[1] === i;
+          parts.push(`<rect class="slot${full ? " full" : ""}${isFresh ? " fresh" : ""}" data-l="${lid}" data-i="${i}" x="${sx}" y="${sy}" width="${SLOT_W}" height="${SLOT_H}" rx="4"/>`);
+          parts.push(`<text class="slot-idx" x="${sx + 3}" y="${sy + 10}">${i}</text>`);
+          if (full) {
+            parts.push(`<circle class="slot-dot" cx="${sx + SLOT_W / 2}" cy="${sy + SLOT_H / 2 + 3}" r="3.2"/>`);
+            slotPos.set(`${lid}:${i}`, [sx + SLOT_W / 2, sy + SLOT_H / 2 + 3]);
+          }
+        }
+      } else {
+        parts.push(`<text class="block-cap" x="${SLOTS_X - 5}" y="${by + 18}">ob_item = NULL: no block yet (an empty list has 0 slots)</text>`);
+      }
+      if (state.ghost && state.ghost.list === lid && state.ghost.allocated > 0) {
+        const gcols = Math.min(COLS, state.ghost.allocated);
+        const gw = gcols * (SLOT_W + SLOT_GAP) - SLOT_GAP;
+        const gh = Math.ceil(state.ghost.allocated / COLS) * (SLOT_H + SLOT_GAP) - SLOT_GAP;
+        parts.push(`<g class="ghost"><rect x="${SLOTS_X - 9}" y="${by - 9}" width="${gw + 18}" height="${gh + 18}" rx="8"/><text x="${SLOTS_X + gw + 14}" y="${by + 12}">old block ${shortHex(state.ghost.addr)}</text><text x="${SLOTS_X + gw + 14}" y="${by + 26}">freed</text></g>`);
+      }
+      y += rowH + 22;
+    }
+
+    // heap of objects
+    const heapY = y + 6;
+    parts.push(`<text class="heap-cap" x="12" y="${heapY - 6}">objects (elsewhere in memory)</text>`);
+    let hx = 18, hy = heapY + 10, lineH = 40;
+    const objPos = new Map();
+    const objs = [...state.objects.values()];
+    for (const o of objs) {
+      const w = Math.max(48, o.repr.length * 8 + 18);
+      if (hx + w > 744) { hx = 18; hy += lineH; }
+      objPos.set(o.id, [hx, hy, w]);
+      hx += w + 8;
+    }
+    const heapH = (objs.length ? hy - heapY + lineH : 34);
+    parts.push(`<rect class="heap-frame" x="8" y="${heapY}" width="744" height="${heapH}" rx="10"/>`);
+    if (!objs.length) parts.push(`<text class="heap-cap" x="20" y="${heapY + 22}">(none yet)</text>`);
+
+    // pointers from slots to objects, drawn under the objects
+    const refs = [];
+    for (const lid of listsInOrder) {
+      const list = state.lists.get(lid);
+      list.items.forEach((oid, i) => {
+        const s = slotPos.get(`${lid}:${i}`);
+        const p = objPos.get(oid);
+        if (!s || !p) return;
+        const tx = p[0] + p[2] / 2, ty = p[1];
+        const isHot = hot.obj === oid;
+        refs.push(`<path class="ref item${isHot ? " hot" : ""}" d="M${s[0]} ${s[1]} C ${s[0]} ${s[1] + 60}, ${tx} ${ty - 50}, ${tx} ${ty}"/>`);
+      });
+    }
+    parts.push(...refs);
+    for (const o of objs) {
+      const [ox, oy, w] = objPos.get(o.id);
+      const cls = `obj${fresh.obj === o.id ? " fresh" : ""}${hot.obj === o.id ? " hot" : ""}`;
+      parts.push(`<g class="${cls}"><rect x="${ox}" y="${oy}" width="${w}" height="32" rx="6"/><text class="v" x="${ox + w / 2}" y="${oy + 15}" text-anchor="middle">${esc(o.repr)}</text><text class="b" x="${ox + w / 2}" y="${oy + 27}" text-anchor="middle">${o.bytes} B</text></g>`);
+    }
+
+    const height = heapY + heapH + 12;
+    svg.setAttribute("viewBox", `0 0 760 ${height}`);
+    svg.innerHTML = `<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor" style="fill:var(--ink)"/></marker></defs>` + parts.join("");
+
+    renderStats();
+    renderCode();
+    renderStair();
+    renderTargets();
+    renderButtons();
+  }
+
+  function renderStats() {
+    const a = listOf("a");
+    const items = [
+      ["len(a)", a.items.length, ""],
+      ["allocated", a.allocated, `${a.allocated - a.items.length} spare`],
+      ["sys.getsizeof(a)", HEADER_BYTES + SLOT_BYTES * a.allocated, "56 + 8 × allocated"],
+      ["block moves", stats.moves, "realloc() calls"],
+      ["pointers copied", stats.copied, stats.appends ? `${(stats.copied / stats.appends).toFixed(2)} per append` : "—"],
+    ];
+    document.getElementById("stats").innerHTML = items.map(([k, v, sub]) =>
+      `<div class="stat"><span class="label">${k}</span><span class="big">${v}</span><span class="sub">${sub}</span></div>`).join("");
+  }
+
+  function renderCode() {
+    const R = RULES[rule];
+    document.getElementById("code-title").textContent = R.title;
+    const link = document.getElementById("code-link");
+    if (R.link) { link.href = R.link; link.hidden = false; } else link.hidden = true;
+    document.getElementById("code").innerHTML = R.lines.map(([n, text, key]) => {
+      const isHot = key && codeHot && codeHot.includes(key);
+      const note = key && notes[key] && isHot ? notes[key] : "";
+      return `<div class="ln${isHot ? " hot" : ""}${key === "cmt" ? " cmt" : ""}"><span class="n">${n}</span><span class="t">${esc(text)}</span>${note ? `<span class="note">// ${esc(note)}</span>` : ""}</div>`;
+    }).join("");
+  }
+
+  function renderStair() {
+    const el = document.getElementById("stair");
+    const W = 320, H = 150, L = 40, B = 22, T = 8, Rm = 8;
+    const maxX = Math.max(20, ...history.map((p) => p[0]));
+    const maxY = Math.max(HEADER_BYTES + 8 * 24, ...history.map((p) => p[1]));
+    const sx = (x) => L + (x / maxX) * (W - L - Rm);
+    const sy = (y) => H - B - ((y - HEADER_BYTES) / (maxY - HEADER_BYTES)) * (H - B - T);
+    let d = "";
+    // Draw the history as a path in the order things happened.
+    history.forEach(([x, y], i) => {
+      if (i === 0) d += `M${sx(x)} ${sy(y)}`;
+      else {
+        const [px, py] = history[i - 1];
+        d += ` L${sx(x)} ${sy(py)} L${sx(x)} ${sy(y)}`;
+      }
+    });
+    const now = history[history.length - 1];
+    const ticksY = [HEADER_BYTES, Math.round((HEADER_BYTES + maxY) / 2 / 8) * 8, maxY];
+    el.innerHTML =
+      ticksY.map((t) => `<line class="grid" x1="${L}" x2="${W - Rm}" y1="${sy(t)}" y2="${sy(t)}"/><text x="${L - 4}" y="${sy(t) + 4}" text-anchor="end">${t}</text>`).join("") +
+      [0, Math.round(maxX / 2), maxX].map((t) => `<text x="${sx(t)}" y="${H - 6}" text-anchor="middle">${t}</text>`).join("") +
+      `<text x="${W - Rm}" y="${H - 6}" text-anchor="end" style="opacity:0">len</text>` +
+      `<path class="path" d="${d}"/><circle class="now" cx="${sx(now[0])}" cy="${sy(now[1])}" r="5"/>`;
+  }
+
+  let target = "a";
+  function renderTargets() {
+    const names = state.names.map((n) => n.name);
+    if (!names.includes(target)) target = "a";
+    const setting = document.getElementById("target-setting");
+    setting.hidden = names.length < 2;
+    document.getElementById("target").innerHTML = names.map((n) =>
+      `<button type="button" data-v="${n}" aria-pressed="${n === target}">${n}</button>`).join("");
+    document.getElementById("append").innerHTML = `<code>${target}.append()</code>`;
+    document.getElementById("append8").innerHTML = `append ×8`;
+    document.getElementById("pop").innerHTML = `<code>${target}.pop()</code>`;
+  }
+
+  function renderButtons() {
+    for (const b of document.querySelectorAll(".actions button, .exp, #rules button, #target button, #kind button")) b.disabled = busy;
+    if (!busy) {
+      document.getElementById("alias").disabled = !!listOf("b");
+      document.getElementById("copy").disabled = !!listOf("c");
+    }
+  }
+
+  // ---------- wiring ----------
+  async function run(fn) {
+    if (busy) return;
+    busy = true;
+    renderButtons();
+    try { await fn(); } finally { busy = false; render(); }
+  }
+
+  function seg(id, onPick) {
+    const group = document.getElementById(id);
+    group.addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b || b.disabled) return;
+      for (const x of group.querySelectorAll("button")) x.setAttribute("aria-pressed", String(x === b));
+      onPick(b.dataset.v);
+    });
+  }
+  function pressSeg(id, v) {
+    for (const x of document.querySelectorAll(`#${id} button`)) x.setAttribute("aria-pressed", String(x.dataset.v === v));
+  }
+  seg("kind", (v) => { kind = v; });
+  seg("speed", (v) => { speed = Number(v); });
+  seg("rules", (v) => { setRule(v); });
+  seg("target", (v) => { target = v; renderTargets(); });
+  function setRule(v) {
+    rule = v;
+    pressSeg("rules", v);
+    codeHot = null;
+    log(`<span class="cmt"># now using: ${esc(RULES[v].title)}</span>`);
+    render();
+  }
+
+  document.getElementById("append").addEventListener("click", () => run(() => doAppend(target)));
+  document.getElementById("append8").addEventListener("click", () => run(async () => { for (let i = 0; i < 8; i++) await doAppend(target); }));
+  document.getElementById("pop").addEventListener("click", () => run(() => doPop(target)));
+  document.getElementById("alias").addEventListener("click", () => run(async () => doAlias()));
+  document.getElementById("copy").addEventListener("click", () => run(() => doCopy()));
+  document.getElementById("reset").addEventListener("click", () => run(async () => { startOver(); }));
+
+  svg.addEventListener("mouseover", (e) => {
+    const s = e.target.closest(".slot.full");
+    if (!s) return;
+    const list = state.lists.get(s.dataset.l);
+    const oid = list && list.items[Number(s.dataset.i)];
+    if (oid && hot.obj !== oid) { hot = { obj: oid }; render(); }
+  });
+
+  const mission = document.getElementById("mission");
+  function startOver(silent) {
+    reset();
+    logEl.innerHTML = "";
+    mission.innerHTML = "";
+    if (!silent) log(`<b>a = []</b>  <span class="cmt"># a header, but no block yet</span>`);
+    render();
+  }
+
+  async function appendMany(name, n, k) {
+    if (k) { kind = k; pressSeg("kind", k); }
+    for (let i = 0; i < n; i++) await doAppend(name);
+  }
+
+  const EXPERIMENTS = {
+    async fill() {
+      startOver();
+      mission.innerHTML = `Watch <strong>allocated</strong>. It jumps 0 → 4 → 8 → 16 → 24, and each jump is a jump in <code>sys.getsizeof(a)</code>. Between jumps, appends just fill spare slots.`;
+      await appendMany("a", 17, "int");
+    },
+    async types() {
+      startOver();
+      mission.innerHTML = `Five very different objects, from 16 bytes to 549 bytes. Every slot is still <strong>8 bytes</strong>, because a slot holds a pointer. <code>sys.getsizeof(a)</code> only counts the header and the slots.`;
+      for (const k of ["int", "str", "none", "list", "big"]) await appendMany("a", 1, k);
+      kind = "int"; pressSeg("kind", "int");
+    },
+    async alias() {
+      startOver();
+      mission.innerHTML = `<code>b = a</code> copies nothing: it's a second arrow to the same header. Growing the list through <code>b</code> moves the <strong>block</strong>, but the header (and so <code>id(a)</code> and <code>id(b)</code>) stays put. That's why <code>a</code> sees every change.`;
+      await appendMany("a", 4, "int");
+      doAlias();
+      target = "b";
+      await sleep(600);
+      await appendMany("b", 1);
+    },
+    async copy() {
+      startOver();
+      mission.innerHTML = `<code>a.copy()</code> makes a new header and a new block with <strong>no spare room</strong>, so the very first append to <code>c</code> has to move. The two blocks point at the same objects: it's a shallow copy.`;
+      await appendMany("a", 5, "int");
+      await doCopy();
+      target = "c";
+      await sleep(400);
+      await appendMany("c", 1);
+    },
+    async shrink() {
+      startOver();
+      mission.innerHTML = `17 items need 24 slots. Popping only moves the block once the length drops below half of 24. <strong>Then switch to "newest" and try again:</strong> since gh-158592, a block of 32 slots or fewer never shrinks.`;
+      speed = Math.min(speed, 0.35);
+      await appendMany("a", 17, "int");
+      speed = Number(document.querySelector("#speed [aria-pressed=true]").dataset.v);
+      for (let i = 0; i < 7; i++) await doPop("a");
+    },
+    async exact() {
+      startOver();
+      setRule("exact");
+      mission.innerHTML = `With no spare room, <strong>every</strong> append moves the block and copies every pointer. Compare <em>pointers copied per append</em> with "3.9 – 3.15.0", then read "Why not grow by exactly one slot?" below.`;
+      await appendMany("a", 16, "int");
+    },
+  };
+
+  document.getElementById("experiments").addEventListener("click", (e) => {
+    const b = e.target.closest(".exp");
+    if (!b || busy) return;
+    const exp = b.dataset.exp;
+    if (exp !== "exact" && rule === "exact") setRule("modern");
+    run(EXPERIMENTS[exp]);
+  });
+
+  startOver();
+})();
+</script>
+</body>
+</html>
