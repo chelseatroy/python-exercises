@@ -1,0 +1,26 @@
+# Deploys the class backend (backend/) to Cloudflare whenever it changes on main.
+# Needs the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets.
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/deploy-backend.yml"]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    # main is also pushed to the solutions repo, which has no Cloudflare secrets.
+    if: github.repository == 'chelseatroy/python-exercises'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: backend
+          wranglerVersion: "4.149.0"
+          command: |
+            d1 migrations apply python-exercises-backend --remote
+            deploy
