@@ -85,7 +85,7 @@ The list of downloads and where each comes from is `DOWNLOADS` at the top of `to
 
 ## Class Backend (Cloudflare)
 
-The pages that collect answers from students (the intro polls and the list resize board) share one small backend in `backend/`. It's a Cloudflare Worker with a D1 database, on Cloudflare's free plan, served at https://python-exercises-backend.chelseatroy.workers.dev/. The pages read that URL from `docs/s1_polls/config.js`.
+The pages that collect answers from students (for now, the intro polls) share one small backend in `backend/`. It's a Cloudflare Worker with a D1 database, on Cloudflare's free plan, served at https://python-exercises-backend.chelseatroy.workers.dev/. The pages read that URL from `docs/s1_polls/config.js`.
 
 - Code: `backend/src/index.js`
 - Database tables: `backend/migrations/`. To change a table, add a new numbered `.sql` file rather than editing an old one.
@@ -112,7 +112,7 @@ Use the D1 console in the Cloudflare dashboard (**Storage & Databases > D1 > pyt
 
 ```
 npx wrangler d1 execute python-exercises-backend --remote --command "SELECT * FROM votes"
-npx wrangler d1 execute python-exercises-backend --remote --command "DELETE FROM resize"
+npx wrangler d1 execute python-exercises-backend --remote --command "DELETE FROM votes"
 ```
 
 ### Free plan limits
@@ -152,17 +152,3 @@ A bonus page for Session 1 showing how ENIAC stored each decimal digit in a ring
 An interactive page for Session 3 showing how a CPython list stores pointers in a separate block of slots, and how that block grows and shrinks. You can switch between the resize rules from CPython 3.8 and earlier, 3.9 through 3.15.0, the newest change (gh-158592, October 2026), and a hypothetical list with no spare room. It's served at https://chelseatroy.github.io/python-exercises/s3_list_resize/s3_list_resize.html.
 
 - The page: `docs/s3_list_resize/s3_list_resize.html` (one self-contained file)
-
-## List Resize Board (GitHub Pages)
-
-A shared board for the Session 3 list experiment. Students submit the lengths and `sys.getsizeof` values they measured, along with the element type, how they built the list, and their Python version. The page overlays everyone's results and groups the ones that follow the same pattern. It's served at https://chelseatroy.github.io/python-exercises/s3_resize_board/s3_resize_board.html. Add `?demo` to the URL to try it with made-up results; nothing is saved in demo mode.
-
-- The page: `docs/s3_resize_board/s3_resize_board.html` and `docs/s3_resize_board/board.js`
-- Backend: the class backend (above). Requests marked `board=resize` go to the handlers at the bottom of `backend/src/index.js`, and submissions are stored in the `resize` table.
-
-### How it works
-
-- Like poll votes, submissions count for 24 hours and are then deleted. To clear the board by hand, delete the rows of the `resize` table (see "Looking at or clearing data" above).
-- Each browser can make up to 12 submissions in 24 hours, and can remove its own. Browser ids stay on the server, so nobody can remove someone else's submission.
-- The page re-fetches results every 5 seconds while it's open.
-

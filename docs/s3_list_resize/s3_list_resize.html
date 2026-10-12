@@ -231,8 +231,6 @@
   .reveal[open] summary h3::before { content: "▾ "; }
   .reveal .body { padding: 0 20px 18px; display: grid; gap: 10px; max-width: 75ch; }
   .reveal pre { margin: 0; padding: 12px 14px; background: var(--slot); border-radius: 8px; overflow-x: auto; font: 0.86rem/1.5 var(--mono); }
-  .board-link { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
-  .board-link .primary { text-decoration: none; display: inline-block; }
 
   @keyframes pop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: none; } }
   @keyframes fade { 0%, 45% { opacity: 1; } 100% { opacity: 0; } }
@@ -373,12 +371,9 @@
     </details>
   </section>
 
-  <section aria-labelledby="board-h">
-    <h2 id="board-h">Now measure a real one</h2>
-    <div class="board-link">
-      <p class="muted" style="max-width:60ch">Write your own experiment in Python with <code>sys.getsizeof</code>. Try a different element type than your neighbor, or a different way of building the list. Then put your numbers on the class board.</p>
-      <a class="primary" href="../s3_resize_board/s3_resize_board.html">Open the resize board</a>
-    </div>
+  <section aria-labelledby="measure-h">
+    <h2 id="measure-h">Now measure a real one</h2>
+    <p class="muted" style="max-width:60ch">Write your own experiment in Python with <code>sys.getsizeof</code>. Try a different element type than your neighbor, or a different way of building the list. Do your numbers follow one of the rules above?</p>
   </section>
 </main>
 
