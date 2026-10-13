@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Where Blocks Live</title>
+<style>
+  :root {
+    --ground: #F6F1E7;
+    --surface: #FFFDF8;
+    --ink: #1F1B2D;
+    --muted: #6A6377;
+    --line: #E0D8C8;
+    --accent: #3B5BDB;
+    --accent-ink: #FFFFFF;
+    --tag: #F2C14E;
+    --tag-edge: #C99A1E;
+    --tag-ink: #3A2A00;
+    --hit: #2B8A3E;
+    --clash: #D9480F;
+    --machine: #2B2540;
+    --machine-ink: #F6F1E7;
+    --machine-muted: #B9B2CC;
+    --slot: #EDE6D8;
+    --other: #D3CBBB;
+    --other-ink: #4F475F;
+    --display: Georgia, "Times New Roman", serif;
+    --body: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #15131C;
+      --surface: #1E1B28;
+      --ink: #ECE8F4;
+      --muted: #A49DB3;
+      --line: #34303F;
+      --accent: #7C93F5;
+      --accent-ink: #0F1020;
+      --tag: #D9AA3A;
+      --tag-edge: #A97F1C;
+      --tag-ink: #241A00;
+      --hit: #51CF66;
+      --clash: #FF8A4C;
+      --machine: #0D0B14;
+      --machine-ink: #ECE8F4;
+      --machine-muted: #8F88A3;
+      --slot: #2A2636;
+      --other: #3A3548;
+      --other-ink: #C9C2D8;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #15131C;
+    --surface: #1E1B28;
+    --ink: #ECE8F4;
+    --muted: #A49DB3;
+    --line: #34303F;
+    --accent: #7C93F5;
+    --accent-ink: #0F1020;
+    --tag: #D9AA3A;
+    --tag-edge: #A97F1C;
+    --tag-ink: #241A00;
+    --hit: #51CF66;
+    --clash: #FF8A4C;
+    --machine: #0D0B14;
+    --machine-ink: #ECE8F4;
+    --machine-muted: #8F88A3;
+    --slot: #2A2636;
+    --other: #3A3548;
+    --other-ink: #C9C2D8;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 16px/1.55 var(--body);
+  }
+  .page {
+    padding-inline: clamp(16px, 4vw, 72px);
+    padding-block: 40px 72px;
+    display: grid;
+    gap: 56px;
+    max-width: 1180px;
+    margin-inline: auto;
+  }
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.3rem, 7vw, 3.6rem); line-height: 1.02; }
+  h2 { font-size: 1.7rem; line-height: 1.15; }
+  h3 { font-size: 1.2rem; line-height: 1.2; }
+  p { margin: 0; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); }
+  code { font-family: var(--mono); font-size: 0.92em; }
+  .label {
+    font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase;
+    font-weight: 700; color: var(--muted);
+  }
+  section { display: grid; gap: 16px; }
+  header { display: grid; gap: 14px; }
+  .lede { font-size: 1.15rem; max-width: 70ch; }
+  .prose { display: grid; gap: 10px; max-width: 72ch; }
+
+  button { font: inherit; color: inherit; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+  .seg button, .btn {
+    font: 600 0.9rem var(--body); cursor: pointer;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    border-radius: 999px; padding: 6px 13px;
+  }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+  .btn:hover, .seg button:hover { border-color: var(--muted); }
+  .btn code, .primary code { font-size: 0.85rem; }
+  .primary {
+    font: 700 0.95rem var(--body); cursor: pointer;
+    background: var(--accent); color: var(--accent-ink);
+    border: 0; border-radius: 999px; padding: 8px 18px;
+  }
+  .primary:disabled, .btn:disabled, .seg button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .setting { display: grid; gap: 5px; }
+
+  .part-num { font: 700 0.8rem var(--mono); color: var(--tag-ink); background: var(--tag); border-radius: 999px; padding: 2px 10px; justify-self: start; }
+  .predict { background: var(--slot); border-radius: 10px; padding: 10px 14px; max-width: 72ch; }
+  .predict strong { display: block; font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+  .lab { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 14px; }
+  .stage { overflow-x: auto; }
+  .stage svg { width: 100%; min-width: 600px; height: auto; display: block; }
+  .stage svg text { font-family: var(--mono); }
+  .msg {
+    background: var(--machine); color: var(--machine-ink); border-radius: 10px; padding: 10px 14px;
+    font: 0.88rem/1.55 var(--mono); min-height: 3.2em;
+  }
+  .msg .good { color: var(--hit); font-weight: 700; }
+  .msg .bad { color: var(--clash); font-weight: 700; }
+  .msg code, .msg b { color: var(--tag); }
+  .readout { display: flex; flex-wrap: wrap; gap: 6px 22px; font: 0.86rem var(--mono); color: var(--muted); }
+  .readout b { color: var(--ink); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.84rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; border: 2px solid transparent; }
+  .analogy { border-left: 4px solid var(--tag); padding: 4px 0 4px 16px; display: grid; gap: 8px; max-width: 72ch; }
+  pre { margin: 0; padding: 12px 14px; background: var(--machine); color: var(--machine-ink); border-radius: 10px; overflow-x: auto; font: 0.86rem/1.55 var(--mono); }
+  pre .cmt { color: var(--machine-muted); }
+
+  /* shared picture styles */
+  .cap { fill: var(--muted); font-size: 11px; }
+  .cap.strong { fill: var(--ink); font-weight: 700; }
+  .free-cell { fill: var(--surface); stroke: var(--line); stroke-width: 1; }
+  .other-cell { fill: var(--other); stroke: var(--line); stroke-width: 1; }
+  .other-txt { fill: var(--other-ink); font-size: 10px; }
+  .ours { fill: var(--tag); stroke: var(--tag-edge); stroke-width: 1.4; }
+  .ours-txt { fill: var(--tag-ink); font-size: 10.5px; font-weight: 700; }
+  .ours.fresh { animation: pop 0.4s ease; transform-box: fill-box; transform-origin: center; }
+  .ghost { fill: none; stroke: var(--clash); stroke-width: 2; stroke-dasharray: 4 3; }
+  .grew { fill: none; stroke: var(--hit); stroke-width: 2.6; }
+  .move-arrow { fill: none; stroke: var(--clash); stroke-width: 2; }
+  .move-txt { fill: var(--clash); font-size: 11px; font-weight: 700; }
+  .tick { stroke: var(--muted); stroke-width: 1; }
+  .map-line { stroke: var(--accent); stroke-width: 1.6; fill: none; }
+  .map-line.other { stroke: var(--muted); opacity: 0.45; stroke-width: 1; }
+  .map-line.fresh { animation: draw 0.6s ease; }
+  .promised { fill: none; stroke: var(--clash); stroke-width: 1.6; stroke-dasharray: 4 3; }
+  .killed rect { fill: var(--clash); opacity: 0.92; }
+  .killed text { fill: #fff; font-size: 20px; font-weight: 700; }
+  .killed .small { font-size: 12px; font-weight: 400; }
+
+  @keyframes pop { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: none; } }
+  @keyframes draw { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header>
+    <div class="label">Session 3 · Follow-up to <a href="../s3_list_resize/s3_list_resize.html">The Growing List</a></div>
+    <h1>Where Blocks Live</h1>
+    <p class="lede">A list's slots have to sit in one unbroken run of memory. So when the list grows, where does the bigger block come from? Is it ever the <em>same</em> block, just longer? And what happens when there's no room at all?</p>
+  </header>
+
+  <!-- PART 1 -->
+  <section aria-labelledby="p1-h">
+    <span class="part-num">Part 1</span>
+    <h2 id="p1-h">Small blocks: same-size cells</h2>
+    <div class="prose">
+      <p>Python makes a lot of small objects, so CPython keeps its own allocator for anything 512 bytes or smaller, called <strong>pymalloc</strong>. It carves memory into <strong>pools</strong>, and every pool is cut into cells of one size: a pool of 32-byte cells, a pool of 48-byte cells, a pool of 64-byte cells, and so on in steps of 16 bytes. A small block always lives in one cell.</p>
+      <p>When a list asks to grow (<code>realloc</code>), pymalloc checks one thing: <em>does the new size still fit in the cell this block already has?</em> If yes, nothing moves. If no, it takes a free cell from a bigger pool, copies the pointers over, and frees the old cell.</p>
+    </div>
+    <p class="predict"><strong>Predict first</strong>A list's first block has 4 slots (32 bytes). Its next block has 8 slots (64 bytes). Will growing ever fit in the cell it already has?</p>
+
+    <div class="lab">
+      <div class="actions">
+        <button class="primary" type="button" id="p1-append"><code>a.append()</code></button>
+        <button class="btn" type="button" id="p1-next">append until it moves</button>
+        <button class="btn" type="button" id="p1-reset">Start over</button>
+      </div>
+      <div class="readout" id="p1-readout"></div>
+      <div class="stage"><svg id="p1-svg" viewBox="0 0 760 340" role="img" aria-label="Rows of pymalloc pools, one row per cell size. Gray cells hold other objects. The yellow cell is the list's block; when it grows past its cell, it moves to a cell in a bigger pool."></svg></div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--tag);border-color:var(--tag-edge)"></span>a's block</span>
+        <span><span class="sw" style="background:var(--other);border-color:var(--line)"></span>a cell holding some other object</span>
+        <span><span class="sw" style="background:var(--surface);border-color:var(--line)"></span>free cell</span>
+      </div>
+      <div class="msg" id="p1-msg" aria-live="polite"></div>
+    </div>
+    <p class="muted prose" style="font-size:0.9rem">There's a pool for every multiple of 16 bytes up to 512; this picture only shows the sizes a growing list visits. CPython's growth rule always rounds to a multiple of 4 slots (32 bytes), so a growing list never fits its old cell and <strong>always moves</strong>. A cell <em>can</em> be reused when the new size fits, which is what you saw in step 6 of The Growing List, where a list with no spare room sometimes grew by just 8 bytes. (The source is <code>pymalloc_realloc()</code> in <a href="https://github.com/python/cpython/blob/v3.15.0/Objects/obmalloc.c" target="_blank" rel="noopener"><code>Objects/obmalloc.c</code></a>.)</p>
+  </section>
+
+  <!-- PART 2 -->
+  <section aria-labelledby="p2-h">
+    <span class="part-num">Part 2</span>
+    <h2 id="p2-h">Bigger blocks: is the memory next door free?</h2>
+    <div class="prose">
+      <p>Once a block is bigger than 512 bytes, pymalloc hands the request to the operating system's C library: <code>malloc</code> and <code>realloc</code>. There are no fixed cells here. Memory is one long row of addresses, with other objects scattered along it.</p>
+      <p><code>realloc</code> tries the cheap thing first: if the addresses <strong>right after</strong> the block are free, it just claims them. The block grows in place and nothing is copied. If something is in the way, it has to find a free run long enough for the whole new block somewhere else, and copy. If there's no run long enough anywhere, it gives up and returns <code>NULL</code>, which Python turns into a <code>MemoryError</code>.</p>
+    </div>
+    <p class="predict"><strong>Predict first</strong><code>a</code> starts with 80 slots and a <code>dict</code> right behind it. What happens on the first resize? What about the next one?</p>
+
+    <div class="lab">
+      <div class="actions">
+        <button class="primary" type="button" id="p2-grow"><code>a.append()</code> until it resizes</button>
+        <button class="btn" type="button" id="p2-block">put an object right after <code>a</code></button>
+        <button class="btn" type="button" id="p2-free">free the object after <code>a</code></button>
+        <button class="btn" type="button" id="p2-reset">Start over</button>
+      </div>
+      <div class="readout" id="p2-readout"></div>
+      <div class="stage"><svg id="p2-svg" viewBox="0 0 760 170" role="img" aria-label="A row of memory addresses, 64 bytes per cell. The list's block is a yellow run of cells. Other objects are gray runs."></svg></div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--tag);border-color:var(--tag-edge)"></span>a's block</span>
+        <span><span class="sw" style="background:var(--other);border-color:var(--line)"></span>some other object</span>
+        <span><span class="sw" style="background:var(--surface);border-color:var(--line)"></span>free</span>
+        <span><span class="sw" style="border-color:var(--hit)"></span>grew in place</span>
+        <span><span class="sw" style="border-color:var(--clash);border-style:dashed"></span>where it used to be</span>
+      </div>
+      <div class="msg" id="p2-msg" aria-live="polite"></div>
+    </div>
+    <div class="prose muted" style="font-size:0.9rem">
+      <p>This strip is tiny on purpose, so it fills up fast. A real 64-bit program has about 128 terabytes of addresses to choose from, so running out of <em>addresses</em> like this almost never happens. You can still hit it on a 32-bit system, or when a limit is set with <code>ulimit -v</code>. What runs out first in real life is RAM, which is Part 3.</p>
+      <p>Really big blocks (128 KiB and up, with Linux's default allocator) don't share a row with other objects at all. Each gets its own whole pages straight from the operating system, and growing one can <em>remap</em> those pages to new addresses instead of copying a single byte.</p>
+    </div>
+  </section>
+
+  <!-- PART 3 -->
+  <section aria-labelledby="p3-h">
+    <span class="part-num">Part 3</span>
+    <h2 id="p3-h">Consecutive addresses, scattered RAM</h2>
+    <div class="prose">
+      <p>Here's the twist: the addresses your program sees aren't locations in RAM. Every program gets its own private, made-up set of addresses, called <strong>virtual addresses</strong>. The operating system cuts them into 4 KiB <strong>pages</strong> and keeps a table, the <strong>page table</strong>, that says which piece of physical RAM (a <strong>frame</strong>) each page really uses. The CPU looks every memory access up in that table, in hardware, so it's fast.</p>
+      <p>So "the slots are contiguous" means the <em>addresses</em> are consecutive. The RAM behind them can be anywhere.</p>
+    </div>
+    <div class="analogy">
+      <strong>Think of a playlist.</strong>
+      <p>Your playlist numbers its songs 1, 2, 3, 4… in order, and the app can jump straight to song 7. That's <code>a[6]</code>. But the song files are stored on servers all over the place, and the app keeps a lookup from "position in my playlist" to "where the file actually lives". Adding a song never means moving the other files around; only the numbering has to stay in order.</p>
+      <p class="muted">Where it breaks down: the lookup isn't per song but per page, a chunk of 512 pointers. So it's a playlist whose albums can be stored anywhere, but each album's tracks are stored together.</p>
+    </div>
+    <p class="predict"><strong>Predict first</strong>Grow <code>a</code> a page at a time. Will its pages land next to each other in RAM? And when RAM is full, does Python get a <code>MemoryError</code>?</p>
+
+    <div class="lab">
+      <div class="actions">
+        <button class="primary" type="button" id="p3-grow">grow <code>a</code> by one page</button>
+        <button class="btn" type="button" id="p3-other">another program starts</button>
+        <button class="btn" type="button" id="p3-reset">Start over</button>
+      </div>
+      <div class="setting">
+        <span class="label">When RAM runs out, the operating system is…</span>
+        <div class="seg" id="p3-mode" role="group" aria-label="How the operating system handles running out of memory">
+          <button type="button" data-v="linux" aria-pressed="true">Linux, default settings</button>
+          <button type="button" data-v="strict" aria-pressed="false">strict (Windows, or a <code>ulimit -v</code> limit)</button>
+        </div>
+      </div>
+      <div class="readout" id="p3-readout"></div>
+      <div class="stage"><svg id="p3-svg" viewBox="0 0 760 290" role="img" aria-label="Top: the program's virtual address pages, where a's block is one consecutive run. Bottom: physical RAM frames. Lines show which frame backs each page."></svg></div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--tag);border-color:var(--tag-edge)"></span>a's block</span>
+        <span><span class="sw" style="background:var(--other);border-color:var(--line)"></span>the rest of this program, or other programs</span>
+        <span><span class="sw" style="background:var(--surface);border-color:var(--line)"></span>unused</span>
+      </div>
+      <div class="msg" id="p3-msg" aria-live="polite"></div>
+    </div>
+    <div class="prose muted" style="font-size:0.9rem">
+      <p>Linux usually says yes to <code>malloc</code> even when RAM is short, and hands out the real frames later, the first time a page is written. That's called <strong>overcommit</strong>. If no frame is left by then, the <strong>out-of-memory killer</strong> ends a process, and there's no exception to catch. Container memory limits on Linux behave the same way: the container's process gets killed. Real systems also have <strong>swap</strong>, disk space used as overflow RAM, which puts all of this off at the cost of making everything very slow.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="try-h">
+    <h2 id="try-h">Try it in Python</h2>
+    <div class="prose">
+      <p>A request so big it can't possibly fit fails right away, before any memory is touched:</p>
+    </div>
+    <pre>&gt;&gt;&gt; [None] * 2**62
+MemoryError</pre>
+    <div class="prose">
+      <p>On Linux, you can cap how many addresses your program may use and watch an ordinary-sized request fail. After the <code>MemoryError</code>, the program is still running, and the list is untouched:</p>
+    </div>
+    <pre>import resource
+resource.setrlimit(resource.RLIMIT_AS, (2**30, 2**30))  <span class="cmt"># 1 GiB of addresses</span>
+
+a = [1, 2, 3]
+try:
+    a.extend([None] * 200_000_000)  <span class="cmt"># 1.6 GB of slots</span>
+except MemoryError:
+    print("MemoryError, and a is still", a)</pre>
+  </section>
+</main>
+
+<script>
+(() => {
+  "use strict";
+  const NS_ARROW = `<defs><marker id="mv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--clash)"/></marker></defs>`;
+  const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, reduced ? 0 : ms));
+  // CPython 3.9+ list growth: list_resize() in Objects/listobject.c.
+  const grow = (n) => (n + (n >> 3) + 6) & ~3;
+  // A small seeded random number generator, so "other objects" land in the same places every time.
+  function seeded(seed) {
+    let x = seed;
+    return () => (x = (x * 1103515245 + 12345) % 2147483648) / 2147483648;
+  }
+
+  // ---------- PART 1: pymalloc's same-size cells ----------
+  (() => {
+    const CLASSES = [32, 64, 128, 192, 256, 320, 416, 512];
+    const LABEL_W = 96, X0 = 104, AREA = 640, ROW_H = 32, TOP = 22;
+    const cellW = (bytes) => Math.round(13 + bytes * 0.14);
+    const svg = document.getElementById("p1-svg");
+    const msg = document.getElementById("p1-msg");
+    const readout = document.getElementById("p1-readout");
+    let s;
+
+    function reset() {
+      const rand = seeded(11);
+      const pools = {};
+      for (const c of CLASSES) {
+        const n = Math.floor(AREA / (cellW(c) + 3));
+        pools[c] = Array.from({ length: n }, () => (rand() < 0.6 ? "other" : null));
+        // Make sure each pool has a free cell somewhere past the middle.
+        pools[c][Math.floor(n * 0.4 + rand() * n * 0.5)] = null;
+      }
+      s = { len: 0, alloc: 0, where: null, pools, moves: 0, copied: 0, from: null, system: false };
+      msg.innerHTML = `<code>a = []</code>: a header with no block yet. Click <code>a.append()</code>.`;
+    }
+
+    async function append() {
+      if (s.system) return;
+      const n = s.len + 1;
+      if (s.alloc >= n) {
+        s.len = n;
+        msg.innerHTML = `len ${n} still fits in ${s.alloc} slots. No <code>realloc</code> at all.`;
+        render();
+        return false;
+      }
+      const alloc = grow(n);
+      const bytes = alloc * 8;
+      if (bytes > 512) {
+        if (s.where) s.pools[s.where.cls][s.where.idx] = "freed";
+        s.from = s.where; s.where = null; s.system = true;
+        s.alloc = alloc; s.len = n; s.moves += 1; s.copied += n - 1;
+        msg.innerHTML = `len ${n} needs ${alloc} slots = <b>${bytes} B</b>. That's over 512 bytes, so pymalloc hands the request to the system's <code>malloc</code>, copies ${n - 1} pointers there, and frees its own cell. <span class="bad">Part 2 picks up from here.</span>`;
+      } else {
+        const cls = CLASSES.find((c) => c >= bytes);
+        const pool = s.pools[cls];
+        const idx = pool.findIndex((x) => x === null);
+        if (s.where && s.where.cls >= bytes) {
+          s.alloc = alloc; s.len = n;
+          msg.innerHTML = `<span class="good">${bytes} B still fits in this ${s.where.cls}-byte cell: the block stays put.</span>`;
+          render();
+          return true;
+        }
+        const old = s.where;
+        if (old) s.pools[old.cls][old.idx] = "freed";
+        pool[idx] = "a";
+        s.where = { cls, idx };
+        s.from = old;
+        s.alloc = alloc; s.len = n;
+        if (old) {
+          s.moves += 1; s.copied += n - 1;
+          msg.innerHTML = `len ${n} needs ${alloc} slots = <b>${bytes} B</b>. <span class="bad">${bytes} B &gt; the ${old.cls}-byte cell.</span> Take a free cell from the ${cls}-byte pool, copy ${plural(n - 1, "pointer")} over, free the old cell.`;
+        } else {
+          msg.innerHTML = `The first append needs 4 slots = <b>32 B</b>, so the block gets a cell from the 32-byte pool.`;
+        }
+      }
+      render();
+      await sleep(1100);
+      if (s.from) {
+        s.pools[s.from.cls][s.from.idx] = null;
+        s.from = null;
+        render();
+      }
+      return true;
+    }
+
+    function render() {
+      const parts = [NS_ARROW];
+      const pos = {};
+      CLASSES.forEach((c, r) => {
+        const y = TOP + r * ROW_H;
+        parts.push(`<text class="cap${s.where && s.where.cls === c ? " strong" : ""}" x="${LABEL_W - 8}" y="${y + 15}" text-anchor="end">${c} B cells</text>`);
+        let x = X0;
+        const w = cellW(c);
+        s.pools[c].forEach((occ, i) => {
+          const isOurs = occ === "a";
+          const cls = isOurs ? `ours${s.from ? " fresh" : ""}` : occ === "other" ? "other-cell" : "free-cell";
+          parts.push(`<rect class="${cls}" x="${x}" y="${y}" width="${w}" height="22" rx="3"/>`);
+          if (occ === "freed") parts.push(`<rect class="ghost" x="${x - 2}" y="${y - 2}" width="${w + 4}" height="26" rx="4"/>`);
+          if (isOurs && w >= 22) parts.push(`<text class="ours-txt" x="${x + w / 2}" y="${y + 15}" text-anchor="middle">a</text>`);
+          pos[`${c}:${i}`] = [x + w / 2, y + 11];
+          x += w + 3;
+        });
+      });
+      const sysY = TOP + CLASSES.length * ROW_H + 6;
+      parts.push(`<text class="cap${s.system ? " strong" : ""}" x="${LABEL_W - 8}" y="${sysY + 17}" text-anchor="end">&gt; 512 B</text>`);
+      parts.push(`<rect class="${s.system ? "ours fresh" : "free-cell"}" x="${X0}" y="${sysY}" width="${AREA - 3}" height="26" rx="5"/>`);
+      parts.push(`<text class="${s.system ? "ours-txt" : "cap"}" x="${X0 + 12}" y="${sysY + 17}">${s.system ? "a's block now comes from the system's malloc (Part 2)" : "not pymalloc: handed to the system's malloc (Part 2)"}</text>`);
+      if (s.from && (s.where || s.system)) {
+        const [x1, y1] = pos[`${s.from.cls}:${s.from.idx}`];
+        const [x2, y2] = s.system ? [X0 + 160, sysY] : pos[`${s.where.cls}:${s.where.idx}`];
+        const midX = Math.max(x1, x2) + 50;
+        parts.push(`<path class="move-arrow" marker-end="url(#mv)" d="M${x1} ${y1 + 10} C ${midX} ${y1 + 10}, ${midX} ${y2 - 10}, ${x2} ${y2 - 12}"/>`);
+        parts.push(`<text class="move-txt" x="${midX + 6}" y="${(y1 + y2) / 2 + 4}">copy ${s.len - 1}</text>`);
+      }
+      svg.setAttribute("viewBox", `0 0 760 ${sysY + 36}`);
+      svg.innerHTML = parts.join("");
+      readout.innerHTML = `<span>len(a) <b>${s.len}</b></span><span>allocated <b>${s.alloc}</b> slots = <b>${s.alloc * 8} B</b></span><span>cell <b>${s.system ? "—" : s.where ? s.where.cls + " B" : "none yet"}</b></span><span>moves <b>${s.moves}</b></span><span>pointers copied <b>${s.copied}</b></span>`;
+      document.getElementById("p1-append").disabled = busy || s.system;
+      document.getElementById("p1-next").disabled = busy || s.system;
+      document.getElementById("p1-reset").disabled = busy;
+    }
+
+    let busy = false;
+    async function run(fn) {
+      if (busy) return;
+      busy = true; render();
+      try { await fn(); } finally { busy = false; render(); }
+    }
+    document.getElementById("p1-append").addEventListener("click", () => run(append));
+    document.getElementById("p1-next").addEventListener("click", () => run(async () => {
+      while (!s.system && !(await append())) { /* keep appending until a realloc happens */ }
+    }));
+    document.getElementById("p1-reset").addEventListener("click", () => run(async () => reset()));
+    reset();
+    render();
+  })();
+
+  // ---------- PART 2: the system allocator, in place or move ----------
+  (() => {
+    const N = 56, CELL_B = 64, X0 = 20, CW = 12.6, Y = 54, H = 34;
+    const svg = document.getElementById("p2-svg");
+    const msg = document.getElementById("p2-msg");
+    const readout = document.getElementById("p2-readout");
+    let s, busy = false, extra = 0;
+    const cellsFor = (slots) => Math.ceil((slots * 8) / CELL_B);
+
+    function reset() {
+      s = {
+        len: 80, alloc: 80,
+        a: { start: 2, size: cellsFor(80) },
+        others: [
+          { label: "dict", start: 12, size: 3 },
+          { label: "str", start: 18, size: 2 },
+          { label: "set", start: 48, size: 3 },
+        ],
+        moves: 0, copied: 0, inPlace: 0, ghost: null, grewFrom: null, failed: false,
+      };
+      extra = 0;
+      msg.innerHTML = `<code>a = [None] * 80</code>: exactly 80 slots = 640 B, so it came from the system's <code>malloc</code>. A <code>dict</code> happens to sit right after it.`;
+    }
+
+    const taken = (i, skipA) => (!skipA && i >= s.a.start && i < s.a.start + s.a.size) || s.others.some((o) => i >= o.start && i < o.start + o.size);
+    const runFree = (start, size, skipA) => {
+      if (start < 0 || start + size > N) return false;
+      for (let i = start; i < start + size; i++) if (taken(i, skipA)) return false;
+      return true;
+    };
+    const after = () => s.a.start + s.a.size;
+    const objAfter = () => s.others.find((o) => o.start === after());
+
+    async function growOnce() {
+      const n = s.alloc + 1;
+      const alloc = grow(n);
+      const need = cellsFor(alloc);
+      const more = need - s.a.size;
+      s.failed = false;
+      if (runFree(after(), more, true)) {
+        s.grewFrom = s.a.size;
+        s.a.size = need;
+        s.alloc = alloc; s.len = n; s.inPlace += 1;
+        msg.innerHTML = `len ${n} needs ${alloc} slots = ${alloc * 8} B: ${plural(more, "more cell")}. <span class="good">The ${more === 1 ? "cell" : "cells"} right after the block ${more === 1 ? "is" : "are"} free, so <code>realloc</code> just claims ${more === 1 ? "it" : "them"}. Same address, 0 pointers copied.</span>`;
+      } else {
+        // first fit: the lowest address with a long enough free run
+        let to = -1;
+        for (let i = 0; i + need <= N; i++) if (runFree(i, need, false)) { to = i; break; }
+        if (to < 0) {
+          s.failed = true;
+          msg.innerHTML = `len ${n} needs ${alloc} slots = ${alloc * 8} B, ${need} cells in a row. Something is in the way after the block, and there's no free run of ${need} cells anywhere. <span class="bad"><code>realloc</code> returns NULL → <code>MemoryError</code>.</span> The old block is untouched, so <code>a</code> still has its ${s.len} items.`;
+          render();
+          return;
+        }
+        const blocker = s.others.find((o) => o.start < after() + more && o.start + o.size > after());
+        s.ghost = { start: s.a.start, size: s.a.size };
+        s.a = { start: to, size: need };
+        s.alloc = alloc; s.len = n; s.moves += 1; s.copied += n - 1;
+        msg.innerHTML = `len ${n} needs ${alloc} slots = ${alloc * 8} B. <span class="bad">The ${blocker ? `<code>${blocker.label}</code>` : "end of memory"} is in the way,</span> so <code>realloc</code> finds a free run of ${need} cells further along, copies ${plural(n - 1, "pointer")} there, and frees the old block. <code>a</code>'s header now points at a new address.`;
+      }
+      render();
+      await sleep(1300);
+      s.ghost = null; s.grewFrom = null;
+      render();
+    }
+
+    function render() {
+      const parts = [NS_ARROW];
+      const x = (i) => X0 + i * CW;
+      // address ruler: one tick every 8 cells = 512 bytes
+      for (let i = 0; i < N; i += 8) {
+        parts.push(`<line class="tick" x1="${x(i)}" x2="${x(i)}" y1="${Y - 14}" y2="${Y - 4}"/>`);
+        parts.push(`<text class="cap" x="${x(i) + 2}" y="${Y - 17}">0x…${(0x8000 + i * CELL_B).toString(16)}</text>`);
+      }
+      for (let i = 0; i < N; i++) parts.push(`<rect class="free-cell" x="${x(i)}" y="${Y}" width="${CW}" height="${H}"/>`);
+      for (const o of s.others) {
+        parts.push(`<rect class="other-cell" x="${x(o.start)}" y="${Y}" width="${o.size * CW}" height="${H}" rx="3"/>`);
+        parts.push(`<text class="other-txt" x="${x(o.start) + (o.size * CW) / 2}" y="${Y + 21}" text-anchor="middle">${o.label}</text>`);
+      }
+      parts.push(`<rect class="ours${s.ghost ? " fresh" : ""}" x="${x(s.a.start)}" y="${Y}" width="${s.a.size * CW}" height="${H}" rx="3"/>`);
+      parts.push(`<text class="ours-txt" x="${x(s.a.start) + 6}" y="${Y + 21}">a · ${s.alloc} slots</text>`);
+      if (s.grewFrom !== null) {
+        parts.push(`<rect class="grew" x="${x(s.a.start + s.grewFrom)}" y="${Y - 3}" width="${(s.a.size - s.grewFrom) * CW}" height="${H + 6}" rx="3"/>`);
+      }
+      if (s.ghost) {
+        parts.push(`<rect class="ghost" x="${x(s.ghost.start)}" y="${Y - 3}" width="${s.ghost.size * CW}" height="${H + 6}" rx="3"/>`);
+        const x1 = x(s.ghost.start) + (s.ghost.size * CW) / 2, x2 = x(s.a.start) + 30;
+        parts.push(`<path class="move-arrow" marker-end="url(#mv)" d="M${x1} ${Y + H + 4} C ${x1} ${Y + H + 40}, ${x2} ${Y + H + 40}, ${x2} ${Y + H + 6}"/>`);
+        parts.push(`<text class="move-txt" x="${(x1 + x2) / 2}" y="${Y + H + 48}" text-anchor="middle">copy ${s.len - 1} pointers</text>`);
+      }
+      if (s.failed) {
+        parts.push(`<text class="move-txt" x="${x(s.a.start)}" y="${Y + H + 22}">MemoryError: no free run of ${cellsFor(grow(s.alloc + 1))} cells</text>`);
+      }
+      parts.push(`<text class="cap" x="${X0}" y="${Y + H + 74}">each cell = ${CELL_B} bytes = 8 slots · ${N} cells = ${N * CELL_B} bytes of addresses, a deliberately tiny memory</text>`);
+      svg.innerHTML = parts.join("");
+      readout.innerHTML = `<span>len(a) <b>${s.len}</b></span><span>allocated <b>${s.alloc}</b> slots = <b>${s.alloc * 8} B</b></span><span>grew in place <b>${s.inPlace}</b></span><span>moves <b>${s.moves}</b></span><span>pointers copied <b>${s.copied}</b></span>`;
+      document.getElementById("p2-grow").disabled = busy;
+      document.getElementById("p2-block").disabled = busy || !runFree(after(), 2, false);
+      document.getElementById("p2-free").disabled = busy || !objAfter();
+      document.getElementById("p2-reset").disabled = busy;
+    }
+
+    async function run(fn) {
+      if (busy) return;
+      busy = true; render();
+      try { await fn(); } finally { busy = false; render(); }
+    }
+    document.getElementById("p2-grow").addEventListener("click", () => run(growOnce));
+    document.getElementById("p2-block").addEventListener("click", () => run(async () => {
+      const labels = ["bytes", "tuple", "float", "int"];
+      s.others.push({ label: labels[extra++ % labels.length], start: after(), size: 2 });
+      s.failed = false;
+      msg.innerHTML = `Some other object just got the cells right after <code>a</code>'s block. Now <code>a</code> can't grow in place.`;
+    }));
+    document.getElementById("p2-free").addEventListener("click", () => run(async () => {
+      const o = objAfter();
+      s.others = s.others.filter((x) => x !== o);
+      s.failed = false;
+      msg.innerHTML = `The <code>${o.label}</code> was freed (nothing referred to it any more). The cells after <code>a</code> are open.`;
+    }));
+    document.getElementById("p2-reset").addEventListener("click", () => run(async () => reset()));
+    reset();
+    render();
+  })();
+
+  // ---------- PART 3: virtual pages, physical frames ----------
+  (() => {
+    const PAGES = 20, FRAMES = 16;
+    const PX = 20, PW = 36, VY = 44, FY = 196, FW = 45;
+    const svg = document.getElementById("p3-svg");
+    const msg = document.getElementById("p3-msg");
+    const readout = document.getElementById("p3-readout");
+    let s, busy = false, mode = "linux", rand;
+
+    function reset() {
+      rand = seeded(5);
+      // frame owner: null (free), "other" (another program), or a virtual page number of this program
+      const frames = Array(FRAMES).fill(null);
+      for (const f of [1, 6, 7, 13]) frames[f] = "other";
+      const pages = Array(PAGES).fill(null); // page -> { role, frame }
+      const map = (p, role) => {
+        const free = frames.map((x, i) => (x === null ? i : -1)).filter((i) => i >= 0);
+        const f = free[Math.floor(rand() * free.length)];
+        frames[f] = p;
+        pages[p] = { role, frame: f };
+      };
+      map(0, "code"); map(1, "code"); map(19, "stack");
+      map(5, "a"); map(6, "a");
+      s = { frames, pages, aStart: 5, aPages: 2, killed: false, fresh: null, promised: null, others: 0 };
+      msg.innerHTML = `<code>a</code>'s block takes up 2 pages: <b>consecutive addresses</b> on top. Follow the lines down to see which RAM frames hold them.`;
+    }
+
+    const freeFrames = () => s.frames.map((x, i) => (x === null ? i : -1)).filter((i) => i >= 0);
+
+    async function growPage() {
+      const p = s.aStart + s.aPages;
+      if (p >= 18) { msg.innerHTML = `That's as far as this picture goes. Start over to try again.`; return; }
+      const addr = `0x7f…${(p * 0x1000).toString(16).padStart(5, "0")}`;
+      const free = freeFrames();
+      if (free.length) {
+        const f = free[Math.floor(rand() * free.length)];
+        s.frames[f] = p;
+        s.pages[p] = { role: "a", frame: f };
+        s.aPages += 1;
+        s.fresh = p;
+        const prev = s.pages[p - 1].frame;
+        msg.innerHTML = `New page at <b>${addr}</b>, right after the last one, so the slots stay consecutive. The OS backed it with RAM frame <b>${f}</b>, ${Math.abs(f - prev) === 1 ? "which happens to sit next to" : "nowhere near"} frame ${prev}. <code>a</code> can't tell the difference.`;
+      } else if (mode === "linux") {
+        s.pages[p] = { role: "a", frame: null };
+        s.aPages += 1;
+        s.promised = p;
+        msg.innerHTML = `<code>malloc</code> said <span class="good">yes</span>: Linux handed out the addresses for page <b>${addr}</b> without checking for RAM (overcommit)…`;
+        render();
+        await sleep(1600);
+        s.killed = true;
+        msg.innerHTML = `…then <code>list_resize</code> started writing pointers into the new page. The OS went to find a frame for it, and there are none left. <span class="bad">The out-of-memory killer ended the whole process.</span> Python never got the chance to raise <code>MemoryError</code>: your terminal just prints <code>Killed</code>.`;
+      } else {
+        msg.innerHTML = `<code>malloc</code> asked for page <b>${addr}</b>. The OS checked: no RAM left to back it, so it refused up front. <span class="bad"><code>realloc</code> returns NULL → <code>MemoryError</code>.</span> <code>a</code> keeps its ${s.aPages} pages, and the program keeps running, so you could catch the exception and free something.`;
+      }
+      render();
+      await sleep(800);
+      s.fresh = null;
+      render();
+    }
+
+    function otherProgram() {
+      const free = freeFrames();
+      const take = Math.min(3, free.length);
+      for (let i = 0; i < take; i++) {
+        const pick = free.splice(Math.floor(rand() * free.length), 1)[0];
+        s.frames[pick] = "other";
+      }
+      s.others += 1;
+      msg.innerHTML = take
+        ? `Another program started and took ${plural(take, "frame")} of RAM. ${plural(freeFrames().length, "free frame")} left.`
+        : `Another program wanted RAM, but there's none free.`;
+    }
+
+    function render() {
+      const parts = [];
+      const vx = (p) => PX + p * PW;
+      const fx = (f) => PX + f * FW;
+      parts.push(`<text class="cap strong" x="${PX}" y="${VY - 22}">this program's addresses (virtual pages, 4 KiB each)</text>`);
+      parts.push(`<text class="cap strong" x="${PX}" y="${FY + 64}">physical RAM (frames, 4 KiB each)</text>`);
+      // mapping lines first, so the boxes sit on top of them
+      s.pages.forEach((pg, p) => {
+        if (!pg || pg.frame === null) return;
+        const x1 = vx(p) + PW / 2 - 1, x2 = fx(pg.frame) + FW / 2 - 2;
+        parts.push(`<path class="map-line${pg.role === "a" ? "" : " other"}${s.fresh === p ? " fresh" : ""}" d="M${x1} ${VY + 30} C ${x1} ${VY + 90}, ${x2} ${FY - 60}, ${x2} ${FY}"/>`);
+      });
+      for (let p = 0; p < PAGES; p++) {
+        const pg = s.pages[p];
+        const cls = !pg ? "free-cell" : pg.role === "a" ? `ours${s.fresh === p ? " fresh" : ""}` : "other-cell";
+        if (s.promised === p) parts.push(`<rect class="promised" x="${vx(p)}" y="${VY}" width="${PW - 2}" height="30" rx="3"/>`);
+        else parts.push(`<rect class="${cls}" x="${vx(p)}" y="${VY}" width="${PW - 2}" height="30" rx="3"/>`);
+        if (pg && pg.role !== "a") parts.push(`<text class="other-txt" x="${vx(p) + PW / 2 - 1}" y="${VY + 19}" text-anchor="middle">${pg.role}</text>`);
+        if (p % 4 === 0) parts.push(`<text class="cap" x="${vx(p)}" y="${VY - 6}" style="font-size:9.5px">${(p * 0x1000).toString(16)}</text>`);
+      }
+      parts.push(`<text class="ours-txt" x="${vx(s.aStart) + 4}" y="${VY + 19}">a</text>`);
+      for (let f = 0; f < FRAMES; f++) {
+        const owner = s.frames[f];
+        const cls = owner === null ? "free-cell" : owner === "other" ? "other-cell" : s.pages[owner].role === "a" ? `ours${s.fresh === owner ? " fresh" : ""}` : "other-cell";
+        parts.push(`<rect class="${cls}" x="${fx(f)}" y="${FY}" width="${FW - 4}" height="36" rx="3"/>`);
+        parts.push(`<text class="cap" x="${fx(f) + (FW - 4) / 2}" y="${FY + 50}" text-anchor="middle" style="font-size:9.5px">${f}</text>`);
+        if (owner === "other") parts.push(`<text class="other-txt" x="${fx(f) + (FW - 4) / 2}" y="${FY + 22}" text-anchor="middle" style="font-size:9px">other</text>`);
+      }
+      if (s.killed) {
+        parts.push(`<g class="killed"><rect x="${PX + 150}" y="110" width="440" height="64" rx="10"/><text x="${PX + 370}" y="140" text-anchor="middle">Killed</text><text class="small" x="${PX + 370}" y="160" text-anchor="middle">the out-of-memory killer ended the process</text></g>`);
+      }
+      svg.innerHTML = parts.join("");
+      const used = s.frames.filter((x) => x !== null).length;
+      readout.innerHTML = `<span>a's pages <b>${s.aPages}</b> (consecutive)</span><span>RAM frames in use <b>${used} of ${FRAMES}</b></span><span>free frames <b>${FRAMES - used}</b></span>`;
+      document.getElementById("p3-grow").disabled = busy || s.killed;
+      document.getElementById("p3-other").disabled = busy || s.killed || !freeFrames().length;
+      document.getElementById("p3-reset").disabled = busy;
+      for (const b of document.querySelectorAll("#p3-mode button")) b.disabled = busy;
+    }
+
+    async function run(fn) {
+      if (busy) return;
+      busy = true; render();
+      try { await fn(); } finally { busy = false; render(); }
+    }
+    document.getElementById("p3-grow").addEventListener("click", () => run(growPage));
+    document.getElementById("p3-other").addEventListener("click", () => run(async () => otherProgram()));
+    document.getElementById("p3-reset").addEventListener("click", () => run(async () => reset()));
+    document.getElementById("p3-mode").addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b || b.disabled) return;
+      mode = b.dataset.v;
+      for (const x of document.querySelectorAll("#p3-mode button")) x.setAttribute("aria-pressed", String(x === b));
+    });
+    reset();
+    render();
+  })();
+})();
+</script>
+</body>
+</html>

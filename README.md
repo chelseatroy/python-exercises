@@ -149,6 +149,12 @@ A bonus page for Session 1 showing how ENIAC stored each decimal digit in a ring
 
 ## The Growing List (GitHub Pages)
 
-An interactive page for Session 3 showing how a CPython list stores pointers in a separate block of slots, and how that block grows and shrinks. You can switch between the resize rules from CPython 3.8 and earlier, 3.9 through 3.15.0, the newest change (gh-158592, October 2026), and a hypothetical list with no spare room. It's served at https://chelseatroy.github.io/python-exercises/s3_list_resize/s3_list_resize.html.
+An interactive page for Session 3 showing how a CPython list stores pointers in a separate block of slots, and how that block grows and shrinks. Students work through seven guided steps (fill, element types, aliasing, copying, shrinking, no spare room, free play), each with a prediction prompt and a debrief. The picture draws one row per block, so the blocks a list has outgrown stay visible above the one it's using. Resizes follow CPython's small-object allocator, so a block only stays put when the new size still fits its cell. Settings switch between the resize rules from CPython 3.8 and earlier, 3.9 through 3.15.0, the newest change (gh-158592, October 2026), and a hypothetical list with no spare room. It's served at https://chelseatroy.github.io/python-exercises/s3_list_resize/s3_list_resize.html.
 
 - The page: `docs/s3_list_resize/s3_list_resize.html` (one self-contained file)
+
+## Where Blocks Live (GitHub Pages)
+
+A follow-up page for Session 3 about where a list's block of memory comes from. Part 1 shows pymalloc's same-size cells and why a small list always moves when it grows. Part 2 shows the system allocator growing a bigger block in place when the memory next door is free, moving it when it isn't, and raising `MemoryError` when no run is long enough. Part 3 shows consecutive virtual pages backed by scattered RAM frames, and the difference between Linux's out-of-memory killer and a strict `MemoryError`. It's served at https://chelseatroy.github.io/python-exercises/s3_block_memory/s3_block_memory.html.
+
+- The page: `docs/s3_block_memory/s3_block_memory.html` (one self-contained file)
