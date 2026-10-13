@@ -247,11 +247,34 @@
   .code { margin: 0; font: 0.8rem/1.6 var(--mono); }
   .code .ln { display: grid; grid-template-columns: 3.5em max-content; gap: 0 12px; padding: 0 16px; }
   .code .ln .note { grid-column: 2; }
-  .code .n { color: var(--machine-muted); text-align: right; user-select: none; }
+  .code .n { color: var(--machine-muted); text-align: right; user-select: none; text-decoration: none; }
+  .code a.n:hover { color: var(--tag); text-decoration: underline; }
+  .code .ln.gap .t { color: var(--machine-muted); }
+  .code a.op { color: inherit; text-decoration: underline dotted var(--tag); text-underline-offset: 3px; }
+  .code a.op:hover { color: var(--tag); }
   .code .t { white-space: pre; }
   .code .note { color: var(--tag); font-weight: 700; white-space: pre; }
   .code .ln.hot { background: color-mix(in oklab, var(--tag) 22%, transparent); }
   .code .ln.cmt .t { color: var(--machine-muted); }
+
+  .prose { display: grid; gap: 10px; max-width: 72ch; }
+  .shift-lab { gap: 16px; }
+  .shift-lab input[type="range"] { width: min(100%, 360px); accent-color: var(--accent); }
+  .shift-lab .pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font: 600 1rem var(--mono); }
+  .bits-wrap { overflow-x: auto; }
+  .bits { display: grid; grid-template-columns: max-content repeat(11, 30px) max-content; gap: 4px; align-items: center; font-family: var(--mono); }
+  .bits .rl { font-size: 0.85rem; padding-right: 10px; white-space: nowrap; }
+  .bits .w { font-size: 0.68rem; color: var(--muted); text-align: center; }
+  .bits .b { height: 30px; display: grid; place-items: center; border-radius: 5px; font-weight: 700; border: 1px solid var(--line); background: var(--surface); }
+  .bits .b.one { background: var(--tag); border-color: var(--tag-edge); color: var(--tag-ink); }
+  .bits .b.in { border-style: dashed; color: var(--muted); }
+  .bits .b.out { opacity: 0.4; text-decoration: line-through; border-style: dashed; }
+  .bits .b.cleared { border-color: var(--clash); border-width: 2px; }
+  .bits .eq { font-size: 0.85rem; padding-left: 10px; white-space: nowrap; }
+  .bits .sep { grid-column: 1 / -1; height: 6px; }
+  .sum { font: 0.92rem/1.6 var(--mono); background: var(--slot); border-radius: 8px; padding: 10px 12px; overflow-x: auto; white-space: pre; }
+  .sum b { color: var(--accent); }
+  .why { display: grid; gap: 10px; max-width: 72ch; padding-left: 1.2em; margin: 0; }
 
   .reveal { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
   .reveal summary { cursor: pointer; padding: 16px 20px; display: grid; gap: 2px; list-style: none; }
@@ -360,10 +383,43 @@
           <p>Why does almost every resize move the block? Every block on this page is 512 bytes or smaller, so it comes from CPython's own small-object allocator. That allocator hands out memory in cells whose sizes are 16 bytes apart, and <code>realloc()</code> can only keep a block where it is if the new size still fits its cell (and doesn't waste more than a quarter of it). A list resize usually adds at least 32 bytes, so it nearly always needs a new cell. Bigger blocks work differently: see <a href="../s3_block_memory/s3_block_memory.html">Where Blocks Live</a>. Addresses here are made up.</p>
         </div>
         <div class="code-panel" aria-live="polite">
-          <div class="code-head"><span id="code-title"></span><a id="code-link" target="_blank" rel="noopener">view on GitHub</a></div>
+          <div class="code-head"><span id="code-title"></span><span id="code-hint">click a line number to open it · <a id="code-link" target="_blank" rel="noopener">whole function on GitHub</a></span></div>
           <div class="code" id="code"></div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="read-h">
+    <h2 id="read-h">Reading the C: lines 44 and 59</h2>
+    <p class="muted how">This is the top of <code>list_resize()</code> exactly as it was in 2018, the version we read in class. Line 44 decides whether the list needs a new block at all. Line 59 decides how big the new block should be. The link from class, <a href="https://github.com/python/cpython/blob/e42b705188271da108de42b55d9344642170aa2b/Objects/listobject.c#L59C47-L59C53" target="_blank" rel="noopener">line 59, columns 47–53</a>, highlights exactly <code>&nbsp;&gt;&gt; 3)</code>.</p>
+    <div class="code-panel">
+      <div class="code-head"><span>Objects/listobject.c, 2018 (commit e42b705)</span><span>click a line number to open it · <a href="https://github.com/python/cpython/blob/e42b705188271da108de42b55d9344642170aa2b/Objects/listobject.c#L33-L77" target="_blank" rel="noopener">whole function on GitHub</a></span></div>
+      <div class="code" id="class-code"></div>
+    </div>
+
+    <h3 id="shift-h">What does <code>&gt;&gt;</code> do?</h3>
+    <div class="prose">
+      <p>An integer is stored as binary digits, called bits. <code>x &gt;&gt; k</code> ("shift right by <em>k</em>") slides all of its bits <em>k</em> places to the right. The <em>k</em> bits on the right end fall off and are thrown away, and zeros come in on the left.</p>
+      <p>Each place in binary is worth twice the place to its right, so sliding every bit one place right <strong>halves</strong> the number, and throwing away the bit that fell off <strong>rounds down</strong>. Slide 3 places and you've halved three times: <code>newsize &gt;&gt; 3</code> is <code>newsize // 8</code>. Line 44's <code>allocated &gt;&gt; 1</code> is <code>allocated // 2</code>, "half of what's allocated".</p>
+    </div>
+    <div class="card shift-lab">
+      <label class="pick" for="sh-range">newsize = <output id="sh-n" for="sh-range">17</output><input type="range" id="sh-range" min="1" max="100" value="17"></label>
+      <div class="bits-wrap"><div class="bits" id="sh-bits" aria-live="polite"></div></div>
+      <div class="sum" id="sh-sum"></div>
+    </div>
+
+    <h3>Why write <code>newsize &gt;&gt; 3</code> instead of <code>newsize / 8</code>?</h3>
+    <ol class="why">
+      <li><strong>Speed, historically.</strong> A shift is one of the cheapest things a CPU can do: one instruction that finishes in a single clock tick. Division used to take dozens of ticks. <code>list_resize()</code> runs every time a list needs a new block, so C programmers reached for the shift.</li>
+      <li><strong>It still saves a little.</strong> Today a compiler turns <code>/ 8</code> into a shift on its own, but not quite for free here. <code>newsize</code> has a signed type (<code>Py_ssize_t</code>), and C's <code>/</code> must round negative numbers toward zero, so the compiler adds a couple of instructions to handle negatives first. A list's length is never negative, and <code>&gt;&gt; 3</code> skips that fix-up.</li>
+      <li><strong>It reads as "about an eighth".</strong> To a C programmer, <code>newsize &gt;&gt; 3</code> says "a fraction of the size, cheaply" at a glance. The exact fraction doesn't matter. What matters is that the spare room grows <em>in proportion</em> to the list, which is what makes appends cost O(1) on average (see the first question below).</li>
+    </ol>
+    <p class="muted how">Python has the same operator: try <code>17 &gt;&gt; 3</code>, and <code>bin(17), bin(17 &gt;&gt; 3)</code>. It's the same binary as Session 1.</p>
+
+    <h3 id="mask-h">And the <code>&amp; ~(size_t)3</code> in the newer code?</h3>
+    <div class="prose">
+      <p>Since Python 3.9, the growth line ends in <code>&amp; ~(size_t)3</code>. <code>~3</code> flips every bit of 3, turning <code>…00000011</code> into <code>…11111100</code>. <code>&amp;</code> keeps a bit only where <em>both</em> sides have a 1, so <code>&amp; ~3</code> clears the last two bits, the 1s place and the 2s place. Whatever's left is a multiple of 4: it <strong>rounds down to a multiple of 4</strong>. The source comment says it plainly: "Add padding to make the allocated size multiple of 4." That's why lists now grow 4, 8, 16, 24, 32 instead of 25, 35. The slider above shows this one too.</p>
     </div>
   </section>
 
@@ -418,17 +474,24 @@
   const RULES = {
     old: {
       title: "CPython ≤ 3.8: list_resize()",
-      link: "https://github.com/python/cpython/blob/e42b705188271da108de42b55d9344642170aa2b/Objects/listobject.c#L44-L59",
+      src: "https://github.com/python/cpython/blob/e42b705188271da108de42b55d9344642170aa2b/Objects/listobject.c",
+      link: "https://github.com/python/cpython/blob/e42b705188271da108de42b55d9344642170aa2b/Objects/listobject.c#L33-L77",
       lines: [
         [33, "static int"],
         [34, "list_resize(PyListObject *self, Py_ssize_t newsize)"],
-        [44, "if (allocated >= newsize && newsize >= (allocated >> 1)) {", "check"],
-        [46, "    Py_SIZE(self) = newsize;"],
-        [47, "    return 0;"],
-        [48, "}"],
-        [59, "new_allocated = newsize + (newsize >> 3) + (newsize < 9 ? 3 : 6);", "grow"],
-        [65, "if (newsize == 0) new_allocated = 0;", "zero"],
-        [68, "items = PyMem_Realloc(self->ob_item, num_allocated_bytes);", "move"],
+        [null, "⋮"],
+        [44, "    if (allocated >= newsize && newsize >= (allocated >> 1)) {", "check"],
+        [45, "        assert(self->ob_item != NULL || newsize == 0);"],
+        [46, "        Py_SIZE(self) = newsize;"],
+        [47, "        return 0;"],
+        [48, "    }"],
+        [null, "⋮"],
+        [59, "    new_allocated = (size_t)newsize + (newsize >> 3) + (newsize < 9 ? 3 : 6);", "grow"],
+        [null, "⋮"],
+        [65, "    if (newsize == 0)", "zero"],
+        [66, "        new_allocated = 0;", "zero"],
+        [67, "    num_allocated_bytes = new_allocated * sizeof(PyObject *);"],
+        [68, "    items = (PyObject **)PyMem_Realloc(self->ob_item, num_allocated_bytes);", "move"],
       ],
       fits: (alloc, n) => alloc >= n && n >= (alloc >> 1),
       fitsNote: (alloc, n) => `${alloc} >= ${n} && ${n} >= ${alloc >> 1}`,
@@ -439,15 +502,24 @@
     },
     modern: {
       title: "CPython 3.9 – 3.15.0: list_resize()",
-      link: "https://github.com/python/cpython/blob/v3.15.0/Objects/listobject.c#L113-L175",
+      src: "https://github.com/python/cpython/blob/v3.15.0/Objects/listobject.c",
+      link: "https://github.com/python/cpython/blob/v3.15.0/Objects/listobject.c#L103-L175",
       lines: [
-        [113, "if (allocated >= newsize && newsize >= (allocated >> 1)) {", "check"],
-        [115, "    Py_SET_SIZE(self, newsize);"],
-        [116, "    return 0;"],
-        [117, "}"],
-        [129, "new_allocated = ((size_t)newsize + (newsize >> 3) + 6) & ~(size_t)3;", "grow"],
-        [136, "if (newsize == 0) new_allocated = 0;", "zero"],
-        [175, "items = PyMem_Realloc(self->ob_item, target_bytes);", "move"],
+        [103, "static int"],
+        [104, "list_resize(PyListObject *self, Py_ssize_t newsize)"],
+        [null, "⋮"],
+        [113, "    if (allocated >= newsize && newsize >= (allocated >> 1)) {", "check"],
+        [114, "        assert(self->ob_item != NULL || newsize == 0);"],
+        [115, "        Py_SET_SIZE(self, newsize);"],
+        [116, "        return 0;"],
+        [117, "    }"],
+        [null, "⋮"],
+        [129, "    new_allocated = ((size_t)newsize + (newsize >> 3) + 6) & ~(size_t)3;", "grow"],
+        [null, "⋮"],
+        [136, "    if (newsize == 0)", "zero"],
+        [137, "        new_allocated = 0;", "zero"],
+        [null, "⋮"],
+        [175, "        items = (PyObject **)PyMem_Realloc(self->ob_item, target_bytes);", "move"],
       ],
       fits: (alloc, n) => alloc >= n && n >= (alloc >> 1),
       fitsNote: (alloc, n) => `${alloc} >= ${n} && ${n} >= ${alloc >> 1}`,
@@ -457,16 +529,33 @@
       },
     },
     newest: {
-      title: "CPython main, Oct 2026 (gh-158592): list_resize()",
-      link: "https://github.com/python/cpython/blob/0babcdd54775bd1cc6bc745767c13d5baa3aedcc/Objects/listobject.c#L111-L156",
+      title: "CPython main, Oct 2026 (gh-158592): list_resize() and py_list_resize()",
+      src: "https://github.com/python/cpython/blob/0babcdd54775bd1cc6bc745767c13d5baa3aedcc/Objects/listobject.c",
+      link: "https://github.com/python/cpython/blob/0babcdd54775bd1cc6bc745767c13d5baa3aedcc/Objects/listobject.c#L110-L196",
       lines: [
-        [94, "#define LIST_SMALL_ALLOCATED 32", "cmt"],
-        [121, "if (allocated >= newsize", "check"],
-        [122, "    && (newsize >= (allocated >> 1) || allocated <= LIST_SMALL_ALLOCATED))", "check2"],
-        [125, "    Py_SET_SIZE(self, newsize);"],
-        [126, "    return 0;"],
-        [148, "new_allocated = ((size_t)newsize + (newsize >> 3) + 6) & ~(size_t)3;", "grow"],
-        [155, "if (newsize == 0) new_allocated = 0;", "zero"],
+        [94, "#define LIST_SMALL_ALLOCATED 32"],
+        [null, "⋮"],
+        [110, "static inline Py_ALWAYS_INLINE int"],
+        [111, "list_resize(PyListObject *self, Py_ssize_t newsize)"],
+        [null, "⋮"],
+        [121, "    if (allocated >= newsize", "check"],
+        [122, "        && (newsize >= (allocated >> 1) || allocated <= LIST_SMALL_ALLOCATED))", "check2"],
+        [123, "    {"],
+        [124, "        assert(self->ob_item != NULL || newsize == 0);"],
+        [125, "        Py_SET_SIZE(self, newsize);"],
+        [126, "        return 0;"],
+        [127, "    }"],
+        [128, "    return py_list_resize(self, newsize);"],
+        [null, "⋮"],
+        [132, "static int"],
+        [133, "py_list_resize(PyListObject *self, Py_ssize_t newsize)"],
+        [null, "⋮"],
+        [148, "    new_allocated = ((size_t)newsize + (newsize >> 3) + 6) & ~(size_t)3;", "grow"],
+        [null, "⋮"],
+        [155, "    if (newsize == 0)", "zero"],
+        [156, "        new_allocated = 0;", "zero"],
+        [null, "⋮"],
+        [196, "        items = (PyObject **)PyMem_Realloc(self->ob_item, target_bytes);", "move"],
       ],
       fits: (alloc, n) => alloc >= n && (n >= (alloc >> 1) || alloc <= 32),
       fitsNote: (alloc, n) => `${alloc} >= ${n} && (${n} >= ${alloc >> 1} || ${alloc} <= 32)`,
@@ -899,16 +988,30 @@
       `<div class="stat"><span class="label">${k}</span><span class="big">${v}</span><span class="sub">${sub}</span></div>`).join("");
   }
 
+  // Lines of C, with each line number linking to that line on GitHub, and the bit
+  // operators linking to the explanation further down the page.
+  function codeLines(lines, src, state = () => ({})) {
+    return lines.map(([n, text, key]) => {
+      if (n === null) return `<div class="ln gap"><span class="n"></span><span class="t">${text}</span></div>`;
+      const { hot, note } = state(key);
+      const num = src ? `<a class="n" href="${src}#L${n}" target="_blank" rel="noopener" title="Line ${n} on GitHub">${n}</a>` : `<span class="n">${n}</span>`;
+      const code = esc(text)
+        .replace(/&gt;&gt;/g, `<a class="op" href="#shift-h" title="What does >> do?">&gt;&gt;</a>`)
+        .replace(/&amp; ~\(size_t\)3/g, `<a class="op" href="#mask-h" title="What does &amp; ~3 do?">&amp; ~(size_t)3</a>`);
+      return `<div class="ln${hot ? " hot" : ""}${key === "cmt" ? " cmt" : ""}">${num}<span class="t">${code}</span>${note ? `<span class="note">// ${esc(note)}</span>` : ""}</div>`;
+    }).join("");
+  }
+
   function renderCode() {
     const R = RULES[rule];
     document.getElementById("code-title").textContent = R.title;
     const link = document.getElementById("code-link");
-    if (R.link) { link.href = R.link; link.hidden = false; } else link.hidden = true;
-    document.getElementById("code").innerHTML = R.lines.map(([n, text, key]) => {
+    if (R.link) link.href = R.link;
+    document.getElementById("code-hint").hidden = !R.link;
+    document.getElementById("code").innerHTML = codeLines(R.lines, R.src, (key) => {
       const isHot = key && codeHot && codeHot.includes(key);
-      const note = key && notes[key] && isHot ? notes[key] : "";
-      return `<div class="ln${isHot ? " hot" : ""}${key === "cmt" ? " cmt" : ""}"><span class="n">${n}</span><span class="t">${esc(text)}</span>${note ? `<span class="note">// ${esc(note)}</span>` : ""}</div>`;
-    }).join("");
+      return { hot: isHot, note: key && notes[key] && isHot ? notes[key] : "" };
+    });
   }
 
   function renderTargets() {
@@ -1146,6 +1249,70 @@
     const oid = list && list.items[Number(s.dataset.i)];
     if (oid && hot.obj !== oid && !busy) { hot = { obj: oid }; render(); }
   });
+
+  // ---------- reading the C ----------
+  const CLASS_SRC = "https://github.com/python/cpython/blob/e42b705188271da108de42b55d9344642170aa2b/Objects/listobject.c";
+  const CLASS_LINES = [
+    [33, "static int"],
+    [34, "list_resize(PyListObject *self, Py_ssize_t newsize)"],
+    [35, "{"],
+    [36, "    PyObject **items;"],
+    [37, "    size_t new_allocated, num_allocated_bytes;"],
+    [38, "    Py_ssize_t allocated = self->allocated;"],
+    [39, ""],
+    [40, "    /* Bypass realloc() when a previous overallocation is large enough"],
+    [41, "       to accommodate the newsize.  If the newsize falls lower than half"],
+    [42, "       the allocated size, then proceed with the realloc() to shrink the list."],
+    [43, "    */"],
+    [44, "    if (allocated >= newsize && newsize >= (allocated >> 1)) {", "hot"],
+    [45, "        assert(self->ob_item != NULL || newsize == 0);"],
+    [46, "        Py_SIZE(self) = newsize;"],
+    [47, "        return 0;"],
+    [48, "    }"],
+    [49, ""],
+    [50, "    /* This over-allocates proportional to the list size, making room"],
+    [51, "     * for additional growth.  The over-allocation is mild, but is"],
+    [52, "     * enough to give linear-time amortized behavior over a long"],
+    [53, "     * sequence of appends() in the presence of a poorly-performing"],
+    [54, "     * system realloc()."],
+    [55, "     * The growth pattern is:  0, 4, 8, 16, 25, 35, 46, 58, 72, 88, ..."],
+    [56, "     * Note: new_allocated won't overflow because the largest possible value"],
+    [57, "     *       is PY_SSIZE_T_MAX * (9 / 8) + 6 which always fits in a size_t."],
+    [58, "     */"],
+    [59, "    new_allocated = (size_t)newsize + (newsize >> 3) + (newsize < 9 ? 3 : 6);", "hot"],
+  ];
+  document.getElementById("class-code").innerHTML = codeLines(CLASS_LINES, CLASS_SRC, (key) => ({ hot: key === "hot" }));
+
+  const shRange = document.getElementById("sh-range");
+  function renderShift() {
+    const n = Number(shRange.value);
+    document.getElementById("sh-n").textContent = n;
+    const bitsOf = (x) => x.toString(2).padStart(8, "0").split("");
+    const cell = (bit, cls = "") => `<span class="b${bit === "1" ? " one" : ""}${cls ? " " + cls : ""}">${bit}</span>`;
+    const row = (label, cells, eq = "") => `<span class="rl">${label}</span>${cells.join("")}${Array(11 - cells.length).fill("<span></span>").join("")}<span class="eq">${eq}</span>`;
+    const nb = bitsOf(n);
+    const shifted = n >> 3;
+    const raw = n + shifted + 6;
+    const mask = ["1", "1", "1", "1", "1", "1", "0", "0"];
+    const rows = [
+      row("", [128, 64, 32, 16, 8, 4, 2, 1].map((w) => `<span class="w">${w}</span>`)),
+      row("newsize", nb.map((b) => cell(b)), `= ${n}`),
+      // the same bits, three places to the right: zeros come in, three bits fall off
+      row("newsize >> 3", ["0", "0", "0"].map((b) => cell(b, "in")).concat(nb.slice(0, 5).map((b) => cell(b)), nb.slice(5).map((b) => cell(b, "out"))), `= ${shifted}`),
+      `<span class="sep"></span>`,
+      row("newsize + (newsize >> 3) + 6", bitsOf(raw).map((b) => cell(b)), `= ${raw}`),
+      row("~3", mask.map((b) => cell(b))),
+      row("… & ~3", bitsOf(raw & ~3).map((b, i) => cell(b, i >= 6 && bitsOf(raw)[i] === "1" ? "cleared" : "")), `= ${raw & ~3}`),
+    ];
+    document.getElementById("sh-bits").innerHTML = rows.join("");
+    const extra = n < 9 ? 3 : 6;
+    document.getElementById("sh-sum").innerHTML =
+      `newsize >> 3  =  ${nb.join("")} >> 3  =  ${bitsOf(shifted).join("")}  =  <b>${shifted}</b>      (and ${n} // 8 = ${Math.floor(n / 8)})\n\n` +
+      `2018, line 59:   ${n} + (${n} >> 3) + ${extra}            = ${n} + ${shifted} + ${extra} = <b>${n + shifted + extra}</b> slots\n` +
+      `3.9+, line 129:  (${n} + (${n} >> 3) + 6) & ~3      = ${raw} & ~3 = <b>${raw & ~3}</b> slots`;
+  }
+  shRange.addEventListener("input", renderShift);
+  renderShift();
 
   reset();
   goStep(0);
