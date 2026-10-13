@@ -1,0 +1,95 @@
+/* Interactive pieces on the Homework 1 reflections page. Colors come from site.css. */
+:root { --refl-good: #23704F; --refl-bad: #B4441C; --refl-dot: #23704F; }
+@media (prefers-color-scheme: dark) {
+  :root { --refl-good: #5DBE8C; --refl-bad: #F08A5D; --refl-dot: #5DBE8C; }
+}
+
+.refl-widget { margin: 1.2em 0 1.6em; }
+.refl-scroll { overflow-x: auto; max-width: 100%; }
+.refl-picked { color: var(--muted); font-size: 0.95rem; min-height: 1.6em; margin: 0.6em 0 0; }
+.refl-picked strong { color: var(--ink); }
+.refl-widget button, .refl-demo button { font: inherit; color: inherit; cursor: pointer; }
+.refl-widget button:focus-visible, .refl-demo button:focus-visible,
+.refl-demo input:focus-visible, .refl-demo textarea:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+
+/* the matrix: one row per technique, one column per reflection */
+.prose table.refl-matrix { display: table; border-collapse: collapse; margin: 0; font-size: 0.9rem; }
+.refl-matrix th, .refl-matrix td { border: 0; border-bottom: 1px solid var(--line); padding: 0; text-align: center; vertical-align: middle; }
+.refl-matrix thead th { border-bottom: 2px solid var(--ink); }
+.refl-matrix .tech-h { text-align: left; color: var(--muted); font-weight: 600; padding: 6px 8px 6px 0; }
+.refl-matrix .count-h { color: var(--muted); font-weight: 600; font-size: 0.8rem; padding: 6px 4px; white-space: nowrap; }
+.refl-matrix .col-h button {
+  width: 30px; height: 30px; padding: 0; white-space: nowrap; border-radius: 50%; border: 1px solid var(--line); background: var(--surface);
+  font: 700 0.8rem var(--mono); margin: 4px 2px;
+}
+.refl-matrix .col-h button:hover { border-color: var(--link); }
+.refl-matrix .col-h button[aria-pressed="true"] { background: var(--link); border-color: var(--link); color: var(--ground); }
+.refl-matrix .group-row th {
+  text-align: left; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted); padding: 12px 0 2px; border-bottom: 0;
+}
+.refl-matrix tbody th[scope="row"] { text-align: left; font-weight: 400; }
+.refl-matrix tbody th[scope="row"] button {
+  background: none; border: 0; padding: 7px 10px 7px 0; text-align: left; width: 100%; min-width: 13em;
+  text-decoration: underline dotted var(--muted); text-underline-offset: 4px;
+}
+.refl-matrix tbody th[scope="row"] button:hover { color: var(--link); }
+.refl-matrix tbody th[scope="row"] button[aria-pressed="true"] { font-weight: 700; color: var(--link); }
+/* position: relative keeps the absolutely positioned .sr-only labels inside the table's scroller. */
+.refl-matrix td { width: 34px; height: 32px; position: relative; }
+.refl-matrix td.count { font-family: var(--mono); color: var(--muted); width: 40px; }
+.refl-matrix .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--refl-dot); }
+.refl-matrix td.on { background: var(--mark); }
+.refl-matrix tr.on > * { background: color-mix(in oklab, var(--mark) 55%, transparent); }
+.refl-matrix tr.on td.on { background: var(--mark); }
+
+/* the empty-file chart */
+.refl-bars { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.prose .refl-bars li { margin: 0; }
+.refl-bars button {
+  display: grid; grid-template-columns: minmax(9em, 15em) 1fr 2em; gap: 10px; align-items: center;
+  width: 100%; background: none; border: 0; padding: 4px 0; text-align: left;
+}
+.refl-bars .bar-label { font-weight: 600; }
+.refl-bars .bar-track { height: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.refl-bars .bar-fill { display: block; height: 100%; background: var(--refl-dot); }
+.refl-bars .bar-n { font-family: var(--mono); font-weight: 700; }
+.refl-bars button:hover .bar-label, .refl-bars button[aria-pressed="true"] .bar-label { color: var(--link); }
+.refl-bars button[aria-pressed="true"] .bar-track { outline: 3px solid var(--mark); }
+.refl-bars .bar-why { margin: 0 0 0 0; color: var(--muted); font-size: 0.9rem; }
+@media (max-width: 520px) { .refl-bars button { grid-template-columns: 1fr 2em; } .refl-bars .bar-track { grid-column: 1 / -1; grid-row: 2; } }
+
+/* the "show a minimal example" toggles */
+.prose details.refl-example { margin: 0.8em 0 1.2em; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.prose details.refl-example > summary { cursor: pointer; padding: 8px 14px; font-weight: 600; color: var(--link); }
+.prose details.refl-example[open] > summary { border-bottom: 1px solid var(--line); }
+.prose details.refl-example > :not(summary) { margin-left: 14px; margin-right: 14px; }
+.prose details.refl-example pre { background: var(--ground); }
+
+/* the two demos */
+.refl-demo { margin: 1em 0 1.6em; padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); display: grid; gap: 10px; }
+/* Grid children otherwise refuse to shrink below their content, so the table's scroller never scrolls. */
+.refl-demo > * { min-width: 0; }
+.refl-demo .demo-label { font-weight: 600; }
+.refl-demo input, .refl-demo textarea {
+  width: 100%; font: 0.95rem/1.5 var(--mono); color: var(--ink); background: var(--ground);
+  border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px;
+}
+.refl-demo .demo-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.refl-demo .demo-presets button { border: 1px solid var(--line); background: var(--ground); border-radius: 999px; padding: 3px 12px; font-size: 0.88rem; }
+.refl-demo .demo-presets button:hover { border-color: var(--link); }
+.refl-demo .demo-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.refl-demo .demo-out { border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; background: var(--ground); }
+.refl-demo .demo-out h4 { margin: 0 0 6px; font: 600 0.8rem var(--body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.refl-demo .demo-tokens { display: block; font-size: 0.8rem; color: var(--muted); overflow-wrap: anywhere; }
+.refl-demo .demo-expr { margin: 6px 0 0; font: 1rem var(--mono); }
+.refl-demo .demo-result { margin: 0; font: 700 1.4rem var(--mono); }
+.refl-demo .demo-err { margin: 6px 0 0; color: var(--refl-bad); }
+.refl-demo .demo-note { margin: 0; color: var(--muted); font-size: 0.88rem; }
+.prose table.case-table { display: table; width: 100%; margin: 0; font-size: 0.85rem; }
+.case-table th, .case-table td { min-width: 7em; }
+.case-table tbody th code { white-space: normal; }
+.case-table thead th { font-size: 0.78rem; color: var(--muted); }
+.case-table td.ok .mark { color: var(--refl-good); font-weight: 700; }
+.case-table td.bad { color: var(--refl-bad); }
+.case-table td.bad .mark { font-weight: 700; }

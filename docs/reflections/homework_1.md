@@ -4,20 +4,164 @@ layout: syllabus
 permalink: /reflections/homework-1/
 ---
 
+<link rel="stylesheet" href="{{ '/reflections/reflections.css' | relative_url }}">
+<script src="{{ '/reflections/reflections.js' | relative_url }}" defer></script>
+
 Ten of you shared reflections on building the natural-language calculator. Each one is below, exactly as written, with names and links removed so you can read them all anonymously. First, here are some patterns that showed up when reading them all together.
 
 ## What we noticed across all the reflections
 
+### At a glance
+
+Each numbered column is one reflection, and each row is something reflections described doing. Click a technique to see who mentioned it, or click a number to see everything one reflection mentioned. A blank means the reflection didn't *mention* it, not that its author didn't do it.
+
+<div id="approach-matrix" class="refl-widget"></div>
+
 ### Everyone started with the same toolkit, then hit the same wall
 
-Almost every reflection begins the same way: a dictionary that turns number words into numbers, often a second one for operators, and later another dictionary for identifiers. That part went smoothly for nearly everyone. The trouble started with **"the result of"** and **commas**. One student put it most directly: "Whenever I thought I had something that worked, it would break on any instance of 'the result of.'"
+Most reflections begin the same way: a dictionary that turns number words into numbers, often a second one for operators, and later another dictionary for identifiers. That part went smoothly for nearly everyone. The trouble started with **"the result of"** and **commas**. One student put it most directly: "Whenever I thought I had something that worked, it would break on any instance of 'the result of.'"
+
+<details class="refl-example" markdown="1">
+<summary>Show a minimal example: the dictionaries</summary>
+
+```python
+NUMBERS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
+           "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10}
+OPERATORS = {"plus": "+", "minus": "-", "times": "*", "divided": "/"}
+
+def tokenize(line):
+    tokens = []
+    for word in line.split():
+        if word in NUMBERS:
+            tokens.append(NUMBERS[word])
+        elif word in OPERATORS:
+            tokens.append(OPERATORS[word])
+    return tokens
+
+tokenize("six times four plus two")   # [6, '*', 4, '+', 2]
+
+# "by" isn't in either dictionary, so it's skipped:
+tokenize("ten divided by five")       # [10, '/', 5]
+```
+
+</details>
 
 People handled it in two main ways:
 
 - **Turn it into parentheses.** Several of you rewrote "the result of …" as an opening parenthesis during parsing. Then evaluating the line meant evaluating the innermost group first, which is a problem you already know how to solve.
 - **Recurse.** Others had their evaluator call itself on the sub-expression. In a few cases the recursion also tracked a position in the line, so the outer call knew where to resume.
 
+<details class="refl-example" markdown="1">
+<summary>Show a minimal example: “the result of” as parentheses</summary>
+
+Turn the phrase into `(` while tokenizing, and let a comma (or the end of the line) close it:
+
+```python
+def tokenize(line):
+    words = line.replace(",", " , ").split()
+    tokens, depth, i = [], 0, 0
+    while i < len(words):
+        if words[i:i + 3] == ["the", "result", "of"]:
+            tokens.append("(")
+            depth += 1
+            i += 3
+            continue
+        word = words[i]
+        if word == "," and depth > 0:
+            # A comma closes the innermost "the result of".
+            tokens.append(")")
+            depth -= 1
+        elif word in NUMBERS:
+            tokens.append(NUMBERS[word])
+        elif word in OPERATORS:
+            tokens.append(OPERATORS[word])
+        i += 1
+    # Anything still open closes at the end of the line.
+    return tokens + [")"] * depth
+
+tokenize("the result of five times four, plus six")
+# ['(', 5, '*', 4, ')', '+', 6]
+```
+
+Then evaluate the innermost group, replace it with its value, and repeat. (`calculate()` is the two-pass function under *Order of operations* below.)
+
+```python
+def evaluate(tokens):
+    while "(" in tokens:
+        # The first ")", and the "(" that matches it:
+        close = tokens.index(")")
+        open_ = max(i for i in range(close) if tokens[i] == "(")
+        inner = calculate(tokens[open_ + 1:close])
+        # Swap the group for its value. The list gets shorter here.
+        tokens = tokens[:open_] + [inner] + tokens[close + 1:]
+    return calculate(tokens)
+
+evaluate(["(", 5, "*", 4, ")", "+", 6])   # 26
+```
+
+</details>
+
+<details class="refl-example" markdown="1">
+<summary>Show a minimal example: “the result of” by recursion</summary>
+
+When the evaluator meets “the result of”, it calls itself. The call returns its value *and* the position where it stopped, so the outer call knows where to pick up. Commas are kept as markers: inside a sub-expression, a comma ends it.
+
+```python
+def evaluate(tokens, i=0, nested=False):
+    """Evaluate from position i. Return (value, where to resume)."""
+    parts = []
+    while i < len(tokens):
+        token = tokens[i]
+        if token == "result_of":
+            # The call returns its value and where it stopped.
+            value, i = evaluate(tokens, i + 1, nested=True)
+            parts.append(value)
+        elif token == ",":
+            if nested:
+                # Inside "the result of", a comma ends it.
+                return calculate(parts), i + 1
+            i += 1    # at the top level, a comma is just a pause
+        else:
+            parts.append(token)
+            i += 1
+    return calculate(parts), i
+
+# "six times the result of five plus one, plus two"
+evaluate([6, "*", "result_of", 5, "+", 1, ",", "+", 2])
+# (38, 9), meaning 6 * (5 + 1) + 2
+
+# The same line with the comma thrown away:
+evaluate([6, "*", "result_of", 5, "+", 1, "+", 2])
+# (48, 8), meaning 6 * (5 + 1 + 2)
+```
+
+</details>
+
 Commas turned out to matter more than they first appeared to. Several of you planned to ignore or delete them, and then found they mark where a sub-expression ends. One reflection describes this bug in detail. Once the commas were removed, "six times the result of five plus one plus two" and "six times the result of five plus one, plus two" gave the same answer. The fix was to keep the commas as markers. Other students used commas to break each line into chunks and carried a running result from one chunk to the next.
+
+Try it: the same calculator, with the commas kept and with them thrown away.
+
+<div id="comma-demo" class="refl-demo"></div>
+
+<details class="refl-example" markdown="1">
+<summary>Show a minimal example: splitting the line into chunks</summary>
+
+Split on commas, solve the first chunk, then apply each later chunk to the running result. (`tokenize()` is the dictionary example above.)
+
+```python
+def evaluate_line(line):
+    chunks = line.split(",")
+    result = calculate(tokenize(chunks[0]))
+    for chunk in chunks[1:]:
+        op, *rest = tokenize(chunk)   # "plus two" -> "+", [2]
+        result = calculate([result, op] + rest)
+    return result
+
+evaluate_line("six times four, plus two, divided by two")
+# ((6 * 4) + 2) / 2 = 13.0
+```
+
+</details>
 
 ### Parsing decides how hard everything else is
 
@@ -25,18 +169,105 @@ The strongest reflections said this in different ways: **the shape you parse a l
 
 ### The case-sensitivity tradeoff
 
-Many of you first tried calling `.lower()` on the whole line. It makes "Let" and "let" (or "Five" and "five") match. Then the `f` vs. `F` example broke it, because identifiers are case-sensitive. This is a good small example of a tradeoff where you can't have both options for free. The reflections describe two ways around it:
+Several of you first tried, or planned, calling `.lower()` on the whole line. It makes "Let" and "let" (or "Five" and "five") match. Then the `f` vs. `F` example broke it, because identifiers are case-sensitive. This is a good small example of a tradeoff where you can't have both options for free. The reflections describe two ways around it:
 
 1. List both capitalized and lowercase forms of number words and keywords explicitly. This duplicates entries but is easy to understand.
 2. Keep two versions of each word, the original and a lowercased copy, and use whichever one the situation needs.
 
+<details class="refl-example" markdown="1">
+<summary>Show a minimal example: both ways around it</summary>
+
+Listing both spellings:
+
+```python
+# ...and so on: every word, twice.
+NUMBERS = {"one": 1, "One": 1, "two": 2, "Two": 2}
+KEYWORDS = {"let", "Let", "calculate", "Calculate"}
+```
+
+Keeping two versions of each word, next to what lowercasing the whole line does:
+
+```python
+line = "Calculate F plus one"
+
+# Lowercasing the whole line: "Calculate" matches now,
+# but F has turned into f.
+line.lower().split()   # ['calculate', 'f', 'plus', 'one']
+
+# Keeping two versions of each word:
+KEYWORDS = {"let", "equal", "calculate"}
+for word in line.split():
+    lower = word.lower()
+    if lower in NUMBERS or lower in OPERATORS or lower in KEYWORDS:
+        # Match keywords and numbers in any case.
+        print("keyword or number:", lower)
+    else:
+        # Keep the original, so f and F stay different names.
+        print("identifier:", word)
+```
+
+</details>
+
+Try all of them on a short program. The third line should be an error, because nothing named `F` exists yet.
+
+<div id="case-demo" class="refl-demo"></div>
+
 ### Order of operations: two passes
 
-Students who handled operator precedence mostly used the same approach: one pass through the token list for multiplication and division, then a second for addition and subtraction. Several mentioned the cost (an extra loop) and the benefit (it's easier to follow). One reflection says honestly that it doesn't handle precedence at all.
+Students who handled operator precedence mostly used the same approach: one pass through the token list for multiplication and division, then a second for addition and subtraction. A few mentioned the cost (an extra loop) and the benefit (it's easier to follow). One reflection says honestly that it doesn't handle precedence at all.
+
+<details class="refl-example" markdown="1">
+<summary>Show a minimal example: two passes</summary>
+
+```python
+def calculate(tokens):
+    # Pass 1: fold each * and / into the number just before it.
+    first = [tokens[0]]
+    for op, number in zip(tokens[1::2], tokens[2::2]):
+        if op == "*":
+            first[-1] *= number
+        elif op == "/":
+            first[-1] /= number
+        else:
+            first += [op, number]
+    # Pass 2: what's left is only + and -, so go left to right.
+    result = first[0]
+    for op, number in zip(first[1::2], first[2::2]):
+        result = result + number if op == "+" else result - number
+    return result
+
+calculate([2, "+", 3, "*", 4])   # 14, not 20
+```
+
+</details>
 
 ### Indexes are where the bugs were
 
-Many of the reported struggles come down to **index management**. Lists got shorter when a parenthesized group was replaced with its result. Operators like "divided by" and "the result of" span several words. Positions had to be tracked across recursive calls. One student explained why they switched from a `for` loop to a `while` loop with a manual index: a `for` loop is more readable, but it couldn't consume multi-word operators. Another worked out the identifier indexes on scratch paper. If your bugs were off-by-one errors, you weren't the only one.
+Several of the reported struggles come down to **index management**. Lists got shorter when a parenthesized group was replaced with its result. Operators like "divided by" and "the result of" span several words. Positions had to be tracked across recursive calls. One student explained why they switched from a `for` loop to a `while` loop with a manual index: a `for` loop is more readable, but it couldn't consume multi-word operators. Another worked out the identifier indexes on scratch paper. If your bugs were off-by-one errors, you weren't the only one.
+
+<details class="refl-example" markdown="1">
+<summary>Show a minimal example: why a while loop</summary>
+
+`for word in words` hands you one word at a time, so it can't take “divided” and “by” together. A `while` loop with your own index can:
+
+```python
+words = "ten divided by two".split()
+
+tokens, i = [], 0
+while i < len(words):
+    if words[i:i + 2] == ["divided", "by"]:
+        tokens.append("/")
+        i += 2              # use up both words at once
+    else:
+        tokens.append(NUMBERS.get(words[i], words[i]))
+        i += 1
+
+tokens   # [10, '/', 2]
+```
+
+The parentheses example above has the other classic index bug built in: replacing a group with its value makes the list shorter, so every position after it moves.
+
+</details>
 
 ### Plan first, or iterate?
 
@@ -58,6 +289,8 @@ A few reflections openly criticize the author's own design. One student realized
 
 ### The empty-file decision: a real split
 
+<div id="empty-file-chart" class="refl-widget" markdown="1">
+
 | Choice | How many | Reasoning given |
 |---|---|---|
 | Write an empty solution file | 3 | Consistency: every input produces an output with one line per problem, and zero problems means zero lines. Works well when processing many files in a row. Needs no special-case code. |
@@ -66,7 +299,30 @@ A few reflections openly criticize the author's own design. One student realized
 | Raise / report an error | 1 | In real software, you'd want to know about suspicious input instead of letting blank files pile up. |
 | Unclear / not done | 2 | |
 
+</div>
+
 There is no single right answer here. What matters is that the most convincing answers name **who** they're designing for: a script processing a batch of files, or a person typing a filename by hand. One student also treated a file that contains only blank lines as empty, which is an edge case worth considering.
+
+<details class="refl-example" markdown="1">
+<summary>Show a minimal example: the three choices</summary>
+
+```python
+# A file of only blank lines counts as empty, too.
+problems = [line for line in open(path) if line.strip()]
+
+if not problems:
+    # Choice 1: write an empty solution file.
+    # Zero problems, zero answers.
+    open(solution_path, "w").close()
+
+    # Choice 2: say so, so an empty result doesn't look like a crash.
+    print(f"{path} has no problems in it, so there's nothing to solve.")
+
+    # Choice 3: treat it as a mistake in the input.
+    raise ValueError(f"{path} is empty")
+```
+
+</details>
 
 ### Other things worth mentioning
 
