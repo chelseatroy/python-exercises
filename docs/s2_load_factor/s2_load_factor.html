@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Choosing a Load Factor</title>
+<style>
+  :root {
+    --ground: #F6F1E7;
+    --surface: #FFFDF8;
+    --ink: #1F1B2D;
+    --muted: #6A6377;
+    --line: #E0D8C8;
+    --accent: #3B5BDB;
+    --accent-ink: #FFFFFF;
+    --tag: #F2C14E;
+    --tag-edge: #C99A1E;
+    --tag-ink: #3A2A00;
+    --hit: #2B8A3E;
+    --clash: #D9480F;
+    --machine: #2B2540;
+    --machine-ink: #F6F1E7;
+    --machine-muted: #B9B2CC;
+    --slot: #EDE6D8;
+    /* chart series: checked with the dataviz palette validator against --surface */
+    --s-miss: #3B5BDB;
+    --s-hit: #C99A1E;
+    --display: Georgia, "Times New Roman", serif;
+    --body: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #15131C;
+      --surface: #1E1B28;
+      --ink: #ECE8F4;
+      --muted: #A49DB3;
+      --line: #34303F;
+      --accent: #7C93F5;
+      --accent-ink: #0F1020;
+      --tag: #D9AA3A;
+      --tag-edge: #A97F1C;
+      --tag-ink: #241A00;
+      --hit: #51CF66;
+      --clash: #FF8A4C;
+      --machine: #0D0B14;
+      --machine-ink: #ECE8F4;
+      --machine-muted: #8F88A3;
+      --slot: #2A2636;
+      --s-miss: #6C84EC;
+      --s-hit: #B08724;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #15131C;
+    --surface: #1E1B28;
+    --ink: #ECE8F4;
+    --muted: #A49DB3;
+    --line: #34303F;
+    --accent: #7C93F5;
+    --accent-ink: #0F1020;
+    --tag: #D9AA3A;
+    --tag-edge: #A97F1C;
+    --tag-ink: #241A00;
+    --hit: #51CF66;
+    --clash: #FF8A4C;
+    --machine: #0D0B14;
+    --machine-ink: #ECE8F4;
+    --machine-muted: #8F88A3;
+    --slot: #2A2636;
+    --s-miss: #6C84EC;
+    --s-hit: #B08724;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 16px/1.55 var(--body);
+  }
+  .page {
+    padding-inline: clamp(16px, 4vw, 72px);
+    padding-block: 40px 72px;
+    display: grid;
+    gap: 44px;
+  }
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.3rem, 7vw, 3.6rem); line-height: 1.02; }
+  h2 { font-size: 1.7rem; line-height: 1.15; }
+  h3 { font-size: 1.25rem; line-height: 1.2; }
+  p { margin: 0; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  code { font-family: var(--mono); font-size: 0.92em; }
+  .label {
+    font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase;
+    font-weight: 700; color: var(--muted);
+  }
+  section { display: grid; gap: 16px; }
+  header { display: grid; gap: 14px; }
+  .lede { font-size: 1.15rem; max-width: 72ch; }
+  .prose { max-width: 72ch; }
+  div.prose, ul.prose { display: grid; gap: 10px; }
+  .page > *, section > * { min-width: 0; }
+  [hidden] { display: none !important; }
+
+  button { font: inherit; color: inherit; }
+  button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+  .seg button, .btn {
+    font: 600 0.9rem var(--body); cursor: pointer;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    border-radius: 999px; padding: 6px 13px;
+  }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+  .btn:hover, .seg button:hover { border-color: var(--muted); }
+  .primary {
+    font: 700 0.95rem var(--body); cursor: pointer;
+    background: var(--accent); color: var(--accent-ink);
+    border: 0; border-radius: 999px; padding: 8px 18px;
+  }
+  .primary:disabled, .btn:disabled { opacity: 0.5; cursor: progress; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px; display: grid; gap: 12px; align-content: start; min-width: 0;
+  }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: end; }
+  .controls > div { display: grid; gap: 4px; }
+  .size-row { display: flex; align-items: center; gap: 12px; }
+  .size-row input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
+  .size-row output { font: 700 1.3rem var(--mono); min-width: 4ch; text-align: right; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 10px; }
+  .stat { border-top: 2px solid var(--ink); padding-top: 6px; display: grid; gap: 0; }
+  .stat .big { font: 600 1.45rem/1.15 var(--mono); font-variant-numeric: tabular-nums; }
+  .stat .sub { font-size: 0.78rem; color: var(--muted); }
+  .aside { font-size: 0.88rem; color: var(--muted); border-left: 3px solid var(--tag); padding-left: 10px; max-width: 72ch; }
+  pre { margin: 0; padding: 12px 14px; background: var(--machine); color: var(--machine-ink); border-radius: 10px; overflow-x: auto; font: 0.86rem/1.55 var(--mono); }
+  pre .cmt { color: var(--machine-muted); }
+
+  /* ---------- charts ---------- */
+  .chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.85rem; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 18px; height: 0; border-top: 2px solid; display: inline-block; }
+  .legend i.dash { border-top-style: dashed; }
+  .chart-wrap { position: relative; }
+  .chart { width: 100%; height: 230px; display: block; touch-action: pan-y; cursor: crosshair; overflow: visible; }
+  .chart text { font-family: var(--mono); font-size: 11.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+  .chart .lbl { font-weight: 700; fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
+  .tip {
+    position: absolute; pointer-events: none; z-index: 2;
+    background: var(--ink); color: var(--ground); border-radius: 8px; padding: 6px 9px;
+    font: 0.8rem/1.4 var(--mono); white-space: nowrap; transform: translate(-50%, calc(-100% - 14px));
+  }
+  .tip[hidden] { display: none; }
+  .tip b { font-weight: 700; }
+  .tip .sw { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+
+  /* ---------- throw a key ---------- */
+  .strip { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 4px; }
+  .cell {
+    aspect-ratio: 1; border-radius: 6px; border: 2px solid var(--line); background: var(--surface);
+    display: grid; place-items: center; font: 700 0.78rem var(--mono); color: var(--ink);
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .cell.full { background: var(--slot); border-color: var(--slot); }
+  .cell.full::after { content: ""; width: 42%; aspect-ratio: 1; border-radius: 50%; background: var(--muted); opacity: 0.55; }
+  .cell.taken { border-color: var(--clash); }
+  .cell.taken::after { display: none; }
+  .cell.landed { border-color: var(--hit); background: var(--surface); color: var(--hit); }
+  .cell.taken { color: var(--clash); }
+  .throw-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  #throw-msg { min-height: 1.6em; }
+  .ladder { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; align-items: center; font: 0.88rem var(--mono); max-width: 520px; }
+  .ladder .bar { height: 12px; border-radius: 0 4px 4px 0; background: var(--s-miss); min-width: 1px; }
+  .ladder .p { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 16px; }
+  .tables { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  .tables th, .tables td { text-align: left; padding: 7px 10px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .tables th { font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+  .tables td.n { font-family: var(--mono); white-space: nowrap; }
+  .table-scroll { overflow-x: auto; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header>
+    <div class="label">Session 2 · Follow-up to <a href="../s2_hash_ring/s2_hash_ring.html">The Hash Ring</a></div>
+    <h1>Choosing a Load Factor</h1>
+    <p class="lede">A Python dict grows when its buckets are 2/3 full. Why 2/3, and not 1/2 or 9/10? Whatever load factor you pick, you're trading speed for memory or memory for speed. Slide it and watch both sides of the trade.</p>
+  </header>
+
+  <!-- ----------------- 1. THE TRADE ----------------- -->
+  <section aria-labelledby="trade-h">
+    <h2 id="trade-h">Fuller is slower. Emptier is bigger.</h2>
+    <p class="muted prose"><strong>Load factor</strong> = keys ÷ buckets. These curves assume a good hash function and probing that scatters, like Python's jump. Real tables come close to them.</p>
+    <div class="card">
+      <div class="controls">
+        <div><span class="label">Load factor</span>
+          <div class="seg" id="lf-preset" role="group" aria-label="Load factor presets">
+            <button type="button" data-v="0.5" aria-pressed="false">1/2</button>
+            <button type="button" data-v="0.6" aria-pressed="false">3/5 (set)</button>
+            <button type="button" data-v="0.6667" aria-pressed="true">2/3 (dict)</button>
+            <button type="button" data-v="0.75" aria-pressed="false">3/4</button>
+            <button type="button" data-v="0.9" aria-pressed="false">9/10</button>
+          </div>
+        </div>
+        <div><span class="label">When a bucket is taken, try</span>
+          <div class="seg" id="probe" role="group" aria-label="Probing rule">
+            <button type="button" data-v="scatter" aria-pressed="true">a scattered bucket (Python)</button>
+            <button type="button" data-v="linear" aria-pressed="false">the next one (+1)</button>
+          </div>
+        </div>
+      </div>
+      <div class="size-row">
+        <span class="label" id="a-label" style="white-space:nowrap">Keys ÷ buckets</span>
+        <input type="range" id="a" min="0.05" max="0.95" step="0.01" value="0.67" aria-labelledby="a-label">
+        <output id="a-out">0.67</output>
+      </div>
+
+      <div class="chart-head">
+        <h3>Time: checks per lookup</h3>
+        <div class="legend">
+          <span><i style="border-color:var(--s-miss)"></i>key isn't there (or a new key)</span>
+          <span><i style="border-color:var(--s-hit)"></i>key is there</span>
+          <span id="ref-legend" hidden><i class="dash" style="border-color:var(--muted)"></i>scattered, for comparison</span>
+        </div>
+      </div>
+      <div class="chart-wrap"><svg class="chart" id="c-time" role="img" aria-label="Average buckets checked per lookup, rising steeply as the load factor approaches 1"></svg><div class="tip" hidden></div></div>
+
+      <div class="chart-head">
+        <h3>Space: buckets per key</h3>
+        <div class="legend">
+          <span><i style="border-color:var(--ink)"></i>buckets per key (1 ÷ load factor)</span>
+        </div>
+      </div>
+      <div class="chart-wrap"><svg class="chart" id="c-space" role="img" aria-label="Buckets per key, rising steeply as the load factor approaches 0"></svg><div class="tip" hidden></div></div>
+
+      <div class="stats" id="trade-stats" aria-live="polite"></div>
+      <p class="muted" style="font-size:0.85rem">Hover a chart to read it; click or drag on it to set the load factor.</p>
+    </div>
+
+    <p class="aside">Since Python 3.6, the empty buckets cost less than this chart suggests. Each key's entry (its hash, key, and value: 16 to 24 bytes) sits in a packed list of entries. The bucket array only holds small index numbers pointing into that list: 1 byte each for up to 128 buckets, growing to 8 bytes in huge dicts. So an empty bucket costs a few bytes, not a whole entry.</p>
+  </section>
+
+  <!-- ----------------- 2. CHANCE OF A COLLISION ----------------- -->
+  <section aria-labelledby="chance-h">
+    <h2 id="chance-h">What load factor does to the chance of a collision</h2>
+    <div class="prose">
+      <p>When a new key arrives, its hash picks a bucket at random (that's the "uniform" in a good hash function). If the table is a fraction <strong>α</strong> full, the chance that bucket is already taken is simply <strong>α</strong>. At 2/3 full, a new key collides 2 times out of 3.</p>
+      <p>If it collides, it probes another bucket, which is <em>also</em> taken with chance about α. So the chance of needing 3 or more checks is about α × α, 4 or more is α³, and so on. The collision chance grows in a straight line, but the cost multiplies, which is why the curve above shoots up near 1.</p>
+    </div>
+
+    <div class="card">
+      <h3>Throw a key at the table</h3>
+      <div class="size-row">
+        <span class="label" id="a2-label" style="white-space:nowrap">Keys ÷ buckets</span>
+        <input type="range" id="a2" min="0.05" max="0.95" step="0.01" value="0.67" aria-labelledby="a2-label">
+        <output id="a2-out">0.67</output>
+      </div>
+      <div class="strip" id="strip" role="img" aria-label="32 buckets, some holding keys"></div>
+      <p id="throw-msg" aria-live="polite" class="muted">32 buckets. Gray dots are keys already stored. Throw a new key and count how many buckets it checks before it finds an empty one.</p>
+      <div class="throw-row">
+        <button class="primary" type="button" id="throw-1">Throw a key</button>
+        <button class="btn" type="button" id="throw-many">Throw 1,000 keys (fresh table each time)</button>
+        <button class="btn" type="button" id="refill">New table</button>
+      </div>
+      <div class="chart-head">
+        <h3>How many checks did each key need?</h3>
+        <div class="legend">
+          <span><i style="border-color:var(--s-miss);border-top-width:8px"></i>measured</span>
+          <span id="theory-legend"><i style="border-color:var(--ink);border-top-width:0;width:8px;height:8px;border-radius:50%;background:var(--ink)"></i>predicted</span>
+        </div>
+      </div>
+      <div class="chart-wrap"><svg class="chart" id="c-hist" role="img" aria-label="Histogram of checks needed per thrown key"></svg><div class="tip" hidden></div></div>
+      <p class="muted" id="hist-note" style="font-size:0.88rem"></p>
+      <div>
+        <span class="label">Predicted chance a new key needs at least…</span>
+        <div class="ladder" id="ladder" style="margin-top:6px"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Lowering the load factor doesn't prevent collisions</h3>
+      <p class="muted prose">The chance that <em>this</em> key collides is α. But a table fills one key at a time, and the chance that <em>some</em> key has collided by now climbs much faster. It's the birthday problem: with 23 people, two probably share a birthday, even though there are 365 days.</p>
+      <div class="controls">
+        <div><span class="label">Buckets in the table</span>
+          <div class="seg" id="bday-m" role="group" aria-label="Number of buckets">
+            <button type="button" data-v="64" aria-pressed="false">64</button>
+            <button type="button" data-v="1024" aria-pressed="true">1,024</button>
+            <button type="button" data-v="1048576" aria-pressed="false">1,048,576</button>
+          </div>
+        </div>
+      </div>
+      <div class="chart-head">
+        <h3>Chance of a collision while filling the table</h3>
+        <div class="legend">
+          <span><i style="border-color:var(--ink)"></i>at least one so far</span>
+          <span><i class="dash" style="border-color:var(--muted)"></i>the next key collides (= α)</span>
+        </div>
+      </div>
+      <div class="chart-wrap"><svg class="chart" id="c-bday" role="img" aria-label="Chance at least one collision has happened, reaching nearly 100% at a very low load factor"></svg><div class="tip" hidden></div></div>
+      <p id="bday-note"></p>
+      <p class="muted prose">So no sensible load factor avoids collisions; even a table that's 5% full has almost surely had some. What the load factor controls is <strong>how long the trail is</strong> when a collision happens. That's why the time chart above measures checks, not collisions.</p>
+    </div>
+  </section>
+
+  <!-- ----------------- 3. SO WHY 2/3? ----------------- -->
+  <section aria-labelledby="why-h">
+    <h2 id="why-h">So why about 0.7?</h2>
+    <div class="split">
+      <div class="card">
+        <h3>Where the curves bend</h3>
+        <ul class="prose" style="padding-left:20px;margin:0">
+          <li><strong>Above about 0.7, time gets expensive fast.</strong> A new key needs 3 checks on average at 2/3, 5 at 0.8, and 10 at 0.9.</li>
+          <li><strong>Below about 0.5, space gets expensive fast.</strong> Going from 2/3 to 1/2 cuts a miss from 3 checks to 2, but takes a third more memory. Going from 1/2 to 1/4 doubles the memory again, and saves less than one check.</li>
+          <li><strong>Remember the resize.</strong> Right after a dict doubles, it's only 1/3 full. The 2/3 is the <em>worst</em> it ever gets, so most of the time a dict is somewhere between 1/3 and 2/3 full.</li>
+          <li><strong>It's cheap to compute.</strong> CPython writes the limit as <code>(n &lt;&lt; 1) / 3</code>: integer arithmetic, no floats.</li>
+        </ul>
+        <p class="muted" style="font-size:0.9rem">There's no theorem that says 2/3. CPython's developers timed real programs at different settings and kept the one that did well. Their notes are in <a href="https://github.com/python/cpython/blob/main/Objects/dictnotes.txt" target="_blank" rel="noopener"><code>Objects/dictnotes.txt</code></a>.</p>
+      </div>
+      <div class="card">
+        <h3>Other tables, other answers</h3>
+        <div class="table-scroll">
+          <table class="tables">
+            <thead><tr><th>Table</th><th>Grows at</th><th>Why</th></tr></thead>
+            <tbody>
+              <tr><td>Python <code>dict</code></td><td class="n">2/3</td><td>The balance above.</td></tr>
+              <tr><td>Python <code>set</code></td><td class="n">3/5</td><td>Sets mostly answer <code>x in s</code>, and many of those answers are "no". Misses are the expensive case, so sets stay emptier.</td></tr>
+              <tr><td>Java <code>HashMap</code></td><td class="n">3/4</td><td>Uses chaining, so a busy bucket just gets a longer list, with no probing at all. You can even set its load factor above 1.</td></tr>
+              <tr><td>Rust <code>HashMap</code>, Abseil, Go 1.24+</td><td class="n">7/8</td><td>"Swiss tables" check a whole group of 8 or 16 buckets in one CPU instruction, so a longer trail costs much less.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted" style="font-size:0.9rem">The right number depends on how much each extra check costs. Make checks cheaper and you can pack the table fuller.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const st = { a: 0.67, probe: "scatter", m: 1024 };
+
+  // average checks per lookup at load factor a (Knuth's formulas)
+  const CURVES = {
+    scatter: { hit: (a) => (1 / a) * Math.log(1 / (1 - a)), miss: (a) => 1 / (1 - a) },
+    linear: { hit: (a) => 0.5 * (1 + 1 / (1 - a)), miss: (a) => 0.5 * (1 + 1 / ((1 - a) ** 2)) },
+  };
+  const fmt = (v, d = 1) => (v >= 100 ? Math.round(v).toLocaleString("en-US") : v.toFixed(d));
+  const pct = (p) => (p >= 0.9995 ? "≈100%" : p < 0.0005 ? "<0.1%" : `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`);
+
+  function wireSeg(id, onPick) {
+    $(id).addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      setSeg(id, b.dataset.v);
+      onPick(b.dataset.v);
+    });
+  }
+  function setSeg(id, v) {
+    $(id).querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.v === String(v))));
+  }
+
+  // ---------------------------------------------------------
+  // Line chart helper: x is always the load factor
+  // ---------------------------------------------------------
+  const PAD = { left: 44, right: 14, top: 14, bottom: 34 };
+  function frame(svg, { x0, x1, y0, y1, yTicks, yFmt, xTicks, xLabel }) {
+    const W = svg.clientWidth || 700, H = svg.clientHeight || 230;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const x = (v) => PAD.left + ((W - PAD.left - PAD.right) * (v - x0)) / (x1 - x0);
+    const y = (v) => H - PAD.bottom - ((H - PAD.top - PAD.bottom) * (v - y0)) / (y1 - y0);
+    const xInv = (px) => x0 + ((px - PAD.left) * (x1 - x0)) / (W - PAD.left - PAD.right);
+    let s = `<defs><clipPath id="${svg.id}-clip"><rect x="${PAD.left}" y="${PAD.top - 2}" width="${W - PAD.left - PAD.right}" height="${H - PAD.top - PAD.bottom + 2}"/></clipPath></defs>`;
+    yTicks.forEach((t) => {
+      s += `<line x1="${PAD.left}" x2="${W - PAD.right}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/>`;
+      s += `<text x="${PAD.left - 7}" y="${y(t) + 4}" text-anchor="end">${yFmt(t)}</text>`;
+    });
+    xTicks.forEach((t) => { s += `<text x="${x(t)}" y="${H - PAD.bottom + 17}" text-anchor="middle">${t}</text>`; });
+    s += `<text x="${W - PAD.right}" y="${H - 2}" text-anchor="end">${xLabel}</text>`;
+    return { W, H, x, y, xInv, s, clip: `clip-path="url(#${svg.id}-clip)"` };
+  }
+  const path = (f, x, y, from, to, n = 240) => {
+    let d = "";
+    for (let i = 0; i <= n; i++) { const v = from + ((to - from) * i) / n; d += `${i ? "L" : "M"}${x(v).toFixed(1)},${y(f(v)).toFixed(1)}`; }
+    return d;
+  };
+  const marker = (cx, cy, color) => `<circle cx="${cx}" cy="${cy}" r="5" fill="${color}" stroke="var(--surface)" stroke-width="2"/>`;
+
+  // hover: crosshair + tooltip, click/drag sets the load factor
+  function hoverable(svg, getFrame, tipHtml, onSet) {
+    const tip = svg.parentElement.querySelector(".tip");
+    let dragging = false;
+    const at = (e) => {
+      const r = svg.getBoundingClientRect();
+      const f = getFrame();
+      return { f, px: e.clientX - r.left, py: e.clientY - r.top, v: f.xInv(e.clientX - r.left) };
+    };
+    svg.addEventListener("pointermove", (e) => {
+      const { f, px, py, v } = at(e);
+      if (px < PAD.left || px > f.W - PAD.right) { hide(); return; }
+      if (dragging && onSet) onSet(v);
+      let cross = svg.querySelector(".cross");
+      if (!cross) { cross = document.createElementNS("http://www.w3.org/2000/svg", "line"); cross.setAttribute("class", "cross"); cross.setAttribute("stroke", "var(--muted)"); cross.setAttribute("stroke-dasharray", "2 3"); svg.appendChild(cross); }
+      cross.setAttribute("x1", px); cross.setAttribute("x2", px); cross.setAttribute("y1", PAD.top); cross.setAttribute("y2", f.H - PAD.bottom);
+      tip.innerHTML = tipHtml(v);
+      tip.hidden = false;
+      tip.style.left = `${Math.min(Math.max(px, 90), f.W - 90)}px`;
+      tip.style.top = `${py}px`;
+    });
+    const hide = () => { tip.hidden = true; const c = svg.querySelector(".cross"); if (c) c.remove(); };
+    svg.addEventListener("pointerleave", () => { dragging = false; hide(); });
+    if (onSet) {
+      svg.addEventListener("pointerdown", (e) => { dragging = true; onSet(at(e).v); });
+      window.addEventListener("pointerup", () => { dragging = false; });
+    }
+  }
+  const clampA = (v) => Math.min(0.95, Math.max(0.05, Math.round(v * 100) / 100));
+
+  // ---------------------------------------------------------
+  // 1. Time and space
+  // ---------------------------------------------------------
+  const TIME_MAX = 10, SPACE_MAX = 10;
+  let timeFrame, spaceFrame;
+  function renderTime() {
+    const svg = $("c-time"), c = CURVES[st.probe];
+    const f = frame(svg, { x0: 0, x1: 1, y0: 0, y1: TIME_MAX, yTicks: [0, 2, 4, 6, 8, 10], yFmt: String, xTicks: [0, 0.25, 0.5, 0.75, 1], xLabel: "load factor →" });
+    timeFrame = f;
+    let s = f.s;
+    if (st.probe === "linear") {
+      s += `<path d="${path(CURVES.scatter.miss, f.x, f.y, 0.001, 0.99)}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4" ${f.clip}/>`;
+    }
+    s += `<path d="${path(c.hit, f.x, f.y, 0.001, 0.99)}" fill="none" stroke="var(--s-hit)" stroke-width="2" ${f.clip}/>`;
+    s += `<path d="${path(c.miss, f.x, f.y, 0.001, 0.99)}" fill="none" stroke="var(--s-miss)" stroke-width="2" ${f.clip}/>`;
+    // selected load factor
+    const a = st.a, mv = c.miss(a), hv = c.hit(a);
+    s += `<line x1="${f.x(a)}" x2="${f.x(a)}" y1="${PAD.top}" y2="${f.H - PAD.bottom}" stroke="var(--ink)" stroke-width="1"/>`;
+    if (mv <= TIME_MAX) s += marker(f.x(a), f.y(mv), "var(--s-miss)") + `<text class="lbl" x="${f.x(a) - 9}" y="${f.y(mv) - 8}" text-anchor="end">${fmt(mv)}</text>`;
+    else s += `<text class="lbl" x="${f.x(a) - 6}" y="${PAD.top + 10}" text-anchor="end">↑ ${fmt(mv)}</text>`;
+    if (hv <= TIME_MAX) s += marker(f.x(a), f.y(hv), "var(--s-hit)") + `<text class="lbl" x="${f.x(a) + 9}" y="${f.y(hv) + 16}">${fmt(hv)}</text>`;
+    svg.innerHTML = s;
+    $("ref-legend").hidden = st.probe !== "linear";
+  }
+  function renderSpace() {
+    const svg = $("c-space");
+    const f = frame(svg, { x0: 0, x1: 1, y0: 0, y1: SPACE_MAX, yTicks: [0, 2, 4, 6, 8, 10], yFmt: String, xTicks: [0, 0.25, 0.5, 0.75, 1], xLabel: "load factor →" });
+    spaceFrame = f;
+    let s = f.s;
+    const per = (v) => 1 / v;
+    // shade: the key's own bucket (below 1) and the empty buckets (1 up to the curve)
+    s += `<rect x="${f.x(0)}" y="${f.y(1)}" width="${f.x(1) - f.x(0)}" height="${f.y(0) - f.y(1)}" fill="var(--tag)" opacity="0.35"/>`;
+    s += `<path d="${path(per, f.x, f.y, 0.02, 1)} L${f.x(1)},${f.y(1)} L${f.x(0)},${f.y(1)} L${f.x(0)},${f.y(SPACE_MAX)} Z" fill="var(--slot)" ${f.clip}/>`;
+    s += `<path d="${path(per, f.x, f.y, 0.02, 1)}" fill="none" stroke="var(--ink)" stroke-width="2" ${f.clip}/>`;
+    s += `<text class="lbl" x="${f.x(0.97)}" y="${f.y(0.5) + 4}" text-anchor="end">the key's own bucket</text>`;
+    s += `<text class="lbl" x="${f.x(0.3)}" y="${f.y(2.1)}" style="font-weight:400;fill:var(--muted)">empty buckets</text>`;
+    const a = st.a, v = per(a);
+    s += `<line x1="${f.x(a)}" x2="${f.x(a)}" y1="${PAD.top}" y2="${f.H - PAD.bottom}" stroke="var(--ink)" stroke-width="1"/>`;
+    if (v <= SPACE_MAX) s += marker(f.x(a), f.y(v), "var(--ink)") + `<text class="lbl" x="${f.x(a) + 9}" y="${f.y(v) - 8}">${fmt(v, 2)}</text>`;
+    else s += `<text class="lbl" x="${f.x(a) + 6}" y="${PAD.top + 10}">↑ ${fmt(v)}</text>`;
+    svg.innerHTML = s;
+  }
+  function renderTradeStats() {
+    const a = st.a, c = CURVES[st.probe];
+    const buckets = Math.ceil(1000 / a);
+    $("trade-stats").innerHTML = `
+      <div class="stat"><span class="label">New key collides</span><span class="big">${pct(a)}</span><span class="sub">chance its bucket is taken</span></div>
+      <div class="stat"><span class="label">Miss / insert</span><span class="big" style="${c.miss(a) > 5 ? "color:var(--clash)" : ""}">≈${fmt(c.miss(a))}</span><span class="sub">checks, on average</span></div>
+      <div class="stat"><span class="label">Find a key</span><span class="big">≈${fmt(c.hit(a))}</span><span class="sub">checks, on average</span></div>
+      <div class="stat"><span class="label">1,000 keys need</span><span class="big">${buckets.toLocaleString("en-US")}</span><span class="sub">buckets, ${pct(1 - a)} empty</span></div>`;
+  }
+  hoverable($("c-time"), () => timeFrame, (v) => {
+    const c = CURVES[st.probe], a = Math.min(0.99, Math.max(0.01, v));
+    return `load factor <b>${a.toFixed(2)}</b><br><span class="sw" style="background:var(--s-miss)"></span>miss ${fmt(c.miss(a))} checks<br><span class="sw" style="background:var(--s-hit)"></span>find ${fmt(c.hit(a))} checks`;
+  }, (v) => setA(clampA(v)));
+  hoverable($("c-space"), () => spaceFrame, (v) => {
+    const a = Math.min(1, Math.max(0.01, v));
+    return `load factor <b>${a.toFixed(2)}</b><br>${fmt(1 / a, 2)} buckets per key<br>${pct(1 - a)} of buckets empty`;
+  }, (v) => setA(clampA(v)));
+
+  // ---------------------------------------------------------
+  // 2a. Throw a key
+  // ---------------------------------------------------------
+  const M = 32;
+  const randInt = (n) => Math.floor(Math.random() * n);
+  // the order a key checks buckets in: scattered = a random order; +1 = home, home+1, …
+  function trail(home) {
+    if (st.probe === "linear") return Array.from({ length: M }, (_, i) => (home + i) % M);
+    const rest = Array.from({ length: M }, (_, i) => i).filter((i) => i !== home);
+    for (let i = rest.length - 1; i > 0; i--) { const j = randInt(i + 1); [rest[i], rest[j]] = [rest[j], rest[i]]; }
+    return [home, ...rest];
+  }
+  const keysFor = (a) => Math.min(M - 1, Math.round(a * M));
+  function fillTable(a) {
+    const t = new Array(M).fill(false);
+    for (let k = 0; k < keysFor(a); k++) { const tr = trail(randInt(M)); t[tr.find((i) => !t[i])] = true; }
+    return t;
+  }
+  function throwInto(t) { const tr = trail(randInt(M)); const n = tr.findIndex((i) => !t[i]); return tr.slice(0, n + 1); }
+
+  let table = fillTable(st.a), busy = false, tally = null;
+  function renderStrip(path = []) {
+    const strip = $("strip");
+    if (!strip.children.length) for (let i = 0; i < M; i++) { const d = document.createElement("div"); d.className = "cell"; strip.appendChild(d); }
+    [...strip.children].forEach((d, i) => { d.className = `cell${table[i] ? " full" : ""}`; d.textContent = ""; });
+    path.forEach((i, n) => {
+      const d = strip.children[i];
+      d.classList.add(n === path.length - 1 ? "landed" : "taken");
+      d.textContent = n + 1;
+    });
+  }
+  async function throwOne() {
+    if (busy) return;
+    busy = true; $("throw-1").disabled = $("throw-many").disabled = true;
+    const p = throwInto(table);
+    renderStrip();
+    for (let n = 1; n <= p.length; n++) {
+      renderStrip(p.slice(0, n));
+      const i = p[n - 1];
+      $("throw-msg").innerHTML = n < p.length
+        ? `Check ${n}: bucket ${i} is <strong style="color:var(--clash)">taken</strong>. Collision, try another…`
+        : `Check ${n}: bucket ${i} is <strong style="color:var(--hit)">empty</strong>. ${n === 1 ? "No collision this time." : `This key needed <strong>${n} checks</strong>.`}`;
+      if (!reduceMotion) await new Promise((r) => setTimeout(r, 380));
+    }
+    busy = false; $("throw-1").disabled = $("throw-many").disabled = false;
+  }
+  function throwMany() {
+    tally = { a: st.a, probe: st.probe, counts: new Array(11).fill(0), total: 0, sum: 0 };
+    for (let r = 0; r < 1000; r++) {
+      const n = throwInto(fillTable(st.a)).length;
+      tally.counts[Math.min(n, 10)]++; tally.total++; tally.sum += n;
+    }
+    renderHist();
+  }
+
+  // predicted chance a new key needs exactly k checks: n of M buckets full, every order equally likely
+  function exactChecks(k, n = keysFor(st.a)) {
+    let p = 1;
+    for (let i = 0; i < k - 1; i++) p *= (n - i) / (M - i);
+    return p * (M - n) / (M - k + 1);
+  }
+  let histFrame;
+  function renderHist() {
+    const svg = $("c-hist");
+    const W = svg.clientWidth || 700, H = svg.clientHeight || 230;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const n = keysFor(st.a);
+    const theory = st.probe === "scatter" ? Array.from({ length: 11 }, (_, k) => {
+      if (k === 0) return 0;
+      if (k < 10) return exactChecks(k, n);
+      let rest = 1; for (let j = 1; j < 10; j++) rest -= exactChecks(j, n); return Math.max(0, rest);
+    }) : null;
+    const shown = tally && tally.a === st.a && tally.probe === st.probe ? tally : null;
+    const measured = shown ? shown.counts.map((c) => c / shown.total) : null;
+    const yMax = Math.max(0.2, ...(theory || [0]), ...(measured || [0])) * 1.12;
+    const bw = (W - PAD.left - PAD.right) / 10;
+    const x = (k) => PAD.left + bw * (k - 1);
+    const y = (p) => H - PAD.bottom - ((H - PAD.top - PAD.bottom) * p) / yMax;
+    let s = "";
+    const step = yMax > 0.6 ? 0.2 : 0.1;
+    for (let t = 0; t <= yMax; t += step) {
+      s += `<line x1="${PAD.left}" x2="${W - PAD.right}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/>`;
+      s += `<text x="${PAD.left - 7}" y="${y(t) + 4}" text-anchor="end">${Math.round(t * 100)}%</text>`;
+    }
+    for (let k = 1; k <= 10; k++) s += `<text x="${x(k) + bw / 2}" y="${H - PAD.bottom + 17}" text-anchor="middle">${k === 10 ? "10+" : k}</text>`;
+    s += `<text x="${W - PAD.right}" y="${H - 2}" text-anchor="end">checks needed →</text>`;
+    if (measured) for (let k = 1; k <= 10; k++) {
+      const h = y(0) - y(measured[k]);
+      if (h > 0) s += `<path d="M${x(k) + 3},${y(0)} V${y(measured[k]) + Math.min(4, h)} q0,-4 4,-4 H${x(k) + bw - 7} q4,0 4,4 V${y(0)} Z" fill="var(--s-miss)"/>`;
+    }
+    if (theory) for (let k = 1; k <= 10; k++) s += `<circle cx="${x(k) + bw / 2}" cy="${y(theory[k])}" r="4.5" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"/>`;
+    svg.innerHTML = s;
+    histFrame = { W, H, x, bw, theory, measured };
+    $("theory-legend").hidden = !theory;
+    const predicted = st.probe === "scatter" ? (M + 1) / (M - n + 1) : null;
+    $("hist-note").innerHTML = (shown
+      ? `1,000 keys averaged <strong>${(shown.sum / shown.total).toFixed(2)}</strong> checks.`
+      : `Press "Throw 1,000 keys" to measure.`)
+      + (predicted ? ` Predicted for ${n} of ${M} buckets full: ${predicted.toFixed(2)}.` : ` With +1 there's no tidy prediction: keys pile up into clusters, and a key that lands in one has to walk to its end. Compare the long tail with the scattered version. (The time chart's +1 curve is for a big table. In just ${M} buckets, a trail can't get that long.)`);
+  }
+  (function hoverHist() {
+    const svg = $("c-hist"), tip = svg.parentElement.querySelector(".tip");
+    svg.addEventListener("pointermove", (e) => {
+      const f = histFrame; if (!f) return;
+      const r = svg.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
+      const k = Math.floor((px - PAD.left) / f.bw) + 1;
+      if (k < 1 || k > 10) { tip.hidden = true; return; }
+      const parts = [`<b>${k === 10 ? "10 or more" : k} check${k === 1 ? "" : "s"}</b>`];
+      if (f.measured) parts.push(`<span class="sw" style="background:var(--s-miss)"></span>measured ${pct(f.measured[k])}`);
+      if (f.theory) parts.push(`<span class="sw" style="background:var(--ink);outline:1px solid var(--ground)"></span>predicted ${pct(f.theory[k])}`);
+      tip.innerHTML = parts.join("<br>");
+      tip.hidden = false;
+      tip.style.left = `${Math.min(Math.max(f.x(k) + f.bw / 2, 80), f.W - 80)}px`;
+      tip.style.top = `${py}px`;
+    });
+    svg.addEventListener("pointerleave", () => { tip.hidden = true; });
+  })();
+
+  function renderLadder() {
+    const a = st.a;
+    const rows = [1, 2, 3, 4, 5, 6].map((k) => ({ k, p: k === 1 ? 1 : a ** (k - 1) }));
+    $("ladder").innerHTML = rows.map(({ k, p }) =>
+      `<span>${k} check${k === 1 ? " " : "s"}</span><div class="bar" style="width:${(p * 100).toFixed(1)}%"></div><span class="p">${k === 1 ? "100%" : `α${k > 2 ? `<sup>${k - 1}</sup>` : ""} = ${pct(p)}`}</span>`).join("");
+  }
+
+  // ---------------------------------------------------------
+  // 2b. Birthday problem
+  // ---------------------------------------------------------
+  let bdayCurve = null, bdayFrame;
+  function computeBday(m) {
+    // chance that no collision has happened after n keys: product of (1 - i/m)
+    const pts = [];
+    let logNone = 0;
+    const samples = 400;
+    let next = 0;
+    for (let n = 0; n <= m; n++) {
+      if (n > 0) logNone += Math.log(1 - (n - 1) / m);
+      while (next <= samples && n >= (next / samples) * m) { pts.push([n / m, 1 - Math.exp(logNone)]); next++; }
+      if (logNone < -40 && next <= samples) { while (next <= samples) { pts.push([next / samples, 1]); next++; } break; }
+    }
+    // dense points near 0, where the curve climbs
+    const dense = [];
+    let logN = 0;
+    const until = Math.min(m, Math.ceil(Math.sqrt(m) * 6));
+    const stride = Math.max(1, Math.floor(until / 300));
+    for (let n = 0; n <= until; n++) {
+      if (n > 0) logN += Math.log(1 - (n - 1) / m);
+      if (n % stride === 0) dense.push([n / m, 1 - Math.exp(logN)]);
+    }
+    const all = [...dense, ...pts.filter(([a]) => a > dense[dense.length - 1][0])];
+    return { m, pts: all, at: (a) => { let best = all[0]; for (const p of all) { if (p[0] <= a) best = p; else break; } return best[1]; } };
+  }
+  function renderBday() {
+    if (!bdayCurve || bdayCurve.m !== st.m) bdayCurve = computeBday(st.m);
+    const svg = $("c-bday");
+    const f = frame(svg, { x0: 0, x1: 1, y0: 0, y1: 1, yTicks: [0, 0.25, 0.5, 0.75, 1], yFmt: (t) => `${t * 100}%`, xTicks: [0, 0.25, 0.5, 0.75, 1], xLabel: "load factor →" });
+    bdayFrame = f;
+    let s = f.s;
+    s += `<line x1="${f.x(0)}" y1="${f.y(0)}" x2="${f.x(1)}" y2="${f.y(1)}" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+    s += `<path d="${bdayCurve.pts.map(([a, p], i) => `${i ? "L" : "M"}${f.x(a).toFixed(1)},${f.y(p).toFixed(1)}`).join("")}" fill="none" stroke="var(--ink)" stroke-width="2"/>`;
+    // where it crosses 50%
+    const half = bdayCurve.pts.find(([, p]) => p >= 0.5);
+    s += marker(f.x(half[0]), f.y(0.5), "var(--ink)");
+    s += `<text class="lbl" x="${f.x(half[0]) + 10}" y="${f.y(0.5) + 4}">50% at ${(half[0] * 100).toFixed(half[0] < 0.01 ? 2 : 1)}% full</text>`;
+    const a = st.a;
+    s += `<line x1="${f.x(a)}" x2="${f.x(a)}" y1="${PAD.top}" y2="${f.H - PAD.bottom}" stroke="var(--ink)" stroke-width="1"/>`;
+    svg.innerHTML = s;
+    const keysAtHalf = Math.round(half[0] * st.m);
+    $("bday-note").innerHTML = `With ${st.m.toLocaleString("en-US")} buckets, there's a 50% chance of a collision after just <strong>${keysAtHalf.toLocaleString("en-US")} keys</strong>, ${(half[0] * 100).toFixed(half[0] < 0.01 ? 2 : 1)}% full. By the dict's 2/3 limit it's ${pct(bdayCurve.at(2 / 3))}. Roughly, the 50% point comes at <code>1.18 × √buckets</code> keys, so bigger tables reach it at an even <em>lower</em> load factor.`;
+  }
+  hoverable($("c-bday"), () => bdayFrame, (v) => {
+    const a = Math.min(1, Math.max(0, v));
+    return `load factor <b>${a.toFixed(3)}</b> (${Math.round(a * st.m).toLocaleString("en-US")} keys)<br>at least one collision: ${pct(bdayCurve.at(a))}<br>next key collides: ${pct(a)}`;
+  }, null);
+
+  // ---------------------------------------------------------
+  // wiring
+  // ---------------------------------------------------------
+  function setA(a, { refill = true } = {}) {
+    if (busy && refill) return;
+    st.a = a;
+    $("a").value = $("a2").value = a;
+    $("a-out").textContent = $("a2-out").textContent = a.toFixed(2);
+    const preset = [0.5, 0.6, 0.6667, 0.75, 0.9].find((p) => Math.abs(p - a) < 0.006);
+    setSeg("lf-preset", preset ?? "none");
+    renderTime(); renderSpace(); renderTradeStats(); renderLadder(); renderBday();
+    if (refill) { table = fillTable(a); renderStrip(); $("throw-msg").innerHTML = `${M} buckets, ${keysFor(a)} keys stored. Throw a new key and count how many buckets it checks.`; }
+    renderHist();
+  }
+  wireSeg("lf-preset", (v) => setA(Math.round(Number(v) * 100) / 100));
+  wireSeg("probe", (v) => { st.probe = v; table = fillTable(st.a); renderStrip(); renderTime(); renderTradeStats(); renderHist(); });
+  wireSeg("bday-m", (v) => { st.m = Number(v); renderBday(); });
+  $("a").addEventListener("input", () => setA(Number($("a").value)));
+  $("a2").addEventListener("input", () => setA(Number($("a2").value)));
+  $("throw-1").addEventListener("click", throwOne);
+  $("throw-many").addEventListener("click", throwMany);
+  $("refill").addEventListener("click", () => { if (busy) return; table = fillTable(st.a); renderStrip(); $("throw-msg").textContent = "New table, same load factor. Keys landed in different buckets."; });
+  let resizeTimer;
+  window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { renderTime(); renderSpace(); renderHist(); renderBday(); }, 120); });
+
+  setA(0.67);
+})();
+</script>
+</body>
+</html>
