@@ -391,17 +391,17 @@
   </section>
 
   <section aria-labelledby="read-h">
-    <h2 id="read-h">Reading the C: lines 44 and 59</h2>
-    <p class="muted how">This is the top of <code>list_resize()</code> exactly as it was in 2018, the version we read in class. Line 44 decides whether the list needs a new block at all. Line 59 decides how big the new block should be. The link from class, <a href="https://github.com/python/cpython/blob/e42b705188271da108de42b55d9344642170aa2b/Objects/listobject.c#L59C47-L59C53" target="_blank" rel="noopener">line 59, columns 47–53</a>, highlights exactly <code>&nbsp;&gt;&gt; 3)</code>.</p>
+    <h2 id="read-h">Reading the C: lines 121–122 and 148</h2>
+    <p class="muted how">This is <code>list_resize()</code> in CPython today (the main branch, October 2026). It comes in two parts: a fast path that runs on every resize, and a slow path, <code>py_list_resize()</code>, for when the list really needs a new block. Lines 121–122 decide whether it does. Line 148 decides how big the new block should be. The link from class, <a href="https://github.com/python/cpython/blob/0babcdd54775bd1cc6bc745767c13d5baa3aedcc/Objects/listobject.c#L148C48-L148C54" target="_blank" rel="noopener">line 148, columns 48–53</a>, highlights exactly <code>&nbsp;&gt;&gt; 3)</code>.</p>
     <div class="code-panel">
-      <div class="code-head"><span>Objects/listobject.c, 2018 (commit e42b705)</span><span>click a line number to open it · <a href="https://github.com/python/cpython/blob/e42b705188271da108de42b55d9344642170aa2b/Objects/listobject.c#L33-L77" target="_blank" rel="noopener">whole function on GitHub</a></span></div>
+      <div class="code-head"><span>Objects/listobject.c, CPython main (commit 0babcdd, October 2026)</span><span>click a line number to open it · <a href="https://github.com/python/cpython/blob/0babcdd54775bd1cc6bc745767c13d5baa3aedcc/Objects/listobject.c#L110-L196" target="_blank" rel="noopener">whole function on GitHub</a></span></div>
       <div class="code" id="class-code"></div>
     </div>
 
     <h3 id="shift-h">What does <code>&gt;&gt;</code> do?</h3>
     <div class="prose">
       <p>An integer is stored as binary digits, called bits. <code>x &gt;&gt; k</code> ("shift right by <em>k</em>") slides all of its bits <em>k</em> places to the right. The <em>k</em> bits on the right end fall off and are thrown away, and zeros come in on the left.</p>
-      <p>Each place in binary is worth twice the place to its right, so sliding every bit one place right <strong>halves</strong> the number, and throwing away the bit that fell off <strong>rounds down</strong>. Slide 3 places and you've halved three times: <code>newsize &gt;&gt; 3</code> is <code>newsize // 8</code>. Line 44's <code>allocated &gt;&gt; 1</code> is <code>allocated // 2</code>, "half of what's allocated".</p>
+      <p>Each place in binary is worth twice the place to its right, so sliding every bit one place right <strong>halves</strong> the number, and throwing away the bit that fell off <strong>rounds down</strong>. Slide 3 places and you've halved three times: <code>newsize &gt;&gt; 3</code> is <code>newsize // 8</code>. Line 122's <code>allocated &gt;&gt; 1</code> is <code>allocated // 2</code>, "half of what's allocated".</p>
     </div>
     <div class="card shift-lab">
       <label class="pick" for="sh-range">newsize = <output id="sh-n" for="sh-range">17</output><input type="range" id="sh-range" min="1" max="100" value="17"></label>
@@ -417,9 +417,9 @@
     </ol>
     <p class="muted how">Python has the same operator: try <code>17 &gt;&gt; 3</code>, and <code>bin(17), bin(17 &gt;&gt; 3)</code>. It's the same binary as Session 1.</p>
 
-    <h3 id="mask-h">And the <code>&amp; ~(size_t)3</code> in the newer code?</h3>
+    <h3 id="mask-h">And the <code>&amp; ~(size_t)3</code> at the end of line 148?</h3>
     <div class="prose">
-      <p>Since Python 3.9, the growth line ends in <code>&amp; ~(size_t)3</code>. <code>~3</code> flips every bit of 3, turning <code>…00000011</code> into <code>…11111100</code>. <code>&amp;</code> keeps a bit only where <em>both</em> sides have a 1, so <code>&amp; ~3</code> clears the last two bits, the 1s place and the 2s place. Whatever's left is a multiple of 4: it <strong>rounds down to a multiple of 4</strong>. The source comment says it plainly: "Add padding to make the allocated size multiple of 4." That's why lists now grow 4, 8, 16, 24, 32 instead of 25, 35. The slider above shows this one too.</p>
+      <p>This part was added in Python 3.9. <code>~3</code> flips every bit of 3, turning <code>…00000011</code> into <code>…11111100</code>. <code>&amp;</code> keeps a bit only where <em>both</em> sides have a 1, so <code>&amp; ~3</code> clears the last two bits, the 1s place and the 2s place. Whatever's left is a multiple of 4: it <strong>rounds down to a multiple of 4</strong>. The source comment says it plainly: "Add padding to make the allocated size multiple of 4." That's why lists now grow 16, 24, 32 where they used to grow 16, 25, 35. The slider above shows this one too.</p>
     </div>
   </section>
 
@@ -436,18 +436,18 @@
     </details>
 
     <details class="reveal">
-      <summary><h3>Why wait until the list is half empty to shrink?</h3><span class="muted">Look at the check on line 44 of the code your instructor links, then do step 5.</span></summary>
+      <summary><h3>Why wait until the list is half empty to shrink?</h3><span class="muted">Look at the check on lines 121–122 above, then do step 5.</span></summary>
       <div class="body">
-        <p>The check is <code>allocated >= newsize &amp;&amp; newsize >= (allocated >> 1)</code>: "there's already room, and we're still using at least half of it." When that's true, CPython only changes the length. Nothing moves.</p>
+        <p>Start with the first two parts of the check, <code>allocated >= newsize &amp;&amp; newsize >= (allocated >> 1)</code>: "there's already room, and we're still using at least half of it." When that's true, CPython only changes the length. Nothing moves.</p>
         <p>Imagine shrinking as soon as there was <em>any</em> spare room instead. A list sitting right at a boundary that alternates <code>append</code>, <code>pop</code>, <code>append</code>, <code>pop</code> would move its whole block on every single call. Waiting until it's half empty leaves a wide gap between "grow" and "shrink", so that back-and-forth costs nothing.</p>
-        <p>Since October 2026 (gh-158592), CPython also never shrinks a block of 32 slots or fewer. Moving a small block costs more than the memory it gives back. Step 5 lets you try both.</p>
+        <p>The last part, <code>|| allocated &lt;= LIST_SMALL_ALLOCATED</code>, is brand new: it arrived in October 2026 (gh-158592), so Python 3.15.0 and earlier don't have it. <code>LIST_SMALL_ALLOCATED</code> is 32 (line 94), so CPython now never shrinks a block of 32 slots or fewer. Moving a small block costs more than the memory it gives back. Step 5 lets you try both.</p>
       </div>
     </details>
 
     <details class="reveal">
       <summary><h3>The growth pattern changed. When, and why?</h3><span class="muted">In step 7, fill to 30 under "CPython ≤ 3.8", then again under "3.9 – 3.15.0".</span></summary>
       <div class="body">
-        <p>The code linked from class is from 2018. Its comment says the growth pattern is <code>0, 4, 8, 16, 25, 35, 46, 58, 72, 88</code>. Run the experiment on a current Python and you'll get <code>0, 4, 8, 16, 24, 32, 40, 52, 64, 76</code>. Somebody changed it. The commit history can tell you who, when, and why:</p>
+        <p>The comment on line 144 says the growth pattern is <code>0, 4, 8, 16, 24, 32, 40, 52, 64, 76</code>. Run the experiment on Python 3.8 and you'd get <code>0, 4, 8, 16, 25, 35, 46, 58, 72, 88</code>, and that's what this same comment used to say. Somebody changed it. The commit history can tell you who, when, and why:</p>
         <pre>git log -L:list_resize:Objects/listobject.c</pre>
         <p>The same command, pointed at <code>list_sort_impl</code>, is how we'll look at sorting next.</p>
       </div>
@@ -1251,35 +1251,47 @@
   });
 
   // ---------- reading the C ----------
-  const CLASS_SRC = "https://github.com/python/cpython/blob/e42b705188271da108de42b55d9344642170aa2b/Objects/listobject.c";
+  const CLASS_SRC = "https://github.com/python/cpython/blob/0babcdd54775bd1cc6bc745767c13d5baa3aedcc/Objects/listobject.c";
   const CLASS_LINES = [
-    [33, "static int"],
-    [34, "list_resize(PyListObject *self, Py_ssize_t newsize)"],
-    [35, "{"],
-    [36, "    PyObject **items;"],
-    [37, "    size_t new_allocated, num_allocated_bytes;"],
-    [38, "    Py_ssize_t allocated = self->allocated;"],
-    [39, ""],
-    [40, "    /* Bypass realloc() when a previous overallocation is large enough"],
-    [41, "       to accommodate the newsize.  If the newsize falls lower than half"],
-    [42, "       the allocated size, then proceed with the realloc() to shrink the list."],
-    [43, "    */"],
-    [44, "    if (allocated >= newsize && newsize >= (allocated >> 1)) {", "hot"],
-    [45, "        assert(self->ob_item != NULL || newsize == 0);"],
-    [46, "        Py_SIZE(self) = newsize;"],
-    [47, "        return 0;"],
-    [48, "    }"],
-    [49, ""],
-    [50, "    /* This over-allocates proportional to the list size, making room"],
-    [51, "     * for additional growth.  The over-allocation is mild, but is"],
-    [52, "     * enough to give linear-time amortized behavior over a long"],
-    [53, "     * sequence of appends() in the presence of a poorly-performing"],
-    [54, "     * system realloc()."],
-    [55, "     * The growth pattern is:  0, 4, 8, 16, 25, 35, 46, 58, 72, 88, ..."],
-    [56, "     * Note: new_allocated won't overflow because the largest possible value"],
-    [57, "     *       is PY_SSIZE_T_MAX * (9 / 8) + 6 which always fits in a size_t."],
-    [58, "     */"],
-    [59, "    new_allocated = (size_t)newsize + (newsize >> 3) + (newsize < 9 ? 3 : 6);", "hot"],
+    [110, "static inline Py_ALWAYS_INLINE int"],
+    [111, "list_resize(PyListObject *self, Py_ssize_t newsize)"],
+    [112, "{"],
+    [113, "    Py_ssize_t allocated = self->allocated;"],
+    [114, ""],
+    [115, "    /* Bypass realloc() when a previous overallocation is large enough"],
+    [116, "       to accommodate the newsize.  If the newsize falls lower than half"],
+    [117, "       the allocated size, then proceed with the realloc() to shrink the list."],
+    [118, "       gh-158592: do not shrink a small list, the realloc() cost is bigger"],
+    [119, "       than the memory we get back."],
+    [120, "    */"],
+    [121, "    if (allocated >= newsize", "hot"],
+    [122, "        && (newsize >= (allocated >> 1) || allocated <= LIST_SMALL_ALLOCATED))", "hot"],
+    [123, "    {"],
+    [124, "        assert(self->ob_item != NULL || newsize == 0);"],
+    [125, "        Py_SET_SIZE(self, newsize);"],
+    [126, "        return 0;"],
+    [127, "    }"],
+    [128, "    return py_list_resize(self, newsize);"],
+    [129, "}"],
+    [130, ""],
+    [131, "/* Slow path of list_resize(): allocate or reallocate ob_item. */"],
+    [132, "static int"],
+    [133, "py_list_resize(PyListObject *self, Py_ssize_t newsize)"],
+    [134, "{"],
+    [135, "    size_t new_allocated, target_bytes;"],
+    [136, "    Py_ssize_t allocated = self->allocated;"],
+    [137, ""],
+    [138, "    /* This over-allocates proportional to the list size, making room"],
+    [139, "     * for additional growth.  The over-allocation is mild, but is"],
+    [140, "     * enough to give linear-time amortized behavior over a long"],
+    [141, "     * sequence of appends() in the presence of a poorly-performing"],
+    [142, "     * system realloc()."],
+    [143, "     * Add padding to make the allocated size multiple of 4."],
+    [144, "     * The growth pattern is:  0, 4, 8, 16, 24, 32, 40, 52, 64, 76, ..."],
+    [145, "     * Note: new_allocated won't overflow because the largest possible value"],
+    [146, "     *       is PY_SSIZE_T_MAX * (9 / 8) + 6 which always fits in a size_t."],
+    [147, "     */"],
+    [148, "    new_allocated = ((size_t)newsize + (newsize >> 3) + 6) & ~(size_t)3;", "hot"],
   ];
   document.getElementById("class-code").innerHTML = codeLines(CLASS_LINES, CLASS_SRC, (key) => ({ hot: key === "hot" }));
 
@@ -1308,8 +1320,8 @@
     const extra = n < 9 ? 3 : 6;
     document.getElementById("sh-sum").innerHTML =
       `newsize >> 3  =  ${nb.join("")} >> 3  =  ${bitsOf(shifted).join("")}  =  <b>${shifted}</b>      (and ${n} // 8 = ${Math.floor(n / 8)})\n\n` +
-      `2018, line 59:   ${n} + (${n} >> 3) + ${extra}            = ${n} + ${shifted} + ${extra} = <b>${n + shifted + extra}</b> slots\n` +
-      `3.9+, line 129:  (${n} + (${n} >> 3) + 6) & ~3      = ${raw} & ~3 = <b>${raw & ~3}</b> slots`;
+      `line 148:        (${n} + (${n} >> 3) + 6) & ~3      = ${raw} & ~3 = <b>${raw & ~3}</b> slots\n` +
+      `before 3.9:      ${n} + (${n} >> 3) + ${extra}            = ${n} + ${shifted} + ${extra} = <b>${n + shifted + extra}</b> slots`;
   }
   shRange.addEventListener("input", renderShift);
   renderShift();
