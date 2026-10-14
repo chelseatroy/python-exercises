@@ -325,7 +325,7 @@
           <div class="col"><span class="label">hash(key)</span><div id="det-hash" style="display:grid;gap:4px"></div></div>
           <div class="col"><span class="label">random.choice(key)</span><div id="det-rand" style="display:grid;gap:4px"></div></div>
         </div>
-        <p class="aside">Try it: run <code>python3 -c "print(hash('greeting'))"</code> twice. Different numbers! Python salts string hashes freshly for <em>each run</em>. Within one run the hash never changes, and that's all a dict needs.</p>
+        <p class="aside">Try it: run <code>python3 -c "print(hash('greeting'))"</code> twice. Different numbers! Python salts string hashes freshly for <em>each run</em>. Within one run the hash never changes, and that's all a dict needs. Why salt it at all? See <a href="../s2_python_hash/s2_python_hash.html">What Hash Does Python Use?</a></p>
       </div>
 
       <div class="card trait">
@@ -456,7 +456,7 @@
               <button type="button" data-v="0" aria-pressed="false">off</button>
             </div>
           </div>
-          <p class="muted" style="font-size:0.82rem">Numbers like <code>65</code> hash to themselves, just like in Python. Strings use a small stand-in hash (0–999) so you can count the laps. Python's real hashes are about 19 digits long.</p>
+          <p class="muted" style="font-size:0.82rem">Numbers like <code>65</code> hash to themselves, just like in Python. Strings use a small stand-in hash (0–999) so you can count the laps. Python's real hashes are about 19 digits long. <a href="../s2_python_hash/s2_python_hash.html">Here's how Python computes them</a>, type by type.</p>
         </div>
       </div>
     </div>

@@ -1,0 +1,1480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>What Hash Does Python Use?</title>
+<style>
+  :root {
+    --ground: #F6F1E7;
+    --surface: #FFFDF8;
+    --ink: #1F1B2D;
+    --muted: #6A6377;
+    --line: #E0D8C8;
+    --accent: #3B5BDB;
+    --accent-ink: #FFFFFF;
+    --tag: #F2C14E;
+    --tag-edge: #C99A1E;
+    --tag-ink: #3A2A00;
+    --hit: #2B8A3E;
+    --clash: #D9480F;
+    --machine: #2B2540;
+    --machine-ink: #F6F1E7;
+    --machine-muted: #B9B2CC;
+    --slot: #EDE6D8;
+    --heat: #9C3D0A;
+    /* chart series and bit-piece colors: the pair checked with the dataviz palette validator for Choosing a Load Factor */
+    --s-miss: #3B5BDB;
+    --s-hit: #C99A1E;
+    --display: Georgia, "Times New Roman", serif;
+    --body: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #15131C;
+      --surface: #1E1B28;
+      --ink: #ECE8F4;
+      --muted: #A49DB3;
+      --line: #34303F;
+      --accent: #7C93F5;
+      --accent-ink: #0F1020;
+      --tag: #D9AA3A;
+      --tag-edge: #A97F1C;
+      --tag-ink: #241A00;
+      --hit: #51CF66;
+      --clash: #FF8A4C;
+      --machine: #0D0B14;
+      --machine-ink: #ECE8F4;
+      --machine-muted: #8F88A3;
+      --slot: #2A2636;
+      --heat: #FFC861;
+      --s-miss: #6C84EC;
+      --s-hit: #B08724;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #15131C;
+    --surface: #1E1B28;
+    --ink: #ECE8F4;
+    --muted: #A49DB3;
+    --line: #34303F;
+    --accent: #7C93F5;
+    --accent-ink: #0F1020;
+    --tag: #D9AA3A;
+    --tag-edge: #A97F1C;
+    --tag-ink: #241A00;
+    --hit: #51CF66;
+    --clash: #FF8A4C;
+    --machine: #0D0B14;
+    --machine-ink: #ECE8F4;
+    --machine-muted: #8F88A3;
+    --slot: #2A2636;
+    --heat: #FFC861;
+    --s-miss: #6C84EC;
+    --s-hit: #B08724;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 16px/1.55 var(--body);
+  }
+  .page {
+    padding-inline: clamp(16px, 4vw, 72px);
+    padding-block: 40px 72px;
+    display: grid;
+    gap: 44px;
+  }
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.3rem, 7vw, 3.6rem); line-height: 1.02; }
+  h2 { font-size: 1.7rem; line-height: 1.15; }
+  h3 { font-size: 1.25rem; line-height: 1.2; }
+  p { margin: 0; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  code { font-family: var(--mono); font-size: 0.92em; }
+  .label {
+    font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase;
+    font-weight: 700; color: var(--muted);
+  }
+  section { display: grid; gap: 16px; }
+  header { display: grid; gap: 14px; }
+  .lede { font-size: 1.15rem; max-width: 72ch; }
+  .prose { max-width: 72ch; }
+  .page > *, section > * { min-width: 0; }
+  [hidden] { display: none !important; }
+
+  button { font: inherit; color: inherit; }
+  button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+  .seg button, .btn {
+    font: 600 0.9rem var(--body); cursor: pointer;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    border-radius: 999px; padding: 6px 13px;
+  }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+  .btn:hover, .seg button:hover { border-color: var(--muted); }
+  .primary {
+    font: 700 0.95rem var(--body); cursor: pointer;
+    background: var(--accent); color: var(--accent-ink);
+    border: 0; border-radius: 999px; padding: 8px 18px;
+  }
+  .primary:disabled, .btn:disabled { opacity: 0.45; cursor: default; }
+  input[type="text"] {
+    font: 600 1rem var(--mono); padding: 7px 10px; min-width: 0;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink);
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px; display: grid; gap: 12px; align-content: start; min-width: 0;
+  }
+  .split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 16px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .row input[type="text"] { flex: 1 1 12ch; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { font: 600 0.85rem var(--mono); cursor: pointer; border: 1px solid var(--line); background: var(--ground); border-radius: 8px; padding: 4px 9px; }
+  .chips button:hover { border-color: var(--accent); }
+  .aside { font-size: 0.88rem; color: var(--muted); border-left: 3px solid var(--tag); padding-left: 10px; max-width: 72ch; }
+  pre { margin: 0; padding: 12px 14px; background: var(--machine); color: var(--machine-ink); border-radius: 10px; overflow-x: auto; font: 0.86rem/1.55 var(--mono); }
+  pre .cmt { color: var(--machine-muted); }
+  .result {
+    font: 600 1.05rem/1.4 var(--mono); padding: 10px 14px; border-radius: 10px;
+    background: var(--machine); color: var(--machine-ink); overflow-wrap: anywhere;
+  }
+  .result .cmt { color: var(--machine-muted); font-weight: 400; }
+  .result .val { color: var(--tag); }
+  .result .err { color: var(--clash); }
+  .tables { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  .tables th, .tables td { text-align: left; padding: 7px 10px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .tables th { font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+  .tables td.n { font-family: var(--mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .table-scroll { overflow-x: auto; }
+
+  /* ---------- the type switchboard ---------- */
+  .routes { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  .route {
+    border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--ground);
+    display: grid; gap: 2px; transition: border-color 0.2s, background 0.2s, opacity 0.2s; text-decoration: none; color: inherit;
+  }
+  .route b { font: 700 0.95rem var(--mono); }
+  .route span { font-size: 0.82rem; color: var(--muted); }
+  .routes.picked .route { opacity: 0.45; }
+  .routes.picked .route.on { opacity: 1; border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 2px var(--accent); animation: pop 0.35s ease; }
+
+  /* ---------- step-through players ---------- */
+  .player { display: grid; gap: 10px; }
+  .pl-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .pl-count { font-size: 0.82rem; color: var(--muted); margin-left: 4px; }
+  .pl-cap { min-height: 3.2em; max-width: 72ch; }
+  .pl-cap b { font-weight: 700; }
+
+  /* ---------- bit strips: most significant bit on the left ---------- */
+  .regs { display: grid; gap: 8px; }
+  .reg { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); gap: 2px 8px; align-items: center; }
+  .reg > .name { font: 700 0.85rem var(--mono); color: var(--muted); }
+  .reg > .hex { grid-column: 2; font: 0.78rem var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+  .reg.hot > .name { color: var(--accent); }
+  .bits { display: grid; grid-template-columns: repeat(var(--n, 64), minmax(0, 1fr)); gap: 1px; }
+  .bits i { display: block; height: 14px; background: var(--slot); border-radius: 1px; }
+  .bits i.on { background: var(--ink); }
+  .bits i.p0 { background: color-mix(in oklab, var(--s-miss) 22%, var(--slot)); }
+  .bits i.p0.on { background: var(--s-miss); }
+  .bits i.p1 { background: color-mix(in oklab, var(--s-hit) 25%, var(--slot)); }
+  .bits i.p1.on { background: var(--s-hit); }
+  .bits i.low { outline: 2px solid var(--clash); outline-offset: -2px; }
+  .bits i.fa { animation: flipA 0.7s ease; }
+  .bits i.fb { animation: flipB 0.7s ease; }
+  @media (max-width: 520px) { .bits { gap: 0; } .bits i { box-shadow: inset -0.5px 0 0 var(--surface); border-radius: 0; } }
+
+  /* ---------- bytes ---------- */
+  .bytes { display: flex; flex-wrap: wrap; gap: 10px; }
+  .blk { display: grid; gap: 4px; padding: 6px; border-radius: 10px; border: 2px solid transparent; transition: border-color 0.2s; }
+  .blk.cur { border-color: var(--accent); }
+  .blk .cap { font-size: 0.7rem; color: var(--muted); text-align: center; }
+  .blk .bs { display: grid; grid-template-columns: repeat(8, 2.1em); gap: 3px; }
+  .byte { display: grid; text-align: center; border-radius: 6px; background: var(--slot); padding: 2px 0; font: 0.72rem/1.2 var(--mono); }
+  .byte b { font-size: 0.82rem; }
+  .byte small { color: var(--muted); min-height: 1.2em; }
+  .byte.data { background: color-mix(in oklab, var(--tag) 40%, var(--slot)); }
+  .byte.len { background: color-mix(in oklab, var(--s-miss) 30%, var(--slot)); }
+  @media (max-width: 420px) { .blk .bs { grid-template-columns: repeat(8, 1.75em); } }
+
+  /* ---------- buckets (small tables) ---------- */
+  .buckets { display: grid; grid-template-columns: repeat(var(--n, 16), minmax(0, 1fr)); gap: 4px; }
+  .bk {
+    aspect-ratio: 1; min-height: 26px; border-radius: 6px; border: 2px solid var(--line); background: var(--surface);
+    display: grid; place-items: center; font: 700 0.75rem var(--mono); position: relative; transition: background 0.2s, border-color 0.2s;
+  }
+  .bk small { position: absolute; bottom: -1.5em; font-weight: 400; color: var(--muted); font-size: 0.66rem; }
+  .bk.full { background: var(--tag); border-color: var(--tag-edge); color: var(--tag-ink); }
+  .bk.look { border-color: var(--clash); border-width: 3px; }
+  .bk.found { border-color: var(--hit); border-width: 3px; }
+  .bk.fresh { animation: pop 0.35s ease; }
+  .bucket-wrap { padding-bottom: 1.6em; }
+  .wide-buckets .bk { aspect-ratio: auto; height: 44px; }
+
+  /* ---------- flood chart ---------- */
+  .chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.85rem; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 18px; height: 0; border-top: 2px solid; display: inline-block; }
+  .chart-wrap { position: relative; }
+  .chart { width: 100%; height: auto; display: block; touch-action: pan-y; cursor: crosshair; overflow: visible; }
+  .chart text { font-family: var(--mono); font-size: 11.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+  .chart .lbl { font-weight: 700; fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
+  .tip {
+    position: absolute; pointer-events: none; z-index: 2;
+    background: var(--ink); color: var(--ground); border-radius: 8px; padding: 6px 9px;
+    font: 0.8rem/1.4 var(--mono); white-space: nowrap; transform: translate(-50%, calc(-100% - 14px));
+  }
+  .tip .sw { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+  .size-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .size-row input[type="range"] { flex: 1 1 160px; min-width: 0; accent-color: var(--accent); }
+  .size-row output { font: 700 1.2rem var(--mono); min-width: 5ch; text-align: right; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .stat { border-top: 2px solid var(--ink); padding-top: 6px; display: grid; gap: 0; }
+  .stat .big { font: 600 1.45rem/1.15 var(--mono); font-variant-numeric: tabular-nums; }
+  .stat .sub { font-size: 0.78rem; color: var(--muted); }
+
+  /* ---------- timeline ---------- */
+  .timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+  .timeline li { display: grid; grid-template-columns: 4.2em minmax(0, 1fr); gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .timeline .yr { font: 700 1rem var(--mono); color: var(--accent); }
+  .timeline .what { display: grid; gap: 3px; }
+  .timeline .what span { font-size: 0.9rem; color: var(--muted); }
+  .paper { border-left: 4px solid var(--accent); }
+
+  @keyframes pop { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
+  @keyframes flipA { 0%, 30% { background: var(--clash); } }
+  @keyframes flipB { 0%, 30% { background: var(--clash); } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header>
+    <div class="label">Session 2 · Follow-up to <a href="../s2_hash_ring/s2_hash_ring.html">The Hash Ring</a></div>
+    <h1>What Hash Does Python Use?</h1>
+    <p class="lede">There isn't just one. <code>hash(x)</code> asks <code>x</code>'s <em>type</em> to hash it, and each type has its own recipe. Strings get a cryptographic hash with a secret key. Integers mostly hash to themselves. Tuples mix their items' hashes together. Step through each one below, and see why strings needed the secret key in the first place.</p>
+  </header>
+
+  <!-- ----------------- 1. THE SWITCHBOARD ----------------- -->
+  <section aria-labelledby="sw-h">
+    <h2 id="sw-h"><code>hash()</code> asks the key's type</h2>
+    <div class="card">
+      <p class="muted">Type a Python value, or pick one. <code>hash(x)</code> calls <code>type(x).__hash__(x)</code>, so the type decides which recipe runs.</p>
+      <div class="chips" id="sw-chips">
+        <button type="button">'greeting'</button>
+        <button type="button">42</button>
+        <button type="button">-1</button>
+        <button type="button">True</button>
+        <button type="button">0.5</button>
+        <button type="button">(1, 2)</button>
+        <button type="button">None</button>
+        <button type="button">object()</button>
+        <button type="button">[1, 2]</button>
+      </div>
+      <form class="row" id="sw-form" autocomplete="off">
+        <span class="mono muted">hash(</span>
+        <input type="text" id="sw-in" value="'greeting'" aria-label="A Python value to hash" spellcheck="false">
+        <span class="mono muted">)</span>
+        <button class="primary" type="submit">Hash it</button>
+      </form>
+      <div class="result" id="sw-out" aria-live="polite"></div>
+      <div class="routes" id="routes">
+        <a class="route" href="#str-h" data-r="str"><b>str</b><span>SipHash-1-3 with a secret key</span></a>
+        <a class="route" href="#int-h" data-r="int"><b>int, bool</b><span>remainder mod 2<sup>61</sup> − 1</span></a>
+        <a class="route" href="#float-h" data-r="float"><b>float</b><span>same remainder, so 1.0 matches 1</span></a>
+        <a class="route" href="#tuple-h" data-r="tuple"><b>tuple</b><span>mixes its items' hashes</span></a>
+        <a class="route" href="#obj-h" data-r="object"><b>object</b><span>its memory address</span></a>
+        <a class="route" href="#obj-h" data-r="none"><b>NoneType</b><span>one fixed number</span></a>
+        <a class="route" href="#un-h" data-r="list"><b>list, dict, set</b><span>no hash at all</span></a>
+      </div>
+      <p class="aside">Strings are shown with <code>PYTHONHASHSEED=0</code>, which turns off the secret key, so you can check them yourself: <code>PYTHONHASHSEED=0 python3 -c "print(hash('greeting'))"</code> prints the same number on 64-bit Python 3.11 or later. Numbers don't depend on the seed at all.</p>
+    </div>
+  </section>
+
+  <!-- ----------------- 2. STRINGS ----------------- -->
+  <section aria-labelledby="str-h">
+    <h2 id="str-h">Strings: SipHash-1-3</h2>
+    <p class="muted prose">CPython hashes the string's bytes with <strong>SipHash-1-3</strong>, mixed with a 128-bit secret key it picks at random every time Python starts. Four 64-bit numbers, <code>v0</code> to <code>v3</code>, get stirred together with the bytes, 8 at a time. "1-3" means 1 round of stirring per block of 8 bytes, then 3 rounds at the end.</p>
+    <div class="card">
+      <form class="row" id="s-form" autocomplete="off">
+        <span class="mono muted">hash(</span>
+        <input type="text" id="s-in" value="greeting" maxlength="40" aria-label="String to hash" spellcheck="false">
+        <span class="mono muted">)</span>
+        <button class="primary" type="submit">Step through it</button>
+      </form>
+      <div class="row">
+        <span class="label">Secret key</span>
+        <div class="seg" id="s-key" role="group" aria-label="Secret key">
+          <button type="button" data-v="zero" aria-pressed="true">PYTHONHASHSEED=0 (all zeros)</button>
+          <button type="button" data-v="random" aria-pressed="false">a random key, like a fresh Python</button>
+        </div>
+        <button class="btn" type="button" id="s-restart" hidden>Restart Python ↻</button>
+      </div>
+      <div class="player" id="s-player">
+        <div class="pl-bar">
+          <button class="btn" type="button" data-act="prev">← Back</button>
+          <button class="primary" type="button" data-act="play">▶ Play</button>
+          <button class="btn" type="button" data-act="next">Next →</button>
+          <span class="pl-count" aria-live="polite"></span>
+        </div>
+        <p class="pl-cap" aria-live="polite"></p>
+      </div>
+      <div class="bytes" id="s-bytes" aria-label="The string's bytes, in blocks of 8"></div>
+      <div class="regs" id="s-regs"></div>
+      <div class="result" id="s-out" aria-live="polite"></div>
+    </div>
+
+    <div class="split">
+      <div class="card">
+        <h3>Change one letter</h3>
+        <p class="muted" style="font-size:0.92rem">A good hash changes about half its bits when the input changes even a little. That's called the <strong>avalanche effect</strong>. It's why <code>'user_1'</code> and <code>'user_2'</code> don't end up in neighboring buckets.</p>
+        <div class="row">
+          <input type="text" id="av-a" value="greeting" maxlength="40" aria-label="First string" spellcheck="false">
+          <input type="text" id="av-b" value="greetinh" maxlength="40" aria-label="Second string" spellcheck="false">
+        </div>
+        <div class="regs" id="av-regs"></div>
+        <p id="av-note" aria-live="polite"></p>
+      </div>
+      <div class="card">
+        <h3>Where it came from</h3>
+        <ul class="prose" style="padding-left:20px;margin:0;display:grid;gap:8px;font-size:0.95rem">
+          <li><strong>Python 3.4 to 3.10:</strong> SipHash-2-4, adopted in <a href="https://peps.python.org/pep-0456/" target="_blank" rel="noopener">PEP 456</a>. Before that, strings used a simple multiply-and-XOR hash (FNV-style).</li>
+          <li><strong>Python 3.11 and later:</strong> SipHash-1-3, with fewer rounds, which makes it faster (<a href="https://github.com/python/cpython/issues/73596" target="_blank" rel="noopener">the discussion</a>). Rust's standard <code>HashMap</code> uses SipHash-1-3 too.</li>
+          <li><strong>The four starting constants</strong> are ASCII text: <code>0x736f6d6570736575</code> spells "somepseu", and together they spell "somepseudorandomlygeneratedbytes".</li>
+          <li><strong>A string remembers its hash.</strong> CPython stores the hash inside the string object the first time it's computed, so using the same string as a key again costs nothing.</li>
+          <li><strong><code>bytes</code> uses the same function.</strong> A <code>str</code> is hashed as the bytes CPython stores it in: 1, 2 or 4 bytes per character, depending on its widest character.</li>
+        </ul>
+        <p class="muted" style="font-size:0.88rem">Check your own Python: <code>import sys; sys.hash_info.algorithm</code> prints <code>'siphash13'</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------- 3. INTEGERS ----------------- -->
+  <section aria-labelledby="int-h">
+    <h2 id="int-h">Integers: the remainder mod 2<sup>61</sup> − 1</h2>
+    <p class="muted prose">An int's hash is its remainder after dividing by <code>P = 2**61 - 1 = 2305843009213693951</code>, a prime. So <code>hash(42) == 42</code>, and every int up to about 2.3 quintillion hashes to itself. There's no secret key: the same int has the same hash in every Python process. Negative numbers keep their sign.</p>
+    <div class="card">
+      <div class="chips" id="i-chips">
+        <button type="button">42</button>
+        <button type="button">-1</button>
+        <button type="button">2**61 - 1</button>
+        <button type="button">2**61</button>
+        <button type="button">10**30</button>
+        <button type="button">-10**30</button>
+      </div>
+      <form class="row" id="i-form" autocomplete="off">
+        <span class="mono muted">hash(</span>
+        <input type="text" id="i-in" value="10**30" aria-label="An integer, like 12345 or 2**70" spellcheck="false">
+        <span class="mono muted">)</span>
+        <button class="primary" type="submit">Step through it</button>
+      </form>
+      <div class="player" id="i-player">
+        <div class="pl-bar">
+          <button class="btn" type="button" data-act="prev">← Back</button>
+          <button class="primary" type="button" data-act="play">▶ Play</button>
+          <button class="btn" type="button" data-act="next">Next →</button>
+          <span class="pl-count" aria-live="polite"></span>
+        </div>
+        <p class="pl-cap" aria-live="polite"></p>
+      </div>
+      <div class="regs" id="i-regs"></div>
+      <div class="result" id="i-out" aria-live="polite"></div>
+    </div>
+    <div class="split">
+      <div class="card">
+        <h3>Why cutting into pieces works</h3>
+        <p class="muted" style="font-size:0.92rem">It's the same trick as dividing by 999 in base 10. Since 1000 is 1 more than 999, 1000 leaves a remainder of 1, and so does every power of 1000. So to find 123,456 mod 999, add the 3-digit groups: 123 + 456 = 579. No long division.</p>
+        <p class="muted" style="font-size:0.92rem">In binary, 2<sup>61</sup> is 1 more than P, so the same thing works with 61-bit pieces. CPython's <code>long_hash</code> does it with shifts, ANDs and adds: no division at all. A prime of the form 2<sup>n</sup> − 1 is called a <strong>Mersenne prime</strong>.</p>
+      </div>
+      <div class="card">
+        <h3>Things to notice</h3>
+        <ul class="prose" style="padding-left:20px;margin:0;display:grid;gap:8px;font-size:0.95rem">
+          <li><code>hash(-1)</code> is <code>-2</code>. In CPython's C code, a hash function returns -1 to mean "an error happened," so no hash is ever allowed to be -1. That's why <code>hash(-1) == hash(-2)</code>.</li>
+          <li><code>hash(2**61 - 1)</code> is <code>0</code>, and so is the hash of every multiple of P. Keep that in mind for <a href="#flood-h">hash flooding</a>, below.</li>
+          <li><code>True</code> and <code>False</code> are ints (<code>bool</code> is a subclass of <code>int</code>), so <code>hash(True) == 1</code>.</li>
+          <li>On a 32-bit build, everything here uses 2<sup>31</sup> − 1 instead.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------- 4. FLOATS ----------------- -->
+  <section aria-labelledby="float-h">
+    <h2 id="float-h">Floats: equal numbers, equal hashes</h2>
+    <p class="muted prose">Python requires that <code>a == b</code> implies <code>hash(a) == hash(b)</code>. Since <code>1 == 1.0</code>, a float has to hash the same as the int it equals. So floats use the same remainder: every float is exactly some whole number <code>m</code> times a power of 2, <code>m × 2**e</code>, and its hash is that value mod P. Multiplying by a power of 2 mod P turns out to be a rotation of the bits.</p>
+    <div class="card">
+      <div class="chips" id="f-chips">
+        <button type="button">0.5</button>
+        <button type="button">1.5</button>
+        <button type="button">-2.25</button>
+        <button type="button">3.14</button>
+        <button type="button">1e100</button>
+        <button type="button">inf</button>
+      </div>
+      <form class="row" id="f-form" autocomplete="off">
+        <span class="mono muted">hash(</span>
+        <input type="text" id="f-in" value="0.5" aria-label="A float" spellcheck="false">
+        <span class="mono muted">)</span>
+        <button class="primary" type="submit">Step through it</button>
+      </form>
+      <div class="player" id="f-player">
+        <div class="pl-bar">
+          <button class="btn" type="button" data-act="prev">← Back</button>
+          <button class="primary" type="button" data-act="play">▶ Play</button>
+          <button class="btn" type="button" data-act="next">Next →</button>
+          <span class="pl-count" aria-live="polite"></span>
+        </div>
+        <p class="pl-cap" aria-live="polite"></p>
+      </div>
+      <div class="regs" id="f-regs"></div>
+      <div class="result" id="f-out" aria-live="polite"></div>
+    </div>
+    <div class="split">
+      <div class="card">
+        <h3>Same value, same hash, any type</h3>
+        <div class="table-scroll">
+          <table class="tables">
+            <thead><tr><th>These are all equal…</th><th>…so they all hash to</th></tr></thead>
+            <tbody>
+              <tr><td><code>1</code>, <code>1.0</code>, <code>True</code>, <code>Fraction(1)</code>, <code>Decimal(1)</code></td><td class="n">1</td></tr>
+              <tr><td><code>0.5</code>, <code>Fraction(1, 2)</code>, <code>Decimal('0.5')</code></td><td class="n">1152921504606846976</td></tr>
+              <tr><td><code>-1</code>, <code>-1.0</code></td><td class="n">-2</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted" style="font-size:0.92rem">That's why <code>{1: 'one'}[1.0]</code> finds <code>'one'</code>. Why is <code>hash(0.5) == 2**60</code>? Because 2 × 2<sup>60</sup> = 2<sup>61</sup>, which is 1 more than P. So mod P, 2<sup>60</sup> acts like ½.</p>
+      </div>
+      <div class="card">
+        <h3>The odd ones</h3>
+        <ul class="prose" style="padding-left:20px;margin:0;display:grid;gap:8px;font-size:0.95rem">
+          <li><code>hash(float('inf'))</code> is <code>314159</code>, the first digits of π. <code>-inf</code> gives <code>-314159</code>.</li>
+          <li><code>nan</code> isn't equal to anything, not even itself. Since Python 3.10, each <code>nan</code> object hashes by its identity, like a plain <code>object()</code>. Before that, every <code>nan</code> hashed to 0.</li>
+          <li><code>complex</code> combines the two parts: <code>hash(real) + 1000003 * hash(imag)</code>, so <code>hash(1j) == 1000003</code>.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------- 5. TUPLES ----------------- -->
+  <section aria-labelledby="tuple-h">
+    <h2 id="tuple-h">Tuples: mix the items' hashes</h2>
+    <p class="muted prose">A tuple hashes each item, then folds those hashes into one 64-bit <em>accumulator</em>: add, rotate, multiply, once per item. The constants are big primes borrowed from <strong>xxHash</strong>, a fast non-cryptographic hash. This recipe arrived in Python 3.8.</p>
+    <div class="card">
+      <div class="chips" id="t-chips">
+        <button type="button">(1, 2)</button>
+        <button type="button">(2, 1)</button>
+        <button type="button">(5, 5)</button>
+        <button type="button">(7, 7)</button>
+        <button type="button">('x', 'y')</button>
+        <button type="button">((1, 2), 3)</button>
+      </div>
+      <form class="row" id="t-form" autocomplete="off">
+        <span class="mono muted">hash(</span>
+        <input type="text" id="t-in" value="(1, 2)" aria-label="A tuple" spellcheck="false">
+        <span class="mono muted">)</span>
+        <button class="primary" type="submit">Step through it</button>
+      </form>
+      <div class="player" id="t-player">
+        <div class="pl-bar">
+          <button class="btn" type="button" data-act="prev">← Back</button>
+          <button class="primary" type="button" data-act="play">▶ Play</button>
+          <button class="btn" type="button" data-act="next">Next →</button>
+          <span class="pl-count" aria-live="polite"></span>
+        </div>
+        <p class="pl-cap" aria-live="polite"></p>
+      </div>
+      <div class="regs" id="t-regs"></div>
+      <div class="result" id="t-out" aria-live="polite"></div>
+    </div>
+    <div class="card">
+      <h3>Why not just XOR the item hashes together?</h3>
+      <p class="muted" style="font-size:0.92rem">XOR is cheap, and older recipes used ideas like it. But XOR doesn't care about order, and anything XOR'd with itself is 0:</p>
+      <div class="table-scroll">
+        <table class="tables" id="xor-table">
+          <thead><tr><th>Tuple</th><th>XOR of item hashes</th><th>Python's <code>hash()</code></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="muted" style="font-size:0.92rem">Coordinates like <code>(x, y)</code> are common dict keys, and so are pairs with the same item twice. With XOR, every <code>(n, n)</code> would land in the same bucket. Rotating and multiplying after each item makes the position of an item matter.</p>
+    </div>
+  </section>
+
+  <!-- ----------------- 6. OBJECTS AND NONE ----------------- -->
+  <section aria-labelledby="obj-h">
+    <h2 id="obj-h">Your own objects: the address, rotated</h2>
+    <p class="muted prose">A class that doesn't define <code>__eq__</code> or <code>__hash__</code> gets the default: two objects are equal only if they're the same object. So the hash only has to match for the same object, and CPython uses its memory address, which is what <code>id()</code> returns. But first it rotates the address right by 4 bits.</p>
+    <div class="card">
+      <div class="row"><button class="primary" type="button" id="o-new">o = object()</button><span class="muted" style="font-size:0.9rem">Each click makes a new object at a new address.</span></div>
+      <div class="player" id="o-player">
+        <div class="pl-bar">
+          <button class="btn" type="button" data-act="prev">← Back</button>
+          <button class="primary" type="button" data-act="play">▶ Play</button>
+          <button class="btn" type="button" data-act="next">Next →</button>
+          <span class="pl-count" aria-live="polite"></span>
+        </div>
+        <p class="pl-cap" aria-live="polite"></p>
+      </div>
+      <div class="regs" id="o-regs"></div>
+      <div class="result" id="o-out" aria-live="polite"></div>
+    </div>
+    <div class="split">
+      <div class="card">
+        <h3>Why rotate?</h3>
+        <p class="muted" style="font-size:0.92rem">A dict picks a bucket from the <em>lowest</em> bits of the hash: <code>hash &amp; (size - 1)</code>. Object addresses are multiples of 16, so their lowest 4 bits are always <code>0000</code>. Drop 12 objects into a 16-bucket dict, with and without the rotation:</p>
+        <button class="btn" type="button" id="drop" style="justify-self:start">Drop 12 objects</button>
+        <div><span class="label">bucket = id(o) &amp; 15</span></div>
+        <div class="bucket-wrap"><div class="buckets wide-buckets" id="drop-raw" style="--n:16"></div></div>
+        <div><span class="label">bucket = hash(o) &amp; 15 (rotated first)</span></div>
+        <div class="bucket-wrap"><div class="buckets wide-buckets" id="drop-rot" style="--n:16"></div></div>
+        <p id="drop-note" class="muted" style="font-size:0.9rem" aria-live="polite"></p>
+      </div>
+      <div class="card">
+        <h3>And <code>None</code>?</h3>
+        <p class="muted" style="font-size:0.92rem"><code>None</code> used to hash by its address too, so its hash changed from run to run. That made the order of a set like <code>{None, 1, 2}</code> change between runs. Since Python 3.12, <code>hash(None)</code> is always <code>4238894112</code> (<code>0xFCA86420</code> in hex) (<a href="https://github.com/python/cpython/issues/99540" target="_blank" rel="noopener">the discussion</a>).</p>
+        <p class="muted" style="font-size:0.92rem">Strings still change between runs on purpose, so a set of strings still prints in a different order each time. Try <code>python3 -c "print({'a', 'b', 'c'})"</code> a few times.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------- 7. UNHASHABLE ----------------- -->
+  <section aria-labelledby="un-h">
+    <h2 id="un-h">Lists don't get a hash</h2>
+    <p class="muted prose"><code>hash([1, 2])</code> raises <code>TypeError: unhashable type: 'list'</code>. Why not just hash the items, like a tuple does? Because a list can change after it's in the dict. Suppose lists hashed like tuples:</p>
+    <div class="card">
+      <div class="player" id="u-player">
+        <div class="pl-bar">
+          <button class="btn" type="button" data-act="prev">← Back</button>
+          <button class="primary" type="button" data-act="play">▶ Play</button>
+          <button class="btn" type="button" data-act="next">Next →</button>
+          <span class="pl-count" aria-live="polite"></span>
+        </div>
+        <p class="pl-cap" aria-live="polite"></p>
+      </div>
+      <pre id="u-code"></pre>
+      <div class="bucket-wrap"><div class="buckets wide-buckets" id="u-buckets" style="--n:8"></div></div>
+    </div>
+    <div class="card">
+      <h3>Two rules for <code>__hash__</code></h3>
+      <ol class="prose" style="padding-left:20px;margin:0;display:grid;gap:6px">
+        <li>If <code>a == b</code>, then <code>hash(a) == hash(b)</code>. Otherwise a dict looks in the wrong bucket for a key it already has.</li>
+        <li>A key's hash must never change while it's in a dict.</li>
+      </ol>
+      <p class="muted" style="font-size:0.92rem">Because of rule 1, if your class defines <code>__eq__</code> and not <code>__hash__</code>, Python sets <code>__hash__</code> to <code>None</code>, and its objects become unhashable. To get the hash back, hash the same fields <code>__eq__</code> compares, by putting them in a tuple:</p>
+      <pre><code>class Point:
+    def __init__(self, x, y):
+        self.x, self.y = x, y
+    def __eq__(self, other):
+        return (self.x, self.y) == (other.x, other.y)
+    def __hash__(self):                 <span class="cmt"># without this: TypeError: unhashable type: 'Point'</span>
+        return hash((self.x, self.y))   <span class="cmt"># equal points → equal tuples → equal hashes</span></code></pre>
+      <p class="muted" style="font-size:0.92rem">Rule 2 is your job: don't change <code>x</code> or <code>y</code> after a <code>Point</code> goes into a dict. <code>@dataclass(frozen=True)</code> writes <code>__eq__</code> and <code>__hash__</code> for you, and won't let the fields change.</p>
+    </div>
+  </section>
+
+  <!-- ----------------- 8. HASH FLOODING ----------------- -->
+  <section aria-labelledby="flood-h">
+    <h2 id="flood-h">Why strings need a secret key: hash flooding</h2>
+    <p class="muted prose">Web frameworks put request data into dicts: form fields, query parameters, JSON object keys. If an attacker can predict your hash function, they can send thousands of keys that all have the <em>same</em> hash. Each new key then has to walk past every key before it, and a lookup that should be O(1) becomes O(n). Inserting n keys costs about n²/2 checks.</p>
+    <div class="card">
+      <div class="chart-head">
+        <h3>Checks to find an empty bucket, for each new key</h3>
+        <div class="legend">
+          <span><i style="border-color:var(--s-hit)"></i>predictable hash, attacker's keys</span>
+          <span><i style="border-color:var(--s-miss)"></i>SipHash with a secret key, same keys</span>
+        </div>
+      </div>
+      <div class="size-row">
+        <span class="label" id="fl-n-label" style="white-space:nowrap">Keys in one request</span>
+        <input type="range" id="fl-n" min="50" max="1000" step="50" value="500" aria-labelledby="fl-n-label">
+        <output id="fl-n-out" class="mono">500</output>
+        <button class="primary" type="button" id="fl-go">Send the request</button>
+      </div>
+      <div class="chart-wrap">
+        <svg class="chart" id="fl-chart" viewBox="0 0 760 270" role="img" aria-label="Checks per insert: a rising line for the predictable hash, and a flat line near zero with the secret key"></svg>
+        <div class="tip" id="fl-tip" hidden></div>
+      </div>
+      <div class="stats" id="fl-stats"></div>
+      <p class="muted" style="font-size:0.88rem">Simulated with CPython's probing rule and 2/3 load factor. The attacker's keys all share one 64-bit hash, so their probe trails are identical. With the secret key, the attacker can't find keys like that, and the same key names spread out like any others.</p>
+    </div>
+
+    <div class="split">
+      <div class="card">
+        <h3>Try it in Python</h3>
+        <p class="muted" style="font-size:0.92rem">Int hashes aren't secret. Every multiple of P hashes to 0, so you can flood a set yourself:</p>
+        <pre><code>import time
+P = 2**61 - 1
+for n in (1_000, 2_000, 4_000, 8_000):
+    flood = [i * P for i in range(n)]  <span class="cmt"># all hash to 0</span>
+    start = time.perf_counter()
+    set(flood)
+    print(n, time.perf_counter() - start)</code></pre>
+        <div class="table-scroll">
+          <table class="tables">
+            <thead><tr><th>Keys</th><th><code>set(range(n))</code></th><th><code>set(flood)</code></th></tr></thead>
+            <tbody>
+              <tr><td class="n">1,000</td><td class="n">0.01 ms</td><td class="n">5 ms</td></tr>
+              <tr><td class="n">2,000</td><td class="n">0.02 ms</td><td class="n">20 ms</td></tr>
+              <tr><td class="n">4,000</td><td class="n">0.03 ms</td><td class="n">85 ms</td></tr>
+              <tr><td class="n">8,000</td><td class="n">0.10 ms</td><td class="n">333 ms</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted" style="font-size:0.88rem">Measured in CPython 3.14 on a laptop. Your times will differ, but doubling the keys will still roughly quadruple the flooded time: that's O(n²).</p>
+        <p class="muted" style="font-size:0.92rem">So why aren't ints protected too? Keeping <code>hash(n) == n</code> makes ints fast to hash, and data from outside a program (form fields, headers, JSON object keys) arrives as strings. Python only puts the secret key on <code>str</code> and <code>bytes</code>.</p>
+      </div>
+
+      <div class="card">
+        <h3>How we got here</h3>
+        <ol class="timeline">
+          <li class="paper"><span class="yr">2003</span><span class="what"><b><a href="https://www.usenix.org/legacy/events/sec03/tech/full_papers/crosby/crosby.pdf" target="_blank" rel="noopener">Denial of Service via Algorithmic Complexity Attacks</a></b><span>Scott Crosby and Dan Wallach, USENIX Security. The original paper: make a hash table hit its worst case on purpose, and a small amount of input ties up a server's CPU. They demonstrated it against Perl, the Squid web proxy and the Bro intrusion detector. (<a href="https://www.usenix.org/conference/12th-usenix-security-symposium/denial-service-algorithmic-complexity-attacks" target="_blank" rel="noopener">abstract page</a>)</span></span></li>
+          <li><span class="yr">2011</span><span class="what"><b><a href="https://media.ccc.de/v/28c3-4680-en-effective_dos_attacks_against_web_application_platforms" target="_blank" rel="noopener">Effective Denial of Service attacks against web application platforms</a></b><span>Alexander Klink and Julian Wälde, at the 28th Chaos Communication Congress (talk video). They showed that a single POST request could do it to PHP, Java, Python, Ruby and others. The <a href="https://ocert.org/advisories/ocert-2011-003.html" target="_blank" rel="noopener">oCERT-2011-003 advisory</a> warned of "100% of CPU usage which can last up to several hours."</span></span></li>
+          <li><span class="yr">2012</span><span class="what"><b>Python adds hash randomization</b><span>A random salt for string hashes, off by default in 2.6.8, 2.7.3, 3.1.5 and 3.2.3 (turn it on with <code>-R</code>), and on by default from Python 3.3. <code>PYTHONHASHSEED</code> controls it.</span></span></li>
+          <li><span class="yr">2012</span><span class="what"><b><a href="https://media.ccc.de/v/29c3-5152-en-hashflooding_dos_reloaded_h264" target="_blank" rel="noopener">Hash-flooding DoS reloaded: attacks and defenses</a></b><span>Jean-Philippe Aumasson, Daniel J. Bernstein and Martin Boßlet, at the 29th Chaos Communication Congress. Adding a random salt to a weak hash isn't enough: attackers could still find collisions, or work out the salt. Their answer was a hash designed to be keyed: <a href="https://www.aumasson.jp/siphash/siphash.pdf" target="_blank" rel="noopener">SipHash</a>.</span></span></li>
+          <li><span class="yr">2014</span><span class="what"><b>Python 3.4: SipHash-2-4</b><span><a href="https://peps.python.org/pep-0456/" target="_blank" rel="noopener">PEP 456</a>, by Christian Heimes, replaces the salted FNV hash for <code>str</code> and <code>bytes</code>.</span></span></li>
+          <li><span class="yr">2022</span><span class="what"><b>Python 3.11: SipHash-1-3</b><span>Fewer rounds for speed, keeping the secret key (<a href="https://github.com/python/cpython/issues/73596" target="_blank" rel="noopener">the discussion</a>).</span></span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------- 9. THEN WHAT ----------------- -->
+  <section aria-labelledby="next-h">
+    <h2 id="next-h">From hash to bucket</h2>
+    <div class="card">
+      <p class="prose">Whichever recipe ran, the dict gets one 64-bit number. It keeps the lowest bits for the first bucket to try, <code>hash &amp; (size - 1)</code>, and if that bucket's taken, it mixes in higher bits with <code>perturb</code> to choose the next one. Try it on <a href="../s2_hash_ring/s2_hash_ring.html">The Hash Ring</a>, and see how full the table is allowed to get in <a href="../s2_load_factor/s2_load_factor.html">Choosing a Load Factor</a>.</p>
+      <p class="muted" style="font-size:0.88rem">Read the source: <a href="https://github.com/python/cpython/blob/main/Python/pyhash.c" target="_blank" rel="noopener"><code>Python/pyhash.c</code></a> (strings, floats, the address rotation), <a href="https://github.com/python/cpython/blob/main/Objects/longobject.c" target="_blank" rel="noopener"><code>Objects/longobject.c</code></a> (<code>long_hash</code>), <a href="https://github.com/python/cpython/blob/main/Objects/tupleobject.c" target="_blank" rel="noopener"><code>Objects/tupleobject.c</code></a> (<code>tuple_hash</code>), and the comments at the top of <a href="https://github.com/python/cpython/blob/main/Objects/dictobject.c" target="_blank" rel="noopener"><code>Objects/dictobject.c</code></a>. Also: <a href="https://docs.python.org/3/library/stdtypes.html#hashing-of-numeric-types" target="_blank" rel="noopener">Hashing of numeric types</a> and <a href="https://docs.python.org/3/reference/datamodel.html#object.__hash__" target="_blank" rel="noopener"><code>object.__hash__</code></a> in the Python docs.</p>
+      <p class="muted" style="font-size:0.82rem">Every hash on this page is computed the way CPython computes it on a 64-bit build, and checked against CPython 3.14.</p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  // ---------------------------------------------------------
+  // CPython's hash functions, 64-bit build
+  // ---------------------------------------------------------
+  const M64 = (1n << 64n) - 1n;
+  const P = (1n << 61n) - 1n;
+  const rotl = (x, b) => ((x << BigInt(b)) | (x >> BigInt(64 - b))) & M64;
+  const signed = (x) => (x >= 1n << 63n ? x - (1n << 64n) : x);
+  const notMinus1 = (x) => (x === -1n ? -2n : x);
+  const hex64 = (x) => "0x" + BigInt.asUintN(64, x).toString(16).padStart(16, "0");
+  const NONE_HASH = 0xFCA86420n;
+  const XX1 = 11400714785074694791n, XX2 = 14029467366897019727n, XX5 = 2870177450012600261n;
+  const SIP_INIT = [0x736f6d6570736575n, 0x646f72616e646f6dn, 0x6c7967656e657261n, 0x7465646279746573n];
+
+  function sipRound(v) {
+    const half = (a, b, c, d, s, t) => {
+      v[a] = (v[a] + v[b]) & M64; v[c] = (v[c] + v[d]) & M64;
+      v[b] = rotl(v[b], s) ^ v[a]; v[d] = rotl(v[d], t) ^ v[c]; v[a] = rotl(v[a], 32);
+    };
+    half(0, 1, 2, 3, 13, 16); half(2, 1, 0, 3, 17, 21);
+  }
+  // CPython stores a str with 1, 2 or 4 bytes per character (PEP 393), little-endian
+  function strBytes(s) {
+    const cps = [...s].map((c) => c.codePointAt(0));
+    const max = Math.max(0, ...cps), width = max < 256 ? 1 : max < 65536 ? 2 : 4;
+    const bytes = [], owner = [];
+    cps.forEach((cp, ci) => { for (let i = 0; i < width; i++) { bytes.push((cp >> (8 * i)) & 255); owner.push(i === 0 ? ci : -1); } });
+    return { bytes, owner, width, chars: [...s] };
+  }
+  const leWord = (bytes, from, n) => { let m = 0n; for (let j = 0; j < n; j++) m |= BigInt(bytes[from + j]) << BigInt(8 * j); return m; };
+  // every intermediate state, for stepping through
+  function sipTrace(bytes, k0, k1) {
+    const v = [k0 ^ SIP_INIT[0], k1 ^ SIP_INIT[1], k0 ^ SIP_INIT[2], k1 ^ SIP_INIT[3]];
+    const snaps = [];
+    const snap = (o) => snaps.push({ v: v.slice(), ...o });
+    snap({ kind: "init" });
+    const full = Math.floor(bytes.length / 8);
+    for (let b = 0; b <= full; b++) {
+      const last = b === full;
+      const m = last ? (BigInt(bytes.length & 255) << 56n) | leWord(bytes, 8 * b, bytes.length - 8 * b) : leWord(bytes, 8 * b, 8);
+      v[3] ^= m; snap({ kind: "in3", block: b, m, last, hot: [3] });
+      sipRound(v); snap({ kind: "round", block: b, m, last, hot: [0, 1, 2, 3] });
+      v[0] ^= m; snap({ kind: "in0", block: b, m, last, hot: [0] });
+    }
+    v[2] ^= 0xffn; snap({ kind: "ff", hot: [2] });
+    for (let r = 1; r <= 3; r++) { sipRound(v); snap({ kind: "final", r, hot: [0, 1, 2, 3] }); }
+    const out = v[0] ^ v[1] ^ v[2] ^ v[3];
+    snap({ kind: "fold", out });
+    return snaps;
+  }
+  function hashStr(s, key) {
+    const { bytes } = strBytes(s);
+    if (!bytes.length) return 0n;
+    const snaps = sipTrace(bytes, key[0], key[1]);
+    return notMinus1(signed(snaps[snaps.length - 1].out));
+  }
+  function hashInt(n) {
+    const neg = n < 0n, x = (neg ? -n : n) % P;
+    return notMinus1(neg ? -x : x);
+  }
+  // f = m * 2**e exactly; returns the pieces too, for stepping through
+  function floatParts(f) {
+    const dv = new DataView(new ArrayBuffer(8)); dv.setFloat64(0, f);
+    const bits = dv.getBigUint64(0), ex = Number((bits >> 52n) & 0x7ffn);
+    let m = bits & ((1n << 52n) - 1n), e;
+    if (ex === 0) e = -1074; else { m |= 1n << 52n; e = ex - 1075; }
+    while (m && !(m & 1n)) { m >>= 1n; e++; }      // 0.5 reads better as 1 × 2**-1 than 2**52 × 2**-53
+    return { neg: bits >> 63n === 1n, m, e };
+  }
+  const rot61 = (x, r) => (r === 0 ? x : ((x << BigInt(r)) & P) | (x >> BigInt(61 - r)));
+  function hashFloat(f) {
+    if (Number.isNaN(f)) return null;
+    if (!Number.isFinite(f)) return f > 0 ? 314159n : -314159n;
+    if (f === 0) return 0n;
+    const { neg, m, e } = floatParts(f);
+    const x = rot61(m % P, ((e % 61) + 61) % 61);
+    return notMinus1(neg ? -x : x);
+  }
+  function tupleTrace(lanes) {
+    let acc = XX5;
+    const snaps = [{ kind: "start", acc }];
+    lanes.forEach((h, i) => {
+      const lane = BigInt.asUintN(64, h);
+      acc = (acc + lane * XX2) & M64; snaps.push({ kind: "add", i, lane, acc });
+      acc = rotl(acc, 31); snaps.push({ kind: "rot", i, lane, acc });
+      acc = (acc * XX1) & M64; snaps.push({ kind: "mul", i, lane, acc });
+    });
+    acc = (acc + (BigInt(lanes.length) ^ (XX5 ^ 3527539n))) & M64;
+    snaps.push({ kind: "len", acc });
+    return snaps;
+  }
+  function hashTuple(lanes) {
+    const snaps = tupleTrace(lanes), acc = snaps[snaps.length - 1].acc;
+    return acc === M64 ? 1546275796n : signed(acc);
+  }
+  const hashPtr = (addr) => notMinus1(signed(((addr >> 4n) | (addr << 60n)) & M64));
+  // a plausible macOS/Linux heap address, 16-byte aligned
+  const newAddress = () => 0x100000000n + BigInt(Math.floor(Math.random() * 2 ** 26)) * 16n;
+  const ZERO_KEY = [0n, 0n];
+  function randomKey() {
+    const a = new Uint32Array(4); crypto.getRandomValues(a);
+    return [(BigInt(a[0]) << 32n) | BigInt(a[1]), (BigInt(a[2]) << 32n) | BigInt(a[3])];
+  }
+
+  // ---------------------------------------------------------
+  // a tiny reader for Python literals
+  // ---------------------------------------------------------
+  function parsePy(src) {
+    const s = src.trim();
+    let p = 0;
+    const ws = () => { while (p < s.length && /\s/.test(s[p])) p++; };
+    const fail = (msg) => { throw new SyntaxError(msg); };
+    function value() {
+      ws();
+      const c = s[p];
+      if (c === "'" || c === '"') {
+        let out = ""; p++;
+        while (p < s.length && s[p] !== c) {
+          if (s[p] === "\\" && p + 1 < s.length) { const e = s[p + 1]; out += { n: "\n", t: "\t", "\\": "\\", "'": "'", '"': '"' }[e] ?? "\\" + e; p += 2; }
+          else out += s[p++];
+        }
+        if (s[p] !== c) fail("That string never closes.");
+        p++;
+        return { kind: "str", v: out };
+      }
+      if (c === "(" || c === "[" || c === "{") {
+        const close = { "(": ")", "[": "]", "{": "}" }[c];
+        p++; ws();
+        const items = []; let comma = false, isDict = false;
+        while (p < s.length && s[p] !== close) {
+          items.push(value()); ws();
+          if (c === "{" && s[p] === ":") { p++; value(); ws(); isDict = true; }
+          if (s[p] === ",") { p++; comma = true; ws(); } else { comma = false; break; }
+        }
+        if (s[p] !== close) fail(`Expected ${close}.`);
+        p++;
+        if (c === "(") return items.length === 1 && !comma ? items[0] : { kind: "tuple", items };
+        if (c === "[") return { kind: "list", items };
+        return { kind: isDict || !items.length ? "dict" : "set", items };
+      }
+      const rest = s.slice(p);
+      const name = rest.match(/^(None|True|False|object\(\)|float\(\s*(['"])(-?inf|nan)\2\s*\))/);
+      if (name) {
+        p += name[0].length;
+        if (name[1] === "None") return { kind: "none" };
+        if (name[1] === "True" || name[1] === "False") return { kind: "bool", v: name[1] === "True" ? 1n : 0n };
+        if (name[1] === "object()") return { kind: "object" };
+        return { kind: "float", v: { "inf": Infinity, "-inf": -Infinity, "nan": NaN }[name[3]] };
+      }
+      const num = rest.match(/^[-+]?(\d[\d_]*)?(\.[\d_]*)?([eE][-+]?\d+)?/);
+      if (num && /\d/.test(num[0])) {
+        p += num[0].length;
+        const t = num[0].replace(/_/g, "");
+        if (num[2] !== undefined || num[3] !== undefined) return { kind: "float", v: Number(t) };
+        return { kind: "int", v: BigInt(t) };
+      }
+      fail("This page understands strings, numbers, tuples, lists, dicts, sets, None, True, False and object().");
+    }
+    const v = value(); ws();
+    if (p !== s.length) fail("This page reads one simple value at a time (no math or variables here).");
+    return v;
+  }
+  function reprPy(node) {
+    switch (node.kind) {
+      case "str": return "'" + node.v.replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
+      case "int": return node.v.toString();
+      case "bool": return node.v ? "True" : "False";
+      case "none": return "None";
+      case "object": return "object()";
+      case "float": return Object.is(node.v, -0) ? "-0.0" : Number.isNaN(node.v) ? "nan" : !Number.isFinite(node.v) ? (node.v > 0 ? "inf" : "-inf") : String(node.v).includes(".") || /e/.test(String(node.v)) ? String(node.v) : node.v + ".0";
+      case "tuple": return "(" + node.items.map(reprPy).join(", ") + (node.items.length === 1 ? "," : "") + ")";
+      case "list": return "[" + node.items.map(reprPy).join(", ") + "]";
+      default: return node.kind === "set" ? "{…}" : "{…}";
+    }
+  }
+  class Unhashable extends Error {}
+  function hashNode(node, key = ZERO_KEY) {
+    switch (node.kind) {
+      case "str": return hashStr(node.v, key);
+      case "int": case "bool": return hashInt(node.v);
+      case "float": { const h = hashFloat(node.v); return h === null ? hashPtr(newAddress()) : h; }
+      case "none": return NONE_HASH;
+      case "object": return hashPtr(newAddress());
+      case "tuple": return hashTuple(node.items.map((it) => hashNode(it, key)));
+      default: throw new Unhashable(`TypeError: unhashable type: '${node.kind}'`);
+    }
+  }
+
+  // ---------------------------------------------------------
+  // shared pieces: bit strips and step-through players
+  // ---------------------------------------------------------
+  function strip(width) {
+    const el = document.createElement("div");
+    el.className = "bits";
+    el.style.setProperty("--n", width);
+    el.innerHTML = "<i></i>".repeat(width);
+    el.setAttribute("aria-hidden", "true");
+    el._prev = null; el._flip = false;
+    return el;
+  }
+  // value drawn most-significant bit first; changed bits flash
+  function setBits(el, value, cls) {
+    const cells = el.children, n = cells.length, prev = el._prev;
+    el._flip = !el._flip;
+    for (let k = 0; k < n; k++) {
+      const bit = n - 1 - k, on = (value >> BigInt(bit)) & 1n;
+      let c = on ? "on" : "";
+      const extra = cls && cls(bit);
+      if (extra) c += " " + extra;
+      if (prev !== null && ((prev >> BigInt(bit)) & 1n) !== on && !reduceMotion) c += el._flip ? " fa" : " fb";
+      cells[k].className = c;
+    }
+    el._prev = value;
+  }
+  // a labeled row: name, strip, hex underneath
+  function reg(parent, name, width) {
+    const row = document.createElement("div");
+    row.className = "reg";
+    row.innerHTML = `<span class="name">${name}</span>`;
+    const st = strip(width);
+    row.appendChild(st);
+    const hx = document.createElement("span"); hx.className = "hex";
+    row.appendChild(hx);
+    parent.appendChild(row);
+    return {
+      row, st,
+      set(v, text, cls) { setBits(st, BigInt.asUintN(width, v), cls); hx.innerHTML = text ?? hex64(v); },
+      hot(on) { row.classList.toggle("hot", !!on); },
+      show(on) { row.hidden = !on; },
+    };
+  }
+  function makePlayer(root, delay = 1500) {
+    let frames = [], i = 0, timer = null;
+    const cap = root.querySelector(".pl-cap"), count = root.querySelector(".pl-count");
+    const btn = (a) => root.querySelector(`[data-act="${a}"]`);
+    function show(k) {
+      i = Math.max(0, Math.min(frames.length - 1, k));
+      const f = frames[i];
+      f.show();
+      cap.innerHTML = `<b>${f.title}</b> ${f.text || ""}`;
+      count.textContent = `step ${i + 1} of ${frames.length}`;
+      btn("prev").disabled = i === 0;
+      btn("next").disabled = i === frames.length - 1;
+    }
+    function stop() { clearInterval(timer); timer = null; btn("play").textContent = "▶ Play"; }
+    function play() {
+      if (timer) return stop();
+      if (i === frames.length - 1) show(0);
+      btn("play").textContent = "❚❚ Pause";
+      timer = setInterval(() => { if (i >= frames.length - 1) stop(); else show(i + 1); }, delay);
+    }
+    root.addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-act]"); if (!b) return;
+      const a = b.dataset.act;
+      if (a === "prev") { stop(); show(i - 1); }
+      else if (a === "next") { stop(); show(i + 1); }
+      else play();
+    });
+    return {
+      load(fs, autoplay) { stop(); frames = fs; show(0); if (autoplay && !reduceMotion) play(); },
+    };
+  }
+  function wireSeg(id, onPick) {
+    $(id).addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      $(id).querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      onPick(b.dataset.v);
+    });
+  }
+  function wireChips(chipsId, inputId, run) {
+    $(chipsId).addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      $(inputId).value = b.textContent;
+      run(true);
+    });
+  }
+  // rotate a strip one bit at a time, so the bits visibly slide around
+  function animateRotation(r, from, to, steps, stepFn, onDone) {
+    clearInterval(r.timer);
+    if (reduceMotion || steps === 0) { onDone(); return; }
+    let k = 0;
+    r.timer = setInterval(() => {
+      k++;
+      stepFn(k);
+      if (k >= steps) { clearInterval(r.timer); onDone(); }
+    }, Math.max(18, Math.min(70, 900 / steps)));
+  }
+
+  // ---------------------------------------------------------
+  // 1. the switchboard
+  // ---------------------------------------------------------
+  function runSwitch() {
+    const src = $("sw-in").value;
+    const out = $("sw-out");
+    const routes = $("routes");
+    routes.classList.add("picked");
+    routes.querySelectorAll(".route").forEach((r) => r.classList.remove("on"));
+    let node;
+    try { node = parsePy(src); }
+    catch (err) { out.innerHTML = `<span class="err">${esc(err.message)}</span>`; routes.classList.remove("picked"); return; }
+    const route = { str: "str", int: "int", bool: "int", float: "float", tuple: "tuple", object: "object", none: "none", list: "list", dict: "list", set: "list" }[node.kind];
+    const card = routes.querySelector(`[data-r="${route}"]`);
+    void card.offsetWidth;
+    card.classList.add("on");
+    const typeName = { str: "str", int: "int", bool: "bool", float: "float", tuple: "tuple", object: "object", none: "NoneType", list: "list", dict: "dict", set: "set" }[node.kind];
+    const shown = reprPy(node);
+    let h;
+    try { h = hashNode(node); }
+    catch (err) {
+      if (!(err instanceof Unhashable)) throw err;
+      out.innerHTML = `<span class="cmt">&gt;&gt;&gt;</span> hash(${esc(shown)})<br><span class="err">${esc(err.message)}</span><br><span class="cmt"># ${typeName}.__hash__ is None: it can change, so it can't be a key</span>`;
+      return;
+    }
+    const why = {
+      str: "SipHash-1-3 of its bytes (PYTHONHASHSEED=0)",
+      int: node.kind === "bool" ? "bool is an int: True is 1" : node.v === -1n ? "-1 is reserved for errors, so it becomes -2" : "the remainder mod 2**61 - 1",
+      float: Number.isNaN(node.v) ? "nan hashes by identity, like object()" : "the same remainder an equal int would get",
+      tuple: "its items' hashes, mixed together" + (JSON.stringify(node, (k, v) => (typeof v === "bigint" ? "" : v)).includes('"str"') ? " (strings with PYTHONHASHSEED=0)" : ""),
+      object: "its memory address, rotated. Yours will differ",
+      none: "a constant since Python 3.12",
+    }[route];
+    out.innerHTML = `<span class="cmt">&gt;&gt;&gt;</span> hash(${esc(shown)})<br><span class="val" id="sw-val"></span><br><span class="cmt"># type is ${typeName}: ${esc(why)}</span>`;
+    rollDigits($("sw-val"), h.toString());
+  }
+  // a short slot-machine roll before the real number settles
+  function rollDigits(el, final) {
+    if (reduceMotion) { el.textContent = final; return; }
+    let n = 0;
+    const t = setInterval(() => {
+      n++;
+      el.textContent = n >= 10 ? final : final.replace(/\d/g, () => Math.floor(Math.random() * 10));
+      if (n >= 10) clearInterval(t);
+    }, 35);
+  }
+  $("sw-form").addEventListener("submit", (e) => { e.preventDefault(); runSwitch(); });
+  wireChips("sw-chips", "sw-in", runSwitch);
+  runSwitch();
+
+  // ---------------------------------------------------------
+  // 2. strings: SipHash-1-3, step by step
+  // ---------------------------------------------------------
+  let sKey = ZERO_KEY, sKeyMode = "zero";
+  const sPlayer = makePlayer($("s-player"), 1300);
+  const sRegs = {};
+  ["m", "v0", "v1", "v2", "v3"].forEach((n) => (sRegs[n] = reg($("s-regs"), n, 64)));
+  sRegs.out = reg($("s-regs"), "hash", 64);
+
+  function renderBytes(sb, curBlock) {
+    const { bytes, owner, chars } = sb;
+    const full = Math.floor(bytes.length / 8);
+    let html = "";
+    for (let b = 0; b <= full; b++) {
+      const last = b === full;
+      let cells = "";
+      for (let j = 0; j < 8; j++) {
+        const idx = 8 * b + j;
+        if (last && j === 7) cells += `<span class="byte len" title="the length, mod 256"><b>${(bytes.length & 255).toString(16).padStart(2, "0")}</b><small>len</small></span>`;
+        else if (idx < bytes.length && (!last || idx < bytes.length)) {
+          const ch = owner[idx] >= 0 ? chars[owner[idx]] : "";
+          cells += `<span class="byte data"><b>${bytes[idx].toString(16).padStart(2, "0")}</b><small>${esc(ch === " " ? "␣" : ch)}</small></span>`;
+        } else cells += `<span class="byte"><b>00</b><small></small></span>`;
+      }
+      html += `<div class="blk ${curBlock === b ? "cur" : ""}"><span class="cap">${last ? "last block: leftovers + length" : `block ${b}`}</span><div class="bs">${cells}</div></div>`;
+    }
+    $("s-bytes").innerHTML = html;
+  }
+
+  function runStr(autoplay) {
+    const s = $("s-in").value;
+    const sb = strBytes(s);
+    const k0 = sKey[0], k1 = sKey[1];
+    const snaps = sipTrace(sb.bytes, k0, k1);
+    const result = sb.bytes.length ? notMinus1(signed(snaps[snaps.length - 1].out)) : 0n;
+    const keyText = sKeyMode === "zero" ? "The key is all zeros, so each starting value is just its constant." : "The key is random, so the starting values are scrambled before any of the string goes in.";
+    const widthNote = sb.width === 1 ? "one byte per character" : `${sb.width} bytes per character, because of its widest character`;
+    const frames = [];
+    const showSnap = (snap, block, opts = {}) => () => {
+      renderBytes(sb, block);
+      ["v0", "v1", "v2", "v3"].forEach((n, k) => { sRegs[n].set(snap.v[k]); sRegs[n].hot(snap.hot && snap.hot.includes(k)); });
+      sRegs.m.show(snap.m !== undefined);
+      if (snap.m !== undefined) sRegs.m.set(snap.m, `${hex64(snap.m)} <span class="cmt">(read right to left: the first byte becomes the lowest bits)</span>`);
+      sRegs.out.show(!!opts.out);
+      if (opts.out) sRegs.out.set(snap.out, `${hex64(snap.out)} → as a signed number: ${result}`);
+      $("s-out").innerHTML = opts.out ? `<span class="cmt">&gt;&gt;&gt;</span> hash(${esc(reprPy({ kind: "str", v: s }))})<br><span class="val">${result}</span>${sKeyMode === "zero" ? `<br><span class="cmt"># same as PYTHONHASHSEED=0 python3 on 3.11+</span>` : `<br><span class="cmt"># a different key gives a different number. Try "Restart Python"</span>`}` : `<span class="cmt">hash(${esc(reprPy({ kind: "str", v: s }))}) = …</span>`;
+    };
+    if (!sb.bytes.length) {
+      frames.push({ title: "The empty string.", text: "CPython skips SipHash and returns 0, so the hash of <code>''</code> can't leak anything about the secret key.", show() {
+        $("s-bytes").innerHTML = ""; ["m", "v0", "v1", "v2", "v3", "out"].forEach((n) => sRegs[n].show(false));
+        $("s-out").innerHTML = `<span class="cmt">&gt;&gt;&gt;</span> hash('')<br><span class="val">0</span>`;
+      } });
+      sPlayer.load(frames, false);
+      return;
+    }
+    ["v0", "v1", "v2", "v3"].forEach((n) => sRegs[n].show(true));
+    frames.push({ title: "Start with four numbers.", text: `v0 to v3 start as the secret key XOR'd with four constants. ${keyText} The string becomes ${sb.bytes.length} bytes (${widthNote}), cut into blocks of 8.`, show: showSnap(snaps[0], -1) });
+    for (const snap of snaps.slice(1)) {
+      const b = snap.block, name = snap.last ? "the last block" : `block ${b}`;
+      if (snap.kind === "in3") frames.push({ title: `Mix in ${name}.`, text: `Its 8 bytes become one 64-bit number, <code>m</code>, which is XOR'd into v3.${snap.last ? " The last block holds the leftover bytes plus the length in its top byte, so 'a' and 'a\\0' hash differently." : ""} Flashing bits just changed.`, show: showSnap(snap, b) });
+      if (snap.kind === "round") frames.push({ title: "One SipRound.", text: "Add pairs together, rotate their bits, XOR them with each other, twice over. Every one of the four numbers changes, and one changed input bit spreads to many output bits.", show: showSnap(snap, b) });
+      if (snap.kind === "in0") frames.push({ title: `Finish ${name}.`, text: "XOR the same block into v0. That's the \"1\" in SipHash-1-3: one round per block.", show: showSnap(snap, b) });
+      if (snap.kind === "ff") frames.push({ title: "Mark the end.", text: "Flip the low 8 bits of v2 (XOR with 0xff). Now the final rounds can't be mistaken for another block.", show: showSnap(snap, -1) });
+      if (snap.kind === "final") frames.push({ title: `Final round ${snap.r} of 3.`, text: snap.r === 3 ? "That's the \"3\" in SipHash-1-3. Python 3.4 to 3.10 used SipHash-2-4: 2 rounds per block, 4 at the end." : "Three extra rounds, so the last bytes are stirred as thoroughly as the first.", show: showSnap(snap, -1) });
+      if (snap.kind === "fold") frames.push({ title: "Fold them into one.", text: "XOR all four numbers together. Read the 64 bits as a signed number, and that's the hash.", show: showSnap(snap, -1, { out: true }) });
+    }
+    sPlayer.load(frames, autoplay);
+  }
+  $("s-form").addEventListener("submit", (e) => { e.preventDefault(); runStr(true); });
+  wireSeg("s-key", (v) => { sKeyMode = v; sKey = v === "zero" ? ZERO_KEY : randomKey(); $("s-restart").hidden = v === "zero"; runStr(false); runAvalanche(); });
+  $("s-restart").addEventListener("click", () => { sKey = randomKey(); runStr(false); runAvalanche(); });
+  runStr(false);
+
+  // avalanche
+  const avRegs = { a: reg($("av-regs"), "a", 64), b: reg($("av-regs"), "b", 64), diff: reg($("av-regs"), "diff", 64) };
+  function runAvalanche() {
+    const a = $("av-a").value, b = $("av-b").value;
+    const ha = hashStr(a, sKey), hb = hashStr(b, sKey);
+    const d = BigInt.asUintN(64, ha ^ hb);
+    const flipped = d.toString(2).split("").filter((c) => c === "1").length;
+    avRegs.a.set(ha, `hash(${esc(reprPy({ kind: "str", v: a }))}) = ${ha}`);
+    avRegs.b.set(hb, `hash(${esc(reprPy({ kind: "str", v: b }))}) = ${hb}`);
+    avRegs.diff.set(d, `${flipped} of 64 bits differ`, (bit) => ((d >> BigInt(bit)) & 1n ? "low" : ""));
+    $("av-note").innerHTML = a === b ? "Same string, same hash: all 64 bits match." : `<strong>${flipped} of 64 bits</strong> changed${Math.abs(flipped - 32) <= 8 ? ", close to half, as it should be." : "."}`;
+  }
+  $("av-a").addEventListener("input", runAvalanche);
+  $("av-b").addEventListener("input", runAvalanche);
+  runAvalanche();
+
+  // ---------------------------------------------------------
+  // 3. integers: cut into 61-bit pieces and add
+  // ---------------------------------------------------------
+  // integer expressions: digits, + - * ** and parentheses
+  function evalInt(src) {
+    const toks = src.replace(/_/g, "").match(/\*\*|\d+|[-+*()]|\S/g) || [];
+    let p = 0;
+    const peek = () => toks[p], take = () => toks[p++];
+    const fail = () => { throw new SyntaxError("Try a whole number, like 12345, -7 or 2**70 + 1."); };
+    function expr() { let v = term(); while (peek() === "+" || peek() === "-") { const op = take(), r = term(); v = op === "+" ? v + r : v - r; } return v; }
+    function term() { let v = unary(); while (peek() === "*") { take(); v *= unary(); } return v; }
+    function unary() { if (peek() === "-") { take(); return -unary(); } if (peek() === "+") { take(); return unary(); } return power(); }
+    function power() {
+      const b = atom();
+      if (peek() === "**") { take(); const e = unary(); if (e < 0n || e > 2000n) throw new RangeError("Keep exponents between 0 and 2000."); return b ** e; }
+      return b;
+    }
+    function atom() {
+      const t = take();
+      if (t === "(") { const v = expr(); if (take() !== ")") fail(); return v; }
+      if (/^\d+$/.test(t || "")) return BigInt(t);
+      fail();
+    }
+    const v = expr();
+    if (p !== toks.length) fail();
+    return v;
+  }
+  const iPlayer = makePlayer($("i-player"), 1700);
+  const MAX_PIECES = 6;
+  function runInt(autoplay) {
+    let n;
+    try { n = evalInt($("i-in").value); }
+    catch (err) { $("i-regs").innerHTML = ""; $("i-out").innerHTML = `<span class="err">${esc(err.message)}</span>`; iPlayer.load([{ title: "", text: "", show() {} }]); return; }
+    const neg = n < 0n, a = neg ? -n : n;
+    const bitsLen = a.toString(2).length;
+    const nPieces = Math.max(1, Math.ceil(bitsLen / 61));
+    if (nPieces > MAX_PIECES) {
+      $("i-regs").innerHTML = "";
+      $("i-out").innerHTML = `<span class="cmt">&gt;&gt;&gt;</span> hash(${esc($("i-in").value.trim())})<br><span class="val">${hashInt(n)}</span><br><span class="cmt"># ${bitsLen} bits is too many pieces to draw here. Try something under 2**366.</span>`;
+      iPlayer.load([{ title: "Too big to draw,", text: "but the recipe is the same: cut into 61-bit pieces and add them up.", show() {} }]);
+      return;
+    }
+    const pieces = Array.from({ length: nPieces }, (_, k) => (a >> BigInt(61 * k)) & P);
+    const sum = pieces.reduce((x, y) => x + y, 0n);
+    const folds = [];                      // keep folding until it's below P
+    let x = sum;
+    while (x > P) { x = (x & P) + (x >> 61n); folds.push(x); }
+    const rem = x === P ? 0n : x;
+    const h = hashInt(n);
+    const width = 61 * nPieces;
+    const pieceCls = (bit) => "p" + (Math.floor(bit / 61) % 2);
+    const box = $("i-regs");
+    const label = $("i-in").value.trim();
+    const outLine = (done) => `<span class="cmt">&gt;&gt;&gt;</span> hash(${esc(label)})<br>${done ? `<span class="val">${h}</span>` : `<span class="cmt">…</span>`}`;
+    const frames = [];
+    const draw = (rows) => () => {
+      box.innerHTML = "";
+      rows.forEach((r) => { const g = reg(box, r.name, r.width); g.set(r.v, r.text, r.cls); g.hot(r.hot); });
+    };
+    const whole = { name: neg ? "|n|" : "n", width, v: a, text: `${a} <span class="cmt">(${bitsLen} bits)</span>`, cls: pieceCls };
+    frames.push({ title: "Write it in binary.", text: `${neg ? "Take the absolute value; the sign goes back on at the end. " : ""}${nPieces === 1 ? `It fits in 61 bits, so it's already smaller than P${a === P ? "… almost: it <em>is</em> P" : ""}.` : `It has ${bitsLen} bits. Each color is one 61-bit piece, counted from the right.`}`, show() { draw([whole])(); $("i-out").innerHTML = outLine(false); } });
+    if (nPieces > 1) {
+      const pieceRows = pieces.map((pc, k) => ({ name: `#${k}`, width: 64, v: pc, text: `${pc}`, cls: (bit) => (bit < 61 ? "p" + (k % 2) : "") }));
+      frames.push({ title: `Cut it into ${nPieces} pieces of 61 bits.`, text: "Piece #1 is worth 2<sup>61</sup> times as much as piece #0. But 2<sup>61</sup> is 1 more than P, so mod P it counts the same as if it sat right at the bottom.", show() { draw([whole, ...pieceRows])(); $("i-out").innerHTML = outLine(false); } });
+      frames.push({ title: "Add the pieces.", text: `${pieces.join(" + ")} = ${sum}. Same remainder as the original number, with no division.`, show() { draw([...pieceRows, { name: "sum", width: 64, v: sum, text: `${sum}`, hot: true }])(); $("i-out").innerHTML = outLine(false); } });
+      folds.forEach((f) => frames.push({ title: "Still bigger than P: fold again.", text: `Cut off the bits above 61 and add them back in: ${f}.`, show() { draw([{ name: "sum", width: 64, v: f, text: `${f}`, hot: true }])(); } }));
+    }
+    if (a === P || x === P) frames.push({ title: "Exactly P leaves remainder 0.", text: "So <code>hash(2**61 - 1) == 0</code>, like any multiple of P.", show() { draw([{ name: "rem", width: 64, v: 0n, text: "0", hot: true }])(); $("i-out").innerHTML = outLine(true); } });
+    const signText = neg ? (rem === 1n ? "Put the minus sign back: -1. But -1 means \"error\" inside CPython, so it becomes <strong>-2</strong>." : `Put the minus sign back: <strong>${h}</strong>.`) : `That's the hash: <strong>${h}</strong>.${nPieces === 1 && a !== P ? " Small ints hash to themselves." : ""}`;
+    frames.push({ title: neg ? "Put the sign back." : "Done.", text: signText, show() { draw([{ name: "hash", width: 64, v: BigInt.asUintN(64, h), text: `${h}${neg ? " (stored as 64-bit two's complement)" : ""}`, hot: true }])(); $("i-out").innerHTML = outLine(true) + `<br><span class="cmt"># check: ${neg ? "-(abs(n) % P)" : "n % P"} == ${neg ? -(a % P) : a % P}${(neg ? -(a % P) : a % P) !== h ? `, and -1 becomes ${h}` : ""}</span>`; } });
+    iPlayer.load(frames, autoplay);
+  }
+  $("i-form").addEventListener("submit", (e) => { e.preventDefault(); runInt(true); });
+  wireChips("i-chips", "i-in", runInt);
+  runInt(false);
+
+  // ---------------------------------------------------------
+  // 4. floats: m × 2**e, and a rotation
+  // ---------------------------------------------------------
+  const fPlayer = makePlayer($("f-player"), 1900);
+  const fAnim = { timer: null };
+  function runFloat(autoplay) {
+    clearInterval(fAnim.timer);
+    const src = $("f-in").value.trim().replace(/_/g, "");
+    const f = /^[-+]?inf(inity)?$/i.test(src) ? (src.startsWith("-") ? -Infinity : Infinity) : /^[-+]?nan$/i.test(src) ? NaN : /^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(src) ? Number(src) : null;
+    const box = $("f-regs");
+    box.innerHTML = "";
+    if (f === null) { $("f-out").innerHTML = `<span class="err">Try a float like 0.5, -2.25, 1e100 or inf.</span>`; fPlayer.load([{ title: "", text: "", show() {} }]); return; }
+    const shown = reprPy({ kind: "float", v: f });
+    const head = `<span class="cmt">&gt;&gt;&gt;</span> hash(${esc(shown)})<br>`;
+    if (!Number.isFinite(f) || f === 0) {
+      const msg = Number.isNaN(f) ? "nan hashes by identity (Python 3.10+): each nan object gets its own hash, like object()." : f === 0 ? "Zero is zero: 0.0 and -0.0 both hash to 0, like the int 0." : `Infinity can't be written as m × 2**e, so it gets a special value: ${f > 0 ? "" : "-"}314159, the first digits of π.`;
+      fPlayer.load([{ title: "A special case.", text: msg, show() { $("f-out").innerHTML = head + (Number.isNaN(f) ? `<span class="cmt"># different for every nan object</span>` : `<span class="val">${hashFloat(f)}</span>`); } }]);
+      return;
+    }
+    const { neg, m, e } = floatParts(f);
+    const r = ((e % 61) + 61) % 61;
+    const h = hashFloat(f);
+    const g = reg(box, "x", 61);
+    const steps = [];
+    let acc = m % P;
+    for (let k = 1; k <= r; k++) steps.push(rot61(m % P, k));
+    const final = rot61(m % P, r);
+    const mCls = (bit) => (bit < m.toString(2).length ? "p0" : "");
+    const frames = [];
+    frames.push({ title: "Write it as a whole number times a power of 2.", text: `${shown} is exactly <code>${neg ? "-" : ""}${m} × 2**${e}</code>. Every finite float can be written this way: that's how floats are stored.`, show() { clearInterval(fAnim.timer); g.st._prev = null; g.set(m, `m = ${m} <span class="cmt">(${m.toString(2).length} bit${m === 1n ? "" : "s"}, fits in 61)</span>`, mCls); g.hot(false); $("f-out").innerHTML = head + `<span class="cmt">…</span>`; } });
+    frames.push({ title: `Multiply by 2**${e}: rotate ${r} place${r === 1 ? "" : "s"} left.`, text: `Since 2**61 leaves remainder 1 mod P, 2**${e} acts like 2**${r} (${e} mod 61 = ${r}). And multiplying by 2 mod 2**61 − 1 moves every bit up one place, with the top bit wrapping around to the bottom. Watch the bits go round.`, show() {
+      clearInterval(fAnim.timer);
+      g.st._prev = null; g.set(m, `rotating…`, mCls); g.hot(true);
+      animateRotation(fAnim, m, final, r, (k) => g.set(steps[k - 1], `rotated ${k} of ${r}`, null), () => g.set(final, `${final}`, null));
+    } });
+    frames.push({ title: neg ? "Put the sign back." : "Done.", text: `${neg ? (final === 1n ? "-1 is reserved for errors, so it's -2." : `Negative floats get a negative hash: ${h}.`) : `That's the hash: ${h}.`} An int with the same value would get exactly the same number.`, show() { clearInterval(fAnim.timer); g.st._prev = null; g.set(final, `${final}`, null); g.hot(false); $("f-out").innerHTML = head + `<span class="val">${h}</span>`; } });
+    fPlayer.load(frames, autoplay);
+  }
+  $("f-form").addEventListener("submit", (e) => { e.preventDefault(); runFloat(true); });
+  wireChips("f-chips", "f-in", runFloat);
+  runFloat(false);
+
+  // ---------------------------------------------------------
+  // 5. tuples: the xxHash-style accumulator
+  // ---------------------------------------------------------
+  const tPlayer = makePlayer($("t-player"), 1300);
+  const tRegs = { lane: reg($("t-regs"), "item", 64), acc: reg($("t-regs"), "acc", 64) };
+  function runTuple(autoplay) {
+    let node;
+    const out = $("t-out");
+    try { node = parsePy($("t-in").value); }
+    catch (err) { out.innerHTML = `<span class="err">${esc(err.message)}</span>`; return; }
+    if (node.kind !== "tuple") { out.innerHTML = `<span class="err">That's not a tuple. Try (1, 2), or (5,) for a one-item tuple.</span>`; return; }
+    let lanes;
+    try { lanes = node.items.map((it) => hashNode(it)); }
+    catch (err) { if (!(err instanceof Unhashable)) throw err; out.innerHTML = `<span class="err">${esc(err.message)}</span><br><span class="cmt"># a tuple is only hashable if every item is</span>`; tPlayer.load([{ title: "", text: "", show() {} }]); return; }
+    const snaps = tupleTrace(lanes);
+    const h = hashTuple(lanes);
+    const shown = reprPy(node);
+    const head = `<span class="cmt">&gt;&gt;&gt;</span> hash(${esc(shown)})<br>`;
+    const items = node.items.map(reprPy);
+    const frames = [];
+    const show = (snap, done) => () => {
+      tRegs.lane.show(snap.lane !== undefined);
+      if (snap.lane !== undefined) tRegs.lane.set(snap.lane, `hash(${esc(items[snap.i])}) = ${signed(snap.lane)}`);
+      tRegs.acc.set(snap.acc, done ? `${hex64(snap.acc)} → ${h}` : hex64(snap.acc));
+      tRegs.acc.hot(true);
+      out.innerHTML = head + (done ? `<span class="val">${h}</span>` : `<span class="cmt">…</span>`);
+    };
+    tRegs.acc.st._prev = null;
+    frames.push({ title: "Start the accumulator at a constant.", text: `${node.items.length ? `First, hash each item on its own: ${items.map((s, i) => `<code>hash(${esc(s)})</code> = ${lanes[i]}`).join(", ")}.` : "No items to hash."} The accumulator starts at xxHash's PRIME5.`, show: show(snaps[0]) });
+    for (const snap of snaps.slice(1)) {
+      const it = snap.i !== undefined ? `<code>${esc(items[snap.i])}</code>` : "";
+      if (snap.kind === "add") frames.push({ title: `Item ${snap.i}: add its hash × PRIME2.`, text: `Multiply ${it}'s hash by a big prime and add it in. Arithmetic wraps around at 64 bits.`, show: show(snap) });
+      if (snap.kind === "rot") frames.push({ title: `Item ${snap.i}: rotate left 31 bits.`, text: "The top 31 bits wrap around to the bottom. This is what makes order matter: whatever was added earlier gets rotated more times than whatever comes later.", show: show(snap) });
+      if (snap.kind === "mul") frames.push({ title: `Item ${snap.i}: multiply by PRIME1.`, text: "Multiplying by a big odd number spreads every bit's influence up into the bits above it.", show: show(snap) });
+      if (snap.kind === "len") frames.push({ title: "Add the length.", text: `Mix in the length (${node.items.length}), XOR'd with a constant chosen so that <code>hash(())</code> kept the value it had before Python 3.8. Read as a signed number, that's the hash.`, show: show(snap, true) });
+    }
+    tPlayer.load(frames, autoplay);
+  }
+  $("t-form").addEventListener("submit", (e) => { e.preventDefault(); runTuple(true); });
+  wireChips("t-chips", "t-in", runTuple);
+  runTuple(false);
+  (function xorTable() {
+    const rows = [[1n, 2n], [2n, 1n], [5n, 5n], [7n, 7n]];
+    $("xor-table").querySelector("tbody").innerHTML = rows.map((r) => {
+      const x = hashInt(r[0]) ^ hashInt(r[1]);
+      return `<tr><td class="n">(${r.join(", ")})</td><td class="n" style="color:var(--clash);font-weight:700">${x}</td><td class="n">${hashTuple(r.map(hashInt))}</td></tr>`;
+    }).join("");
+  })();
+
+  // ---------------------------------------------------------
+  // 6. objects: rotate the address
+  // ---------------------------------------------------------
+  const oPlayer = makePlayer($("o-player"), 1700);
+  const oAnim = { timer: null };
+  function runObj(autoplay) {
+    clearInterval(oAnim.timer);
+    const addr = newAddress(), h = hashPtr(addr);
+    const box = $("o-regs");
+    box.innerHTML = "";
+    const g = reg(box, "id", 64);
+    const lowCls = (bit) => (bit < 4 ? "low" : "");
+    const steps = [];
+    for (let k = 1; k <= 4; k++) steps.push(((addr >> BigInt(k)) | (addr << BigInt(64 - k))) & M64);
+    const head = `<span class="cmt">&gt;&gt;&gt;</span> o = object()<br>`;
+    const frames = [
+      { title: "Start with the address.", text: `<code>id(o)</code> is ${addr}, where the object lives in memory. Outlined in red: the lowest 4 bits. CPython lines objects up on 16-byte boundaries, so these 4 bits are always <code>0000</code>.`, show() { clearInterval(oAnim.timer); g.st._prev = null; g.set(addr, `${addr} = ${hex64(addr)}`, lowCls); $("o-out").innerHTML = head + `<span class="cmt">&gt;&gt;&gt;</span> id(o)<br><span class="val">${addr}</span>`; } },
+      { title: "Rotate right 4 bits.", text: "Every bit moves down 4 places, and the 4 bits that fall off the bottom wrap around to the top. The always-zero bits move out of the way.", show() {
+        clearInterval(oAnim.timer); g.st._prev = null; g.set(addr, "rotating…", lowCls);
+        const mark = (k) => (bit) => (((bit + k) % 64) < 4 ? "low" : "");
+        animateRotation(oAnim, addr, steps[3], 4, (k) => g.set(steps[k - 1], `rotated ${k} of 4`, mark(k)), () => g.set(steps[3], hex64(steps[3]), mark(4)));
+      } },
+      { title: "That's the hash.", text: "The zeros that wrapped to the top don't change the value, so the hash is just the address divided by 16. Try it: <code>hash(o) == id(o) &gt;&gt; 4</code> is <code>True</code>.", show() { clearInterval(oAnim.timer); g.st._prev = null; g.set(steps[3], `${h}`, (bit) => (bit >= 60 ? "low" : "")); $("o-out").innerHTML = head + `<span class="cmt">&gt;&gt;&gt;</span> hash(o), id(o) &gt;&gt; 4<br><span class="val">(${h}, ${addr >> 4n})</span>`; } },
+    ];
+    oPlayer.load(frames, autoplay);
+  }
+  $("o-new").addEventListener("click", () => runObj(true));
+  runObj(false);
+
+  // drop objects with and without rotating
+  let dropTimer = null;
+  function bucketsHTML(n) { return Array.from({ length: n }, (_, b) => `<div class="bk" data-b="${b}"><span></span><small>${b}</small></div>`).join(""); }
+  function resetDrop() { $("drop-raw").innerHTML = bucketsHTML(16); $("drop-rot").innerHTML = bucketsHTML(16); $("drop-note").textContent = ""; }
+  function addTo(el, b) {
+    const cell = el.querySelector(`[data-b="${b}"]`), span = cell.querySelector("span");
+    const n = Number(span.textContent || 0) + 1;
+    span.textContent = n;
+    cell.classList.add("full");
+    cell.classList.remove("fresh"); void cell.offsetWidth; cell.classList.add("fresh");
+    cell.style.background = n > 1 ? `color-mix(in oklab, var(--heat) ${Math.min(100, 30 + 7 * n)}%, var(--tag))` : "";
+  }
+  $("drop").addEventListener("click", () => {
+    clearInterval(dropTimer);
+    resetDrop();
+    // objects made one after another sit a few 16-byte slots apart
+    let addr = newAddress();
+    const addrs = Array.from({ length: 12 }, () => (addr += 16n * BigInt(1 + Math.floor(Math.random() * 3))));
+    let k = 0;
+    const step = () => {
+      const a = addrs[k++];
+      addTo($("drop-raw"), Number(a & 15n));
+      addTo($("drop-rot"), Number(BigInt.asUintN(64, hashPtr(a)) & 15n));
+      if (k >= addrs.length) {
+        clearInterval(dropTimer);
+        const used = new Set(addrs.map((a) => Number(BigInt.asUintN(64, hashPtr(a)) & 15n))).size;
+        $("drop-note").innerHTML = `Without the rotation, all 12 objects want bucket 0, and every lookup walks a trail 12 long. With it, they spread over ${used} buckets.`;
+      }
+    };
+    if (reduceMotion) { while (k < addrs.length) step(); } else dropTimer = setInterval(step, 160);
+  });
+  resetDrop();
+
+  // ---------------------------------------------------------
+  // 7. the lost key
+  // ---------------------------------------------------------
+  (function lostKey() {
+    const uPlayer = makePlayer($("u-player"), 2200);
+    const h1 = hashTuple([1n, 2n].map(hashInt)), b1 = Number(BigInt.asUintN(64, h1) & 7n);
+    // append the first number that moves the key to a different bucket, so the miss is easy to see
+    let add = 3n, h2, b2;
+    for (;; add++) { h2 = hashTuple([1n, 2n, add].map(hashInt)); b2 = Number(BigInt.asUintN(64, h2) & 7n); if (b2 !== b1) break; }
+    const box = $("u-buckets");
+    const draw = (cells) => {
+      box.innerHTML = Array.from({ length: 8 }, (_, b) => {
+        const c = cells[b] || {};
+        return `<div class="bk ${c.cls || ""}" data-b="${b}"><span style="font-size:0.7rem">${c.text || ""}</span><small>${b}</small></div>`;
+      }).join("");
+    };
+    const code = (lines) => { $("u-code").innerHTML = lines.join("\n"); };
+    const frames = [
+      { title: "Store a list as a key.", text: `Pretend <code>hash([1, 2])</code> worked like <code>hash((1, 2))</code>: ${h1}. The low 3 bits pick bucket ${b1} of 8.`, show() {
+        code(["key = [1, 2]", `d[key] = 'found me'          <span class="cmt"># hash → ${h1} → bucket ${b1}</span>`]);
+        draw({ [b1]: { cls: "full fresh", text: "[1, 2]" } });
+      } },
+      { title: "Change the list.", text: `The dict holds the <em>same</em> list object, so the key inside the dict changes too. But it stays in bucket ${b1}: nothing tells the dict to move it.`, show() {
+        code(["key = [1, 2]", `d[key] = 'found me'          <span class="cmt"># hash → ${h1} → bucket ${b1}</span>`, `key.append(${add})`]);
+        draw({ [b1]: { cls: "full fresh", text: `[1, 2, ${add}]` } });
+      } },
+      { title: "Look it up.", text: `Hash the key again: now it's ${h2}, which points at bucket ${b2}. ${b1 === b2 ? "Same bucket by luck, but the stored hash doesn't match, so CPython skips it without even comparing the keys." : `Bucket ${b2} is empty, so the dict stops looking.`}`, show() {
+        code(["key = [1, 2]", `d[key] = 'found me'          <span class="cmt"># hash → ${h1} → bucket ${b1}</span>`, `key.append(${add})`, `d[key]                        <span class="cmt"># hash → ${h2} → bucket ${b2}</span>`]);
+        const cells = { [b1]: { cls: "full", text: `[1, 2, ${add}]` } };
+        cells[b2] = { ...(cells[b2] || {}), cls: (cells[b2] ? cells[b2].cls + " " : "") + "look" };
+        draw(cells);
+      } },
+      { title: "KeyError, with the key right there.", text: "The entry is still in the dict, but it can't be found with the key it was stored under. That's why Python makes mutable built-ins like list, dict and set unhashable: you have to use a tuple or a frozenset instead.", show() {
+        code(["key = [1, 2]", `d[key] = 'found me'          <span class="cmt"># hash → ${h1} → bucket ${b1}</span>`, `key.append(${add})`, `d[key]                        <span class="cmt"># hash → ${h2} → bucket ${b2}</span>`, `<span style="color:var(--clash)">KeyError: [1, 2, ${add}]</span>`]);
+        const cells = { [b1]: { cls: "full", text: `[1, 2, ${add}]` } };
+        cells[b2] = { ...(cells[b2] || {}), cls: (cells[b2] ? cells[b2].cls + " " : "") + "look" };
+        draw(cells);
+      } },
+    ];
+    uPlayer.load(frames, false);
+  })();
+
+  // ---------------------------------------------------------
+  // 8. hash flooding
+  // ---------------------------------------------------------
+  // insert hashes into a CPython-style table; count the occupied buckets checked per insert
+  function insertChecks(hashes) {
+    let size = 8, table = new Array(size).fill(null), placed = [];
+    const place = (h) => {
+      const mask = BigInt(size - 1), u = BigInt.asUintN(64, h);
+      let perturb = u, i = Number(u & mask), c = 0;
+      while (table[i] !== null) { c++; perturb >>= 5n; i = Number((BigInt(i) * 5n + perturb + 1n) & mask); }
+      table[i] = h;
+      return c;
+    };
+    const out = [];
+    for (const h of hashes) {
+      if (placed.length + 1 > Math.floor((2 * size) / 3)) {
+        while (size < 3 * (placed.length + 1)) size *= 2;
+        table = new Array(size).fill(null);
+        placed.forEach(place);
+      }
+      out.push(place(h));
+      placed.push(h);
+    }
+    return out;
+  }
+  const NS = "http://www.w3.org/2000/svg";
+  const fl = { bad: [], good: [], n: 0 };
+  let W = 760, H = 270, L = 58, R = 120;
+  const T = 14, B = 38;
+  function runFlood() {
+    const n = Number($("fl-n").value);
+    const key = randomKey();
+    const names = Array.from({ length: n }, (_, i) => `field${i}`);
+    fl.bad = insertChecks(new Array(n).fill(0n));
+    fl.good = insertChecks(names.map((s) => hashStr(s, key)));
+    fl.n = n;
+    drawFlood(true);
+  }
+  function drawFlood(animate) {
+    const { bad, good, n } = fl;
+    // draw at the real width so the text stays readable on a phone
+    W = Math.max(320, Math.min(760, Math.round($("fl-chart").parentElement.clientWidth || 760)));
+    H = W < 520 ? 300 : 270; L = W < 520 ? 48 : 58; R = W < 520 ? 84 : 120;
+    $("fl-chart").setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const ymax = Math.max(10, ...bad);
+    const nice = Math.pow(10, Math.floor(Math.log10(ymax)));
+    const top = Math.ceil(ymax / nice) * nice;
+    const x = (i) => L + ((W - L - R) * i) / Math.max(1, n - 1);
+    const y = (v) => T + (H - T - B) * (1 - v / top);
+    let svg = "";
+    for (let k = 0; k <= 4; k++) {
+      const v = (top * k) / 4, yy = y(v);
+      svg += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="var(--line)" stroke-width="1"/>`;
+      svg += `<text x="${L - 8}" y="${yy + 4}" text-anchor="end">${Math.round(v).toLocaleString()}</text>`;
+    }
+    [0, 0.25, 0.5, 0.75, 1].forEach((f) => {
+      const i = Math.round(f * (n - 1));
+      svg += `<text x="${x(i)}" y="${H - B + 18}" text-anchor="middle">${(i + 1).toLocaleString()}</text>`;
+    });
+    svg += `<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">key number</text>`;
+    const path = (arr) => arr.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+    svg += `<defs><clipPath id="fl-clip"><rect id="fl-reveal" x="0" y="0" width="${animate && !reduceMotion ? 0 : W}" height="${H}"/></clipPath></defs>`;
+    svg += `<g clip-path="url(#fl-clip)">`;
+    svg += `<path d="${path(bad)}" fill="none" stroke="var(--s-hit)" stroke-width="2" stroke-linejoin="round"/>`;
+    svg += `<path d="${path(good)}" fill="none" stroke="var(--s-miss)" stroke-width="2" stroke-linejoin="round"/>`;
+    svg += `<text class="lbl" x="${x(n - 1) + 8}" y="${y(bad[n - 1]) + 4}">no secret</text>`;
+    svg += `<text class="lbl" x="${x(n - 1) + 8}" y="${y(good[n - 1]) - 6}">secret key</text>`;
+    svg += `</g>`;
+    svg += `<line id="fl-cross" y1="${T}" y2="${H - B}" stroke="var(--muted)" stroke-width="1" visibility="hidden"/>`;
+    svg += `<circle id="fl-dot-bad" r="4" fill="var(--s-hit)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>`;
+    svg += `<circle id="fl-dot-good" r="4" fill="var(--s-miss)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>`;
+    $("fl-chart").innerHTML = svg;
+    if (animate && !reduceMotion) {
+      const rect = $("fl-reveal"), t0 = performance.now();
+      const tick = (t) => { const f = Math.min(1, (t - t0) / 1400); rect.setAttribute("width", W * f); if (f < 1) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+      setTimeout(() => rect.setAttribute("width", W), 1600);   // in case animation frames are paused, as in a background tab
+    }
+    const sum = (a) => a.reduce((s, v) => s + v, 0);
+    const sb = sum(bad), sg = sum(good);
+    $("fl-stats").innerHTML = `
+      <div class="stat"><span class="big">${sb.toLocaleString()}</span><span class="sub">checks in all, predictable hash: about n²/2</span></div>
+      <div class="stat"><span class="big">${sg.toLocaleString()}</span><span class="sub">checks in all, with the secret key</span></div>
+      <div class="stat"><span class="big">${sg ? Math.round(sb / sg).toLocaleString() + "×" : "∞"}</span><span class="sub">more work for the server, from one request</span></div>`;
+    fl.x = x; fl.y = y;
+  }
+  $("fl-n").addEventListener("input", () => { $("fl-n-out").textContent = $("fl-n").value; });
+  $("fl-n").addEventListener("change", runFlood);
+  $("fl-go").addEventListener("click", runFlood);
+  (function hover() {
+    const svg = $("fl-chart"), tip = $("fl-tip");
+    const hide = () => { tip.hidden = true; ["fl-cross", "fl-dot-bad", "fl-dot-good"].forEach((id) => $(id) && $(id).setAttribute("visibility", "hidden")); };
+    svg.addEventListener("pointermove", (e) => {
+      if (!fl.n) return;
+      const box = svg.getBoundingClientRect(), sx = W / box.width;
+      const px = (e.clientX - box.left) * sx;
+      const i = Math.max(0, Math.min(fl.n - 1, Math.round(((px - L) / (W - R - L)) * (fl.n - 1))));
+      const xx = fl.x(i);
+      $("fl-cross").setAttribute("x1", xx); $("fl-cross").setAttribute("x2", xx); $("fl-cross").setAttribute("visibility", "visible");
+      [["fl-dot-bad", fl.bad[i]], ["fl-dot-good", fl.good[i]]].forEach(([id, v]) => { const d = $(id); d.setAttribute("cx", xx); d.setAttribute("cy", fl.y(v)); d.setAttribute("visibility", "visible"); });
+      tip.hidden = false;
+      tip.style.left = `${xx / sx}px`;
+      tip.style.top = `${fl.y(fl.bad[i]) / sx}px`;
+      tip.innerHTML = `<b>key ${i + 1}</b><br><span class="sw" style="background:var(--s-hit)"></span>no secret: ${fl.bad[i].toLocaleString()} checks<br><span class="sw" style="background:var(--s-miss)"></span>secret key: ${fl.good[i]} checks`;
+    });
+    svg.addEventListener("pointerleave", hide);
+  })();
+  let lastW = 0;
+  window.addEventListener("resize", () => { const w = $("fl-chart").parentElement.clientWidth; if (fl.n && Math.abs(w - lastW) > 20) { lastW = w; drawFlood(false); } });
+  runFlood();
+})();
+</script>
+</body>
+</html>
