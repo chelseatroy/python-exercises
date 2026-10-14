@@ -171,8 +171,16 @@
   .player { display: grid; gap: 10px; }
   .pl-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .pl-count { font-size: 0.82rem; color: var(--muted); margin-left: 4px; }
-  .pl-cap { min-height: 3.2em; max-width: 72ch; }
-  .pl-cap b { font-weight: 700; }
+  /* every step's explanation stays; the list scrolls so the diagrams below don't jump */
+  .pl-log {
+    list-style: none; margin: 0; padding: 0 6px 0 0; max-width: 72ch; max-height: 15em; overflow-y: auto;
+    display: grid; gap: 8px; align-content: start;
+  }
+  .pl-log li { padding-left: 10px; border-left: 3px solid var(--line); color: var(--muted); font-size: 0.92rem; }
+  .pl-log li.now { border-left-color: var(--accent); color: var(--ink); font-size: 1rem; }
+  .pl-log li:empty { display: none; }
+  .pl-log b { font-weight: 700; }
+  @media (prefers-reduced-motion: no-preference) { .pl-log { scroll-behavior: smooth; } }
 
   /* ---------- bit strips: most significant bit on the left ---------- */
   .regs { display: grid; gap: 8px; }
@@ -329,7 +337,7 @@
           <button class="btn" type="button" data-act="next">Next →</button>
           <span class="pl-count" aria-live="polite"></span>
         </div>
-        <p class="pl-cap" aria-live="polite"></p>
+        <ol class="pl-log" aria-live="polite"></ol>
       </div>
       <div class="bytes" id="s-bytes" aria-label="The string's bytes, in blocks of 8"></div>
       <div class="regs" id="s-regs"></div>
@@ -387,7 +395,7 @@
           <button class="btn" type="button" data-act="next">Next →</button>
           <span class="pl-count" aria-live="polite"></span>
         </div>
-        <p class="pl-cap" aria-live="polite"></p>
+        <ol class="pl-log" aria-live="polite"></ol>
       </div>
       <div class="regs" id="i-regs"></div>
       <div class="result" id="i-out" aria-live="polite"></div>
@@ -436,7 +444,7 @@
           <button class="btn" type="button" data-act="next">Next →</button>
           <span class="pl-count" aria-live="polite"></span>
         </div>
-        <p class="pl-cap" aria-live="polite"></p>
+        <ol class="pl-log" aria-live="polite"></ol>
       </div>
       <div class="regs" id="f-regs"></div>
       <div class="result" id="f-out" aria-live="polite"></div>
@@ -493,7 +501,7 @@
           <button class="btn" type="button" data-act="next">Next →</button>
           <span class="pl-count" aria-live="polite"></span>
         </div>
-        <p class="pl-cap" aria-live="polite"></p>
+        <ol class="pl-log" aria-live="polite"></ol>
       </div>
       <div class="regs" id="t-regs"></div>
       <div class="result" id="t-out" aria-live="polite"></div>
@@ -524,7 +532,7 @@
           <button class="btn" type="button" data-act="next">Next →</button>
           <span class="pl-count" aria-live="polite"></span>
         </div>
-        <p class="pl-cap" aria-live="polite"></p>
+        <ol class="pl-log" aria-live="polite"></ol>
       </div>
       <div class="regs" id="o-regs"></div>
       <div class="result" id="o-out" aria-live="polite"></div>
@@ -560,7 +568,7 @@
           <button class="btn" type="button" data-act="next">Next →</button>
           <span class="pl-count" aria-live="polite"></span>
         </div>
-        <p class="pl-cap" aria-live="polite"></p>
+        <ol class="pl-log" aria-live="polite"></ol>
       </div>
       <pre id="u-code"></pre>
       <div class="bucket-wrap"><div class="buckets wide-buckets" id="u-buckets" style="--n:8"></div></div>
@@ -899,13 +907,21 @@ for n in (1_000, 2_000, 4_000, 8_000):
   }
   function makePlayer(root, delay = 1500) {
     let frames = [], i = 0, timer = null;
-    const cap = root.querySelector(".pl-cap"), count = root.querySelector(".pl-count");
+    const log = root.querySelector(".pl-log"), count = root.querySelector(".pl-count");
     const btn = (a) => root.querySelector(`[data-act="${a}"]`);
     function show(k) {
       i = Math.max(0, Math.min(frames.length - 1, k));
       const f = frames[i];
       f.show();
-      cap.innerHTML = `<b>${f.title}</b> ${f.text || ""}`;
+      // one explanation per step so far: Back removes the newest, Next appends
+      while (log.children.length > i + 1) log.lastElementChild.remove();
+      for (let j = log.children.length; j <= i; j++) {
+        const li = document.createElement("li");
+        if (frames[j].title) li.innerHTML = `<b>${frames[j].title}</b> ${frames[j].text || ""}`;
+        log.appendChild(li);
+      }
+      [...log.children].forEach((li, j) => li.classList.toggle("now", j === i));
+      log.scrollTop = log.scrollHeight;
       count.textContent = `step ${i + 1} of ${frames.length}`;
       btn("prev").disabled = i === 0;
       btn("next").disabled = i === frames.length - 1;
@@ -925,7 +941,7 @@ for n in (1_000, 2_000, 4_000, 8_000):
       else play();
     });
     return {
-      load(fs, autoplay) { stop(); frames = fs; show(0); if (autoplay && !reduceMotion) play(); },
+      load(fs, autoplay) { stop(); frames = fs; log.innerHTML = ""; show(0); if (autoplay && !reduceMotion) play(); },
     };
   }
   function wireSeg(id, onPick) {
