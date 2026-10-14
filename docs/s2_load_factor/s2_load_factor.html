@@ -315,7 +315,96 @@
     </div>
   </section>
 
-  <!-- ----------------- 3. SO WHY 2/3? ----------------- -->
+  <!-- ----------------- 3. WHY IT'S O(1) ----------------- -->
+  <section aria-labelledby="o1-h">
+    <h2 id="o1-h">Why it's O(1)</h2>
+    <p class="muted prose">Every chart so far puts the load factor on the x-axis. Big-O is about the <em>number of keys</em>, so here's the same dict with keys on the x-axis instead, from 1 to a million. It follows CPython's rules: grow at 2/3 full, double the buckets.</p>
+    <div class="card">
+      <div class="controls">
+        <div><span class="label">The hash function</span>
+          <div class="seg" id="o1-hash" role="group" aria-label="Hash function quality">
+            <button type="button" data-v="good" aria-pressed="true">spreads keys evenly</button>
+            <button type="button" data-v="bad" aria-pressed="false">gives every key the same hash</button>
+          </div>
+        </div>
+      </div>
+      <div class="size-row">
+        <span class="label" id="o1-n-label" style="white-space:nowrap">Keys</span>
+        <input type="range" id="o1-n" min="0" max="6" step="0.01" value="4" aria-labelledby="o1-n-label">
+        <output id="o1-n-out" style="min-width:9ch">10,000</output>
+      </div>
+
+      <div class="chart-head">
+        <h3>Look up a key that isn't there</h3>
+        <div class="legend">
+          <span><i style="border-color:var(--ink)"></i>dict</span>
+          <span><i class="dash" style="border-color:var(--muted)"></i>list (<code>x in my_list</code>)</span>
+        </div>
+      </div>
+      <div class="chart-wrap"><svg class="chart" id="c-lookup" role="img" aria-label="Checks per lookup as the number of keys grows, on log scales: the dict stays flat while the list grows in a straight line"></svg><div class="tip" hidden></div></div>
+      <p class="muted prose" id="lookup-note" style="font-size:0.92rem"></p>
+
+      <div class="chart-head">
+        <h3>Insert a key</h3>
+        <div class="legend">
+          <span><i style="border-color:var(--muted)"></i>that one insert</span>
+          <span><i style="border-color:var(--ink);border-top-width:3px"></i>average per insert so far</span>
+        </div>
+      </div>
+      <div class="chart-wrap"><svg class="chart" id="c-insert" role="img" aria-label="Work per insert as the number of keys grows, on log scales: rare resize spikes, with a flat average"></svg><div class="tip" hidden></div></div>
+      <p class="muted prose" id="insert-note" style="font-size:0.92rem"></p>
+
+      <div class="stats" id="o1-stats" aria-live="polite"></div>
+      <p class="muted" style="font-size:0.85rem">Both axes are log scales: each step up multiplies, instead of adding. Work counts bucket checks, plus one move for every key copied during a resize.</p>
+    </div>
+
+    <div class="split">
+      <div class="card">
+        <h3>Expected O(1): lookups</h3>
+        <p class="muted">A lookup never resizes, so there's no expensive step to spread out. Its cost depends on where keys happened to land. Averaged over that luck, it's at most 3 checks at any size. That's <strong>expected</strong> (or average-case) O(1). It's only true if the hash spreads keys evenly: with every key on the same hash, it's O(n).</p>
+      </div>
+      <div class="card">
+        <h3>Amortized O(1): inserts</h3>
+        <p class="muted">Most inserts are cheap, and every so often one is very expensive. Each resize copies every key, but it also doubles the room, so the next resize waits twice as long. Spread over all the inserts, the copying adds up to about 2 extra moves per key at most. That's <strong>amortized</strong> O(1): an average over a whole run of operations. It's the same trick as <code>list.append</code> in Session 3.</p>
+      </div>
+    </div>
+    <p class="aside">Why does Python give string hashes a fresh random salt every run? If attackers could predict the hashes, they could send a web server thousands of keys that all collide, turning every dict insert into O(n) work and tying up the server. That's called <strong>hash flooding</strong>.</p>
+
+    <div class="card">
+      <h3>Try it in Python</h3>
+      <p class="muted">Lookup time as the collection grows 1,000×:</p>
+      <pre>import timeit
+
+for n in [1_000, 10_000, 100_000, 1_000_000]:
+    d = dict.fromkeys(range(n))
+    lst = list(range(n))
+    t_dict = timeit.timeit(lambda: -1 in d, number=1000) / 1000
+    t_list = timeit.timeit(lambda: -1 in lst, number=100) / 100
+    print(f"{n:>9,} keys   dict {t_dict * 1e9:5.0f} ns   list {t_list * 1e9:12,.0f} ns")</pre>
+      <pre><span class="cmt">    1,000 keys   dict    43 ns   list        4,950 ns
+   10,000 keys   dict    40 ns   list       50,062 ns
+  100,000 keys   dict    42 ns   list      526,338 ns
+1,000,000 keys   dict    46 ns   list    5,339,003 ns</span></pre>
+      <p class="muted">And with a hash that sends every key to the same bucket. Double the keys, and the time goes up 4×: each insert walks past every key already there.</p>
+      <pre>import time
+
+class SameHash:
+    def __hash__(self):
+        return 0          <span class="cmt"># every key lands in the same bucket</span>
+
+for n in [2_000, 4_000, 8_000, 16_000]:
+    start = time.perf_counter()
+    d = {SameHash(): None for _ in range(n)}
+    print(f"{n:>5,} keys   {time.perf_counter() - start:.2f} s")</pre>
+      <pre><span class="cmt">2,000 keys   0.02 s
+4,000 keys   0.09 s
+8,000 keys   0.34 s
+16,000 keys   1.38 s</span></pre>
+      <p class="muted" style="font-size:0.82rem">One run on CPython 3.10. Your times will differ, but the pattern won't.</p>
+    </div>
+  </section>
+
+  <!-- ----------------- 4. SO WHY 2/3? ----------------- -->
   <section aria-labelledby="why-h">
     <h2 id="why-h">So why about 0.7?</h2>
     <div class="split">
@@ -666,6 +755,125 @@
   }, null);
 
   // ---------------------------------------------------------
+  // 3. Why it's O(1): keys on the x-axis
+  // ---------------------------------------------------------
+  const MAXN = 1_000_000;
+  const models = {};
+  function dictModel(bad) {
+    if (models[bad]) return models[bad];
+    // buckets after n keys, average work per insert so far, and every resize
+    const N = new Float64Array(MAXN + 1), avg = new Float64Array(MAXN + 1), resizes = [];
+    let size = 8, total = 0;
+    N[0] = size;
+    for (let k = 1; k <= MAXN; k++) {
+      let copy = 0;
+      while (k > Math.floor((2 * size) / 3)) {
+        size *= 2;
+        // every key already stored moves; with one shared hash, each re-insert walks past the ones before it
+        copy += bad ? ((k - 1) * k) / 2 : k - 1;
+      }
+      if (copy) resizes.push({ k, copy });
+      const checks = bad ? k : 1 / (1 - (k - 1) / size);
+      total += checks + copy;
+      N[k] = size; avg[k] = total / k;
+    }
+    return (models[bad] = { N, avg, resizes, insert: (k) => (bad ? k : 1 / (1 - (k - 1) / N[k])), copyAt: (k) => { const r = resizes.find((x) => x.k === k); return r ? r.copy : 0; } });
+  }
+  const o1 = { n: 10_000, bad: false };
+  const dictMiss = (m, n) => (o1.bad ? n + 1 : 1 / (1 - n / m.N[n]));
+  const listMiss = (n) => n;
+  const kfmt = (v) => (v >= 1e12 ? `${v / 1e12}T` : v >= 1e9 ? `${v / 1e9}B` : v >= 1e6 ? `${v / 1e6}M` : v >= 1e3 ? `${v / 1e3}k` : String(v));
+
+  function logFrame(svg, yMax) {
+    const W = svg.clientWidth || 700, H = svg.clientHeight || 230;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const lx = (v) => Math.log10(Math.max(1, v));
+    const x = (v) => PAD.left + ((W - PAD.left - PAD.right) * lx(v)) / 6;
+    const y = (v) => H - PAD.bottom - ((H - PAD.top - PAD.bottom) * lx(v)) / Math.log10(yMax);
+    const xInv = (px) => 10 ** ((6 * (px - PAD.left)) / (W - PAD.left - PAD.right));
+    let s = `<defs><clipPath id="${svg.id}-clip"><rect x="${PAD.left}" y="${PAD.top - 2}" width="${W - PAD.left - PAD.right}" height="${H - PAD.top - PAD.bottom + 2}"/></clipPath></defs>`;
+    for (let e = 0; 10 ** e <= yMax; e += yMax > 1e6 ? 2 : 1) {
+      s += `<line x1="${PAD.left}" x2="${W - PAD.right}" y1="${y(10 ** e)}" y2="${y(10 ** e)}" stroke="var(--line)"/>`;
+      s += `<text x="${PAD.left - 7}" y="${y(10 ** e) + 4}" text-anchor="end">${kfmt(10 ** e)}</text>`;
+    }
+    for (let e = 0; e <= 6; e++) s += `<text x="${x(10 ** e)}" y="${H - PAD.bottom + 17}" text-anchor="middle">${kfmt(10 ** e)}</text>`;
+    s += `<text x="${W - PAD.right}" y="${H - 2}" text-anchor="end">keys in the dict →</text>`;
+    return { W, H, x, y, xInv, s, clip: `clip-path="url(#${svg.id}-clip)"` };
+  }
+  // n values to draw: log-spaced, plus both sides of every resize so the sawtooth and spikes stay sharp
+  function samples(m) {
+    const set = new Set();
+    for (let i = 0; i <= 480; i++) set.add(Math.round(10 ** ((6 * i) / 480)));
+    m.resizes.forEach((r) => { [r.k - 1, r.k, r.k + 1].forEach((k) => { if (k >= 1 && k <= MAXN) set.add(k); }); });
+    return [...set].sort((p, q) => p - q);
+  }
+  const line = (pts, f) => pts.map(([n, v], i) => `${i ? "L" : "M"}${f.x(n).toFixed(1)},${f.y(v).toFixed(1)}`).join("");
+
+  let lookupFrame, insertFrame;
+  function renderLookup() {
+    const m = dictModel(o1.bad), svg = $("c-lookup");
+    const f = logFrame(svg, 1e6);
+    lookupFrame = f;
+    const ns = samples(m);
+    let s = f.s;
+    s += `<path d="${line([[1, 1], [MAXN, MAXN]], f)}" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 4"/>`;
+    s += `<path d="${line(ns.map((n) => [n, dictMiss(m, n)]), f)}" fill="none" stroke="var(--ink)" stroke-width="2" ${f.clip}/>`;
+    s += `<text class="lbl" x="${f.x(3e5)}" y="${f.y(3e5) + 4}" text-anchor="end" dx="-10">list</text>`;
+    if (!o1.bad) s += `<text class="lbl" x="${f.x(MAXN)}" y="${f.y(3) - 8}" text-anchor="end">dict</text>`;
+    const n = o1.n, v = dictMiss(m, n);
+    s += `<line x1="${f.x(n)}" x2="${f.x(n)}" y1="${PAD.top}" y2="${f.H - PAD.bottom}" stroke="var(--ink)"/>`;
+    s += marker(f.x(n), f.y(listMiss(n)), "var(--muted)") + marker(f.x(n), f.y(v), "var(--ink)");
+    svg.innerHTML = s;
+    $("lookup-note").innerHTML = o1.bad
+      ? `Every key starts at the same bucket, so a lookup walks past all ${n.toLocaleString("en-US")} of them, the same as searching the list. <strong>O(n).</strong>`
+      : `The dict's line is a sawtooth between 1.5 and 3 checks. Each resize drops the load factor from 2/3 back to 1/3, and it fills up again. It never trends upward, however many keys there are. <strong>O(1).</strong> The list checks every item: <strong>O(n)</strong>.`;
+  }
+  function renderInsert() {
+    const m = dictModel(o1.bad), svg = $("c-insert");
+    const yMax = o1.bad ? 1e12 : 1e6;
+    const f = logFrame(svg, yMax);
+    insertFrame = f;
+    const ns = samples(m);
+    let s = f.s;
+    s += `<path d="${line(ns.map((k) => [k, m.insert(k) + m.copyAt(k)]), f)}" fill="none" stroke="var(--muted)" stroke-width="1.5" ${f.clip}/>`;
+    s += `<path d="${line(ns.map((k) => [k, m.avg[k]]), f)}" fill="none" stroke="var(--ink)" stroke-width="3" ${f.clip}/>`;
+    const last = m.resizes[m.resizes.length - 1];
+    if (!o1.bad) s += `<text class="lbl" x="${f.x(last.k) - 8}" y="${f.y(last.copy) + 4}" text-anchor="end" style="font-weight:400;fill:var(--muted)">resize: copy ${last.copy.toLocaleString("en-US")} keys</text>`;
+    const n = o1.n;
+    s += `<line x1="${f.x(n)}" x2="${f.x(n)}" y1="${PAD.top}" y2="${f.H - PAD.bottom}" stroke="var(--ink)"/>`;
+    s += marker(f.x(n), f.y(m.avg[n]), "var(--ink)");
+    s += `<text class="lbl" x="${f.x(n) + 9}" y="${f.y(m.avg[n]) - 8}">${fmt(m.avg[n])}</text>`;
+    svg.innerHTML = s;
+    $("insert-note").innerHTML = o1.bad
+      ? `Each insert walks past every key already there, and each resize re-inserts them all the same slow way. The average keeps climbing. <strong>O(n)</strong> per insert, so building the dict is O(n²).`
+      : `Most inserts take 1 to 3 checks. The spikes are resizes, each copying every key. But resizes come half as often each time, so the average (the thick line) stays flat, between about 3 and 4 units of work. <strong>Amortized O(1).</strong>`;
+  }
+  function renderO1Stats() {
+    const m = dictModel(o1.bad), n = o1.n;
+    const done = m.resizes.filter((r) => r.k <= n);
+    const copied = done.reduce((t, r) => t + r.copy, 0);
+    $("o1-n-out").textContent = n.toLocaleString("en-US");
+    $("o1-stats").innerHTML = `
+      <div class="stat"><span class="label">Dict lookup</span><span class="big">${fmt(dictMiss(m, n))}</span><span class="sub">checks</span></div>
+      <div class="stat"><span class="label">List lookup</span><span class="big">${fmt(listMiss(n))}</span><span class="sub">checks</span></div>
+      <div class="stat"><span class="label">Resizes so far</span><span class="big">${done.length}</span><span class="sub">${o1.bad ? "each one slow" : `${fmt(copied / n, 2)} copies per key`}</span></div>
+      <div class="stat"><span class="label">Average insert</span><span class="big" style="${o1.bad ? "color:var(--clash)" : ""}">${fmt(m.avg[n])}</span><span class="sub">units of work</span></div>`;
+  }
+  function renderO1() { renderLookup(); renderInsert(); renderO1Stats(); }
+  const setN = (v) => { o1.n = Math.min(MAXN, Math.max(1, Math.round(v))); $("o1-n").value = Math.log10(o1.n); renderO1(); };
+  hoverable($("c-lookup"), () => lookupFrame, (v) => {
+    const m = dictModel(o1.bad), n = Math.min(MAXN, Math.max(1, Math.round(v)));
+    return `<b>${n.toLocaleString("en-US")}</b> keys<br><span class="sw" style="background:var(--ink);outline:1px solid var(--ground)"></span>dict ${fmt(dictMiss(m, n))} checks<br><span class="sw" style="background:var(--muted)"></span>list ${fmt(listMiss(n))} checks`;
+  }, setN);
+  hoverable($("c-insert"), () => insertFrame, (v) => {
+    const m = dictModel(o1.bad), n = Math.min(MAXN, Math.max(1, Math.round(v)));
+    const copy = m.copyAt(n);
+    return `insert #<b>${n.toLocaleString("en-US")}</b><br>this insert: ${fmt(m.insert(n) + copy)}${copy ? " (a resize!)" : ""}<br>average so far: ${fmt(m.avg[n])}`;
+  }, setN);
+  wireSeg("o1-hash", (v) => { o1.bad = v === "bad"; renderO1(); });
+  $("o1-n").addEventListener("input", () => setN(10 ** Number($("o1-n").value)));
+
+  // ---------------------------------------------------------
   // wiring
   // ---------------------------------------------------------
   function setA(a, { refill = true } = {}) {
@@ -688,9 +896,10 @@
   $("throw-many").addEventListener("click", throwMany);
   $("refill").addEventListener("click", () => { if (busy) return; table = fillTable(st.a); renderStrip(); $("throw-msg").textContent = "New table, same load factor. Keys landed in different buckets."; });
   let resizeTimer;
-  window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { renderTime(); renderSpace(); renderHist(); renderBday(); }, 120); });
+  window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { renderTime(); renderSpace(); renderHist(); renderBday(); renderO1(); }, 120); });
 
   setA(0.67);
+  renderO1();
 })();
 </script>
 </body>
