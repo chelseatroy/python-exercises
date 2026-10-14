@@ -421,6 +421,31 @@
     <div class="prose">
       <p>This part was added in Python 3.9. <code>~3</code> flips every bit of 3, turning <code>…00000011</code> into <code>…11111100</code>. <code>&amp;</code> keeps a bit only where <em>both</em> sides have a 1, so <code>&amp; ~3</code> clears the last two bits, the 1s place and the 2s place. Whatever's left is a multiple of 4: it <strong>rounds down to a multiple of 4</strong>. The source comment says it plainly: "Add padding to make the allocated size multiple of 4." That's why lists now grow 16, 24, 32 where they used to grow 16, 25, 35. The slider above shows this one too.</p>
     </div>
+
+    <details class="reveal">
+      <summary><h3>Why not just "clear the last two bits"? (Why bitmasks exist)</h3><span class="muted">Flipping 3 seems like a strange way to round down. Guess why C does it this way.</span></summary>
+      <div class="body">
+        <p><strong>C has no operator for "clear the last two bits."</strong> Its whole toolkit for bits is six operators: <code>&amp;</code> (AND), <code>|</code> (OR), <code>^</code> (XOR), <code>~</code> (NOT), <code>&lt;&lt;</code> and <code>&gt;&gt;</code> (shifts). None of them takes a list of positions. Python's integers have the same six, and no more.</p>
+        <p>So instead you build a <strong>bitmask</strong>: a number whose bits mark the positions you care about. Then one operator applies it to every position at once:</p>
+        <pre>x        =    0001 1001   25
+
+~3       =    1111 1100        the mask: 0 means "clear this bit"
+x &amp; ~3   =    0001 1000   24   clear the last two bits
+
+3        =    0000 0011        the mask: 1 means "this bit"
+x | 3    =    0001 1011   27   set them
+x ^ 3    =    0001 1010   26   flip them
+x &amp; 1    =    0000 0001    1   test one bit: is x odd?</pre>
+        <p>To clear bits, the mask needs 0s in those places and 1s everywhere else. For a 64-bit number, that's 62 ones and then <code>00</code>: <code>0xFFFFFFFFFFFFFFFC</code>. Nobody wants to type that, and it only works at one width. So C programmers write the bits they <em>want gone</em>, <code>3</code>, and let <code>~</code> flip it into the mask. Read <code>x &amp; ~3</code> as "x, without the bits in 3." The compiler works out <code>~(size_t)3</code> once, while compiling, so the running program does a single <code>&amp;</code>.</p>
+        <p>Bitmasks are everywhere once you start looking:</p>
+        <ul style="margin:0;padding-left:20px;display:grid;gap:6px">
+          <li><strong>The dict from Session 2.</strong> The Hash Ring found a bucket with <code>hash % size</code>. CPython actually writes <code>hash &amp; (size - 1)</code>. When <code>size</code> is a power of 2, <code>size - 1</code> is all 1s (8 − 1 = <code>0111</code>), so the <code>&amp;</code> keeps just the remainder, with no division. Another reason dict sizes are powers of 2.</li>
+          <li><strong>Flags.</strong> <code>re.compile(pattern, re.IGNORECASE | re.MULTILINE)</code> packs two on/off settings into one number, one bit each.</li>
+          <li><strong>File permissions.</strong> <code>chmod 755</code> is three groups of three bits: read, write, execute.</li>
+        </ul>
+        <p class="muted">Try it in Python: <code>25 &amp; ~3</code>, <code>bin(25 | 3)</code>, <code>25 ^ 3</code>. One surprise: <code>~3</code> prints <code>-4</code>. Python's integers are signed, and "all 1s ending in 00" is how a computer stores −4. It's the same bit pattern, so <code>25 &amp; ~3</code> is still 24.</p>
+      </div>
+    </details>
   </section>
 
   <section aria-labelledby="why-h">
