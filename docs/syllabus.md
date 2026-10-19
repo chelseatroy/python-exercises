@@ -258,7 +258,13 @@ The class participation grade is designed to support our development of **Invest
 
 ![Pie chart of the three skill sets with all three highlighted](../assets/img/syllabus/image10.png)
 
-Class sessions are mandatory in this course. If you are unable to attend an individual class session, please notify the instructors and course staff ahead of class, and we’ll give you 2 of the 6 participation points for that day (otherwise it’s a zero). There is no way to get full participation credit for a class that you cannot attend, even if you have a legitimate reason.[^3] To get full credit for class participation you are expected to come to each class and complete the activities therein. These can include:
+Class sessions are mandatory in this course. If you are unable to attend an individual class session, please notify the instructors and course staff ahead of class, and we’ll give you 2 of the 6 participation points for that day (otherwise it’s a zero). There is no way to get full participation credit for a class that you cannot attend, even if you have a legitimate reason.[^3] 
+
+If you can only attend part of a class session, notify the instructors and course staff ahead of class, and tell us whether you’ll be arriving late or leaving early (this helps us sequence the day’s activities). If your chat history for that session definitively evidences that you attended half of the class or more in a contiguous block, you will receive 3 of the 6 participation points for that day, or 4 if your participation is exceptional while you are in class (I'm looking for 6-level participation for the time you are in class to merit this 4 on a partial absence day). 
+
+If you tell us you’ll have a partial absence and then don’t attend, that’s a zero, same as an unannounced absence, because it has the same impact on class quality (I might have planned an activity that included you in attendance, forcing me to adjust on the fly if you weren't there). In other words, get _any_ points for attendance, you have to attend for _as much or more of class_ as you told me you would.
+
+To get full credit for class participation you are expected to come to each class and complete the activities therein. These can include:
 
 * Individual activities: writing reflection exercises, asking questions   
 * Paired activities: close reading and reflection exercises  
