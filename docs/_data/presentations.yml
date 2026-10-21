@@ -9,7 +9,7 @@
   presenters:
     - name: Mary Henry
       library: time and datetime
-      video: ""
+      video: "https://www.youtube.com/watch?v=lP_ZDhF4OLw"
     - name: Cynthia Di
       library: re and string
       video: ""
