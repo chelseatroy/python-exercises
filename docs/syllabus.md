@@ -260,7 +260,7 @@ The class participation grade is designed to support our development of **Invest
 
 Class sessions are mandatory in this course. If you are unable to attend an individual class session, please notify the instructors and course staff ahead of class, and we’ll give you 2 of the 6 participation points for that day (otherwise it’s a zero). There is no way to get full participation credit for a class that you cannot attend, even if you have a legitimate reason.[^3] 
 
-If you can only attend part of a class session, notify the instructors and course staff ahead of class, and tell us whether you’ll be arriving late or leaving early (this helps us sequence the day’s activities). If your chat history for that session definitively evidences that you attended half of the class or more in a contiguous block, you will receive 3 of the 6 participation points for that day, or 4 if your participation is exceptional while you are in class (I'm looking for 6-level participation for the time you are in class to merit this 4 on a partial absence day). 
+If you can only attend part of a class session, notify the instructors and course staff ahead of class, and tell us whether you’ll be arriving late or leaving early (this helps us sequence the day’s activities). If your chat history for that session definitively evidences that you attended half of the class or more in a contiguous block, and you submit an on-time STS (see the scores below), you will receive 3 of the 6 participation points for that day. 
 
 If you tell us you’ll have a partial absence and then don’t attend, that’s a zero, same as an unannounced absence, because it has the same impact on class quality (I might have planned an activity that included you in attendance, forcing me to adjust on the fly if you weren't there). In other words, to get _any_ points for attendance, you have to attend for _as much or more of class_ as you told me you would.
 
@@ -272,7 +272,34 @@ To get full credit for class participation you are expected to come to each clas
 * Large group activities: group discussions and annotation exercises.   
 * Pairing with the instructor in front of the class: in this class I may ask you, specifically, to step up and pair with me on a programming problem. Please be prepared to be on camera, with your audio working, for any class, such that this is possible. 
 
-Each class participation grade will *also* do the six-point specification grade thing described in the homework section above. 
+Each class participation grade will *also* do the six-point specification grade thing described in the homework section above, with the following scores:
+
+**Incomplete scores**
+
+* 0: Absent, did not give me a heads up.  
+* 1: I've never given this score for participation; I have no specific vision of how one would achieve it.  
+* 2: Showed up to class but that's literally it; no STS, no participation. OR, was absent, but gave me a heads up.  
+* 3: Showed up to class and did EITHER some amount of participating OR the STS (an on-time STS is required to achieve anything above an incomplete for participation, regardless of other factors). OR, gave me a heads up about a partial absence, attended half of the class or more in a contiguous block, and did the STS.
+
+The STS is the Session Techniques Survey, where you reflect on what worked and did not work for you in that day's class. It's on time if you submit it before midnight on the day of class.
+
+**Complete scores** (all scores beyond this point include attending all of class and submitting an on-time STS)
+
+* 4: If everyone participated at the level this student did, the session would feel heavy and awkward, and no one would look forward to attending class each week.  
+* 5: If everyone participated at the level this student did, the session would feel like an average undergraduate remote class experience, and people would largely feel neutral about attending class each week.  
+  * Technically I should be able to expect more than this, but undergraduate institutions everywhere dropped a lot of balls pedagogically during the pandemic, and that's not y'all's fault.  
+* 6: If everyone participated at the level this student did, the session would feel like an average pre-pandemic graduate remote class experience. I believe that most graduate students would actively look forward to attending class each week.
+
+I've deliberately left myself a lot of latitude on what precise contributions qualify for a 6 in my class, but they do, without historical exception that I can think of, hew to the above. Examples of things that have earned people 6s include:
+
+* Reliably responding to my questions about how or why something functions the way it does with fully articulated, easily interpretable attempts at an answer, even if that answer turns out to be incorrect.  
+  * By "fully articulated, easily interpretable" I mean "phrasing that clearly explains what they mean; it does not force me to guess based on, say, a single word what their hypothesis was."  
+* Reliably asking specific questions about the material that give me the opportunity to clarify the class's understanding or my own understanding.  
+  * On occasions when a student has asked a question relevant to the material that forced me to look something up and then come back next class with a better answer, those students usually earn a 6 for that contribution.  
+* Contributing to the STS at such a level of detail or insight that their individual answer helps me improve the class format for everyone.  
+  * For example, the student last year who recommended the addition of "Key Terms" and "Learning Goals" to the session agenda, with an explanation of why he wanted it and examples of what he'd have put in those sections for the classes we'd done so far, got a 6 for that.  
+* Participating in live pairing sessions when I ask for a volunteer.  
+* Picking up slack in a class discussion or activity when other students are not responding at the level I would need for the activity to move.
 
 “But I am a quiet person and have trouble breaking into conversations”—heard. *I will be careful in this class to provide written, simultaneous contribution mechanisms* (like diagrams where you will have a color that represents your work) and *individually assessable contributions* (like when I call on you to ask questions of your peers and when I give you retention questions to complete individually). I also usually have group work happen in groups of no more than one person per two minutes of exercise time, with a max of four people, matched by caucus score. These mitigations protect your opportunities to contribute and demonstrate participation in the class.
 
