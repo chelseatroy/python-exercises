@@ -1,3 +1,6 @@
 .ipynb_checkpoints/
 __pycache__
 .DS_Store
+
+# Local demo scripts
+data_frame_exercise/s05_append_demo_script.md

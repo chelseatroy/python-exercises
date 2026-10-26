@@ -112,13 +112,6 @@ class DataFrame():
             self.__setitem__(key, new_column)
         return self
     
-    def append(self, other_df):
-        first_set_of_rows = self._list
-        second_set_of_rows = other_df._list
-
-        new_rows = first_set_of_rows + second_set_of_rows
-        return DataFrame.from_rows(new_rows)
-
     def group_by(self, column):
         '''
         Returns an object that aggregates the items in the dataframe
