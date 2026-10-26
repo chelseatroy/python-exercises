@@ -1115,6 +1115,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     { group: "Functions and calls", ops: [
       { op: "MAKE_FUNCTION", eff: "… code, name → … function", d: "Pop a code object and a name and build a function object. This is what def does when its line runs.", n: "3.11+ no longer pushes the name first; the code object carries it." },
       { op: "CALL_FUNCTION", eff: "… f, arg1, …, argN → … result", d: "Pop N arguments and the function under them, and call it. A Python function gets a new frame on the call stack; a built-in one, written in C, doesn't.", n: "3.11+: <b>CALL</b>." },
+      { op: "CALL_FUNCTION_KW", eff: "… f, args, (names) → … result", d: "A call with keyword arguments, like print_stack(limit=3). The tuple on top of the stack lists the keyword names; their values sit just below it.", n: "3.11 and 3.12: <b>KW_NAMES</b> followed by <b>CALL</b>. 3.13+: <b>CALL_KW</b>." },
       { op: "LOAD_METHOD", eff: "… obj → … method, obj", d: "Like LOAD_ATTR, for obj.method() calls. Skips building a 'bound method' object.", n: "3.12+: folded into <b>LOAD_ATTR</b>." },
       { op: "CALL_METHOD", eff: "… method, obj, args → … result", d: "Call a method loaded by LOAD_METHOD.", n: "3.11+: <b>CALL</b>." },
       { op: "RETURN_VALUE", eff: "… value → (frame ends)", d: "Pop the top of the stack and return it. The frame comes off the call stack and the value is pushed onto the caller's stack.", n: "Same name. 3.12 and 3.13 also had <b>RETURN_CONST</b> for returning a constant directly; 3.14 removed it again." },
