@@ -1,0 +1,1209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Stack Machine</title>
+<style>
+  :root {
+    --ground: #F6F1E7;
+    --surface: #FFFDF8;
+    --ink: #1F1B2D;
+    --muted: #6A6377;
+    --line: #E0D8C8;
+    --accent: #3B5BDB;
+    --accent-ink: #FFFFFF;
+    --tag: #F2C14E;
+    --tag-edge: #C99A1E;
+    --tag-ink: #3A2A00;
+    --hit: #2B8A3E;
+    --clash: #D9480F;
+    --machine: #2B2540;
+    --machine-ink: #F6F1E7;
+    --machine-muted: #B9B2CC;
+    --slot: #EDE6D8;
+    --obj: #DCE4FB;
+    --obj-edge: #7B8FD6;
+    --display: Georgia, "Times New Roman", serif;
+    --body: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #15131C;
+      --surface: #1E1B28;
+      --ink: #ECE8F4;
+      --muted: #A49DB3;
+      --line: #34303F;
+      --accent: #7C93F5;
+      --accent-ink: #0F1020;
+      --tag: #D9AA3A;
+      --tag-edge: #A97F1C;
+      --tag-ink: #241A00;
+      --hit: #51CF66;
+      --clash: #FF8A4C;
+      --machine: #0D0B14;
+      --machine-ink: #ECE8F4;
+      --machine-muted: #8F88A3;
+      --slot: #2A2636;
+      --obj: #27304F;
+      --obj-edge: #6F86E0;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #15131C;
+    --surface: #1E1B28;
+    --ink: #ECE8F4;
+    --muted: #A49DB3;
+    --line: #34303F;
+    --accent: #7C93F5;
+    --accent-ink: #0F1020;
+    --tag: #D9AA3A;
+    --tag-edge: #A97F1C;
+    --tag-ink: #241A00;
+    --hit: #51CF66;
+    --clash: #FF8A4C;
+    --machine: #0D0B14;
+    --machine-ink: #ECE8F4;
+    --machine-muted: #8F88A3;
+    --slot: #2A2636;
+    --obj: #27304F;
+    --obj-edge: #6F86E0;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 16px/1.55 var(--body);
+  }
+  .page {
+    padding-inline: clamp(16px, 4vw, 72px);
+    padding-block: 40px 72px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 52px;
+  }
+  .page > *, .anatomy, .pipeline, .picker, .callout > * { min-width: 0; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.3rem, 7vw, 3.6rem); line-height: 1.02; }
+  h2 { font-size: 1.7rem; line-height: 1.15; }
+  h3 { font-size: 1.25rem; line-height: 1.2; }
+  p { margin: 0; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); }
+  code { font-family: var(--mono); font-size: 0.92em; }
+  .label {
+    font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase;
+    font-weight: 700; color: var(--muted);
+  }
+  section { display: grid; gap: 16px; min-width: 0; }
+  header { display: grid; gap: 14px; }
+  .lede { font-size: 1.15rem; max-width: 70ch; }
+  .prose { display: grid; gap: 10px; max-width: 72ch; }
+  .prose ul, .prose ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+
+  button { font: inherit; color: inherit; }
+  button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+  .seg button, .btn {
+    font: 600 0.9rem var(--body); cursor: pointer;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    border-radius: 999px; padding: 6px 13px;
+  }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+  .btn:hover, .seg button:hover { border-color: var(--muted); }
+  .seg button code, .btn code { font-size: 0.85rem; }
+  .primary {
+    font: 700 0.95rem var(--body); cursor: pointer;
+    background: var(--accent); color: var(--accent-ink);
+    border: 0; border-radius: 999px; padding: 8px 18px;
+  }
+  .primary:disabled, .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px; display: grid; gap: 12px; align-content: start; min-width: 0;
+  }
+
+  /* ---------- the big picture ---------- */
+  .pipeline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-items: stretch; }
+  .pipeline .stage { position: relative; }
+  .pipeline .stage + .stage::before {
+    content: "→"; position: absolute; left: -10px; top: 50%; transform: translate(-50%, -50%);
+    color: var(--muted); font-size: 1.1rem;
+  }
+  .pipeline pre { margin: 0; font: 0.78rem/1.45 var(--mono); white-space: pre-wrap; }
+  @media (max-width: 760px) {
+    .pipeline { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+    .pipeline .stage + .stage::before { content: "↓"; left: 50%; top: -12px; }
+  }
+  .loop-sketch { background: var(--machine); color: var(--machine-ink); border-radius: 12px; padding: 14px 16px; font: 0.86rem/1.6 var(--mono); white-space: pre; overflow-x: auto; margin: 0; }
+  .loop-sketch .c { color: var(--machine-muted); }
+
+  .anatomy { display: grid; gap: 14px; }
+  .anatomy .line {
+    background: var(--machine); color: var(--machine-ink); border-radius: 12px; padding: 16px;
+    font: 0.95rem/1.4 var(--mono); white-space: pre; overflow-x: auto;
+  }
+  .anatomy .line span { border-radius: 4px; cursor: help; }
+  .anatomy .line span[data-k] { outline: 1px dashed var(--machine-muted); outline-offset: 2px; }
+  .anatomy .line span.on { background: var(--tag); color: var(--tag-ink); outline-color: var(--tag); }
+  .anatomy ol { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+  .anatomy li { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 12px; font-size: 0.92rem; display: grid; gap: 2px; cursor: default; }
+  .anatomy li.on { border-color: var(--tag-edge); box-shadow: 0 0 0 2px var(--tag) inset; }
+  .anatomy li b { font-family: var(--mono); font-size: 0.85rem; }
+
+  /* ---------- walkthrough ---------- */
+  .picker { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+  .walk { display: grid; grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.1fr); gap: 18px; align-items: start; }
+  .walk .left, .walk .right { display: grid; gap: 14px; min-width: 0; align-content: start; }
+  @media (max-width: 960px) {
+    .walk { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  .code-panel { background: var(--machine); color: var(--machine-ink); border-radius: 12px; padding: 12px 0; overflow-x: auto; }
+  .code-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; padding: 0 16px 8px; font-size: 0.82rem; color: var(--machine-muted); }
+  .code { margin: 0; font: 0.8rem/1.6 var(--mono); }
+  .code .ln { display: block; padding: 0 16px; white-space: pre; border-left: 3px solid transparent; }
+  .code .ln.blank { height: 0.8em; }
+  .code .ln.hdr { color: var(--machine-muted); padding-top: 6px; }
+  .code .ln.hot { background: color-mix(in oklab, var(--tag) 26%, transparent); border-left-color: var(--tag); }
+  .code .ln.next { border-left-color: var(--machine-muted); }
+  .code .ln.dim { opacity: 0.55; }
+  .code .ln.mark { background: color-mix(in oklab, var(--tag) 20%, transparent); }
+  .code .ln.new { background: color-mix(in oklab, var(--obj-edge) 30%, transparent); }
+  .code .ln .tok { color: var(--tag); font-weight: 700; }
+  .src .ln .n { color: var(--machine-muted); user-select: none; }
+
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .controls input[type="range"] { flex: 1 1 160px; accent-color: var(--accent); min-width: 120px; }
+  .count { font: 600 0.85rem var(--mono); color: var(--muted); min-width: 7.5em; }
+  .kbd-hint { font-size: 0.8rem; color: var(--muted); }
+
+  .now { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--tag); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; }
+  .now .op { font: 700 0.95rem var(--mono); }
+  .now.done { border-left-color: var(--hit); }
+
+  .callstack { display: grid; gap: 10px; }
+  .callstack .cap { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .frame {
+    background: var(--surface); border: 1.5px solid var(--ink); border-radius: 12px; padding: 12px 14px;
+    display: grid; gap: 10px; min-width: 0;
+  }
+  .frame.waiting { border-color: var(--line); border-style: dashed; opacity: 0.8; }
+  .frame.fresh { animation: drop 0.35s ease; }
+  .frame .fh { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; align-items: baseline; }
+  .frame .fh b { font: 700 1rem var(--mono); }
+  .frame .fh span { font-size: 0.8rem; color: var(--muted); }
+  .frame .body { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; }
+  @media (max-width: 520px) { .frame .body { grid-template-columns: minmax(0, 1fr); } }
+  .frame h4 { margin: 0 0 4px; font: 700 0.72rem var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .slots { width: 100%; border-collapse: collapse; font: 0.8rem/1.3 var(--mono); }
+  .slots td { border: 1px solid var(--line); padding: 4px 6px; vertical-align: top; overflow-wrap: anywhere; }
+  .slots td.i { width: 2.2em; text-align: center; color: var(--muted); background: var(--slot); }
+  .slots td.k { width: 38%; color: var(--muted); }
+  .slots td.v.empty::before { content: "(empty)"; color: var(--muted); font-style: italic; }
+  .slots td.v.flash { animation: glow 1.2s ease; }
+  .vstack { display: flex; flex-direction: column-reverse; gap: 4px; min-height: 2.2em; justify-content: flex-start; }
+  .vstack .item {
+    font: 600 0.8rem/1.3 var(--mono); background: var(--obj); border: 1.3px solid var(--obj-edge); border-radius: 7px;
+    padding: 5px 8px; overflow-wrap: anywhere; position: relative;
+  }
+  .vstack .item.top::after { content: "← top"; position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font: 600 0.68rem var(--body); color: var(--muted); }
+  .vstack .item.top { padding-right: 46px; }
+  .vstack .item.fresh { animation: drop 0.3s ease; }
+  .vstack .empty { font: italic 0.8rem var(--body); color: var(--muted); border: 1px dashed var(--line); border-radius: 7px; padding: 5px 8px; }
+  .result { font: 700 0.95rem var(--mono); color: var(--hit); }
+
+  .log {
+    margin: 0; padding: 10px 12px 10px 34px; max-height: 15em; overflow-y: auto;
+    font-size: 0.86rem; line-height: 1.45; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    display: grid; gap: 6px; align-content: start;
+  }
+  .log:empty::before { content: "Each step's explanation collects here."; color: var(--muted); margin-left: -20px; font-style: italic; }
+  .log li { color: var(--muted); }
+  .log li::marker { font: 0.75rem var(--mono); }
+  .log li.cur { color: var(--ink); }
+  .log li .op { font: 700 0.8rem var(--mono); color: var(--ink); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.84rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; }
+
+  /* ---------- side-by-side listings ---------- */
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 860px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+  .stat { border-top: 2px solid var(--ink); padding-top: 6px; display: grid; }
+  .stat .big { font: 600 1.4rem/1.15 var(--mono); font-variant-numeric: tabular-nums; }
+  .stat .sub { font-size: 0.8rem; color: var(--muted); }
+
+  .c-src .ln { display: grid; grid-template-columns: 3.4em max-content; gap: 0 12px; padding: 0 16px; white-space: pre; }
+  .c-src .ln .n { color: var(--machine-muted); text-align: right; text-decoration: none; user-select: none; }
+  .c-src a.n:hover { color: var(--tag); text-decoration: underline; }
+  .c-src .ln.gap .t { color: var(--machine-muted); }
+  .c-src .ln.mark { background: color-mix(in oklab, var(--tag) 22%, transparent); }
+
+  .results { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  .results th, .results td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .results th { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .results .t { color: var(--hit); font: 700 0.9rem var(--mono); }
+  .results .f { color: var(--clash); font: 700 0.9rem var(--mono); }
+  .table-wrap { overflow-x: auto; }
+
+  /* ---------- primer ---------- */
+  .filter { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .filter input {
+    font: 0.95rem var(--mono); padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--ink); width: min(100%, 320px);
+  }
+  .primer { display: grid; gap: 22px; }
+  .primer h3 { font-size: 1.15rem; }
+  .ops { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr)); gap: 10px; }
+  .op-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 7px; align-content: start; }
+  .op-card .nm { font: 700 0.95rem var(--mono); overflow-wrap: anywhere; }
+  .op-card .eff { font: 0.8rem/1.4 var(--mono); background: var(--slot); border-radius: 6px; padding: 5px 8px; overflow-wrap: anywhere; }
+  .op-card .newer { font-size: 0.82rem; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 6px; }
+  .op-card .newer b { color: var(--ink); font-weight: 600; }
+  .op-card.seen { border-color: var(--tag-edge); }
+  .op-card.seen .nm::after { content: "in the step-through"; margin-left: 8px; font: 600 0.66rem var(--body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--tag-ink); background: var(--tag); border-radius: 999px; padding: 2px 7px; vertical-align: 2px; }
+  .no-hits { color: var(--muted); font-style: italic; }
+
+  .callout { background: var(--machine); color: var(--machine-ink); border-radius: 14px; padding: 18px 20px; display: grid; gap: 10px; max-width: 78ch; }
+  .callout h3 { color: var(--machine-ink); }
+  .callout code { color: var(--tag); }
+  .callout a { color: var(--tag); }
+
+  .diffs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 10px; }
+  .diffs .card { gap: 6px; padding: 14px 16px; }
+  .diffs .card b { font: 700 0.88rem var(--mono); overflow-wrap: anywhere; }
+  .diffs .card .when { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+
+  .reveal { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+  .reveal summary { cursor: pointer; padding: 14px 18px; font-weight: 600; }
+  .reveal .body { padding: 0 18px 16px; display: grid; gap: 10px; }
+
+  .refs { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 75ch; }
+
+  @keyframes drop { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+  @keyframes glow { 0% { background: var(--tag); color: var(--tag-ink); } 100% { } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header>
+    <div class="label">Session 6 · How Python runs your code</div>
+    <h1>The Stack Machine</h1>
+    <p class="lede">Before Python runs your code, it compiles it into <strong>bytecode</strong>: a list of tiny instructions like <code>LOAD_FAST</code> and <code>BINARY_ADD</code>. Then a loop in the interpreter runs those instructions one at a time. Almost every one of them does the same kind of thing: it pushes values onto a <strong>stack</strong>, or pops them off. Here's what that looks like.</p>
+    <p class="muted" style="max-width:72ch">This page goes with <a href="https://github.com/chelseatroy/python-exercises/blob/main/s6_disassembly.ipynb">the disassembly notebook</a>. Every listing below is real output from <code>dis.dis()</code> in <strong>Python 3.10.8</strong>, the version the notebook runs on. Newer Pythons print something different; the <a href="#new-h">last section</a> shows you what, and why.</p>
+  </header>
+
+  <section aria-labelledby="how-h">
+    <h2 id="how-h">From source code to a running loop</h2>
+    <div class="pipeline">
+      <div class="card stage">
+        <div class="label">1 · You write</div>
+        <pre>def add_two_numbers(a, b):
+    return a + b</pre>
+      </div>
+      <div class="card stage">
+        <div class="label">2 · The compiler makes</div>
+        <p style="font-size:0.92rem">A <strong>code object</strong>: the instructions as bytes, plus a table of constants and a list of variable names.</p>
+      </div>
+      <div class="card stage">
+        <div class="label">3 · <code>dis</code> shows you</div>
+        <pre>LOAD_FAST    0 (a)
+LOAD_FAST    1 (b)
+BINARY_ADD
+RETURN_VALUE</pre>
+      </div>
+      <div class="card stage">
+        <div class="label">4 · The interpreter</div>
+        <p style="font-size:0.92rem">Runs one instruction, moves to the next, and repeats until something says <code>RETURN_VALUE</code>.</p>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>That interpreter is, at its heart, one enormous loop with a <code>switch</code> statement inside it: one <code>case</code> for every kind of instruction. In Python-flavored pseudocode:</p>
+    </div>
+    <pre class="loop-sketch"><span class="c"># the shape of CPython's main loop (the real one is C, in Python/ceval.c)</span>
+while True:
+    instruction = code[next_offset]
+    next_offset += 2                      <span class="c"># each 3.10 instruction is 2 bytes</span>
+    match instruction.name:
+        case "LOAD_FAST":   stack.push(slots[instruction.arg])
+        case "BINARY_ADD":  right = stack.pop(); left = stack.pop(); stack.push(left + right)
+        case "RETURN_VALUE": return stack.pop()
+        ...                               <span class="c"># about 125 more cases</span></pre>
+
+    <div class="prose">
+      <p>Two different things in there are called "the stack," and they're worth keeping apart:</p>
+      <ul>
+        <li><strong>The call stack</strong> is a stack of <strong>frames</strong>, one for every function call that hasn't returned yet. Calling a function pushes a frame; returning pops it. This is what a traceback prints.</li>
+        <li><strong>The value stack</strong> lives <em>inside</em> each frame. It's the scratch space the instructions work on: <code>LOAD_FAST</code> pushes onto it, <code>BINARY_ADD</code> pops two values off it and pushes one back.</li>
+      </ul>
+      <p>Each frame also has <strong>slots</strong> for its local variables, and remembers which instruction it's on.</p>
+    </div>
+
+    <h3>How to read one line of <code>dis</code> output</h3>
+    <div class="anatomy" id="anatomy">
+      <div class="line" id="anatomy-line" aria-hidden="true"></div>
+      <ol id="anatomy-keys"></ol>
+    </div>
+    <p class="muted" style="max-width:72ch">The notebook's very first cell, <code>dis.dis("1+1")</code>, prints just <code>LOAD_CONST 0 (2)</code> and <code>RETURN_VALUE</code>. There's no addition in it at all: the compiler noticed that <code>1+1</code> can only ever be <code>2</code> and did the math ahead of time. That's called <strong>constant folding</strong>.</p>
+  </section>
+
+  <section aria-labelledby="walk-h">
+    <h2 id="walk-h">Step through it</h2>
+    <p class="muted" style="max-width:75ch">Pick a program, then step through it one instruction at a time. On the left is the bytecode, with the instruction that just ran highlighted. On the right is the <strong>call stack</strong>: the frame on top is the one running; any frames below it are waiting for a call to return. Use the arrow keys, or press play.</p>
+
+    <div class="picker">
+      <div class="seg" id="prog" role="group" aria-label="Which program to step through"></div>
+      <div class="seg" id="arg" role="group" aria-label="Which value of x" hidden></div>
+    </div>
+
+    <div class="walk" id="walk" tabindex="-1">
+      <div class="left">
+        <div class="code-panel">
+          <div class="code-head"><span>Python source</span><span id="src-note"></span></div>
+          <div class="code src" id="src"></div>
+        </div>
+        <div class="code-panel">
+          <div class="code-head"><span>Bytecode, from <code>dis.dis()</code> in 3.10</span><span><code>--></code> just ran</span></div>
+          <div class="code" id="bytecode"></div>
+        </div>
+      </div>
+      <div class="right">
+        <div class="controls">
+          <button class="btn" type="button" id="back" aria-label="Back one instruction">← Back</button>
+          <button class="primary" type="button" id="next">Next instruction →</button>
+          <button class="btn" type="button" id="play">Play</button>
+          <button class="btn" type="button" id="restart">Restart</button>
+          <input type="range" id="scrub" min="0" value="0" aria-label="Jump to step">
+          <span class="count" id="count" aria-live="polite"></span>
+        </div>
+        <div class="now" id="now" aria-live="polite"></div>
+        <div class="callstack">
+          <div class="cap"><span class="label">Call stack · top frame is running</span><span class="result" id="result"></span></div>
+          <div id="frames"></div>
+        </div>
+        <ol class="log" id="log" aria-label="Every step so far"></ol>
+        <p class="kbd-hint">Keyboard: ← and → step back and forward while the walkthrough has focus.</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="fast-h">
+    <h2 id="fast-h">Why is it called <code>LOAD_FAST</code>? Is there a <code>LOAD_SLOW</code>?</h2>
+    <div class="prose">
+      <p>There's no instruction called <code>LOAD_SLOW</code>. But there is a slow way to load a variable, and it's what <code>FAST</code> is being compared to: <strong>looking the name up in a dictionary.</strong></p>
+      <p>Here's the loop from the notebook's "Storing and loading names" section, twice: inside a function on the left, and at the top level of a module (or a notebook cell) on the right. Same Python, same structure, but every <span style="background:color-mix(in oklab, var(--tag) 40%, transparent);padding:0 3px;border-radius:3px">highlighted</span> instruction is different.</p>
+    </div>
+    <div class="pair">
+      <div class="code-panel">
+        <div class="code-head"><span>Inside <code>looping_sum()</code></span><span>locals are numbered slots</span></div>
+        <div class="code" id="fast-fn"></div>
+      </div>
+      <div class="code-panel">
+        <div class="code-head"><span>At module level</span><span>names live in a dictionary</span></div>
+        <div class="code" id="fast-mod"></div>
+      </div>
+    </div>
+    <div class="prose">
+      <p><strong>Inside a function, the compiler can see every variable the function will ever have.</strong> It reads the whole <code>def</code> before running any of it, so it knows <code>result</code> and <code>item</code> are local, numbers them (slot 3, slot 4), and bakes those numbers into the bytecode. At run time, <code>LOAD_FAST 3</code> means "give me slot 3": one array index.</p>
+      <p><strong>At module level, it can't.</strong> Any code anywhere can add a global (<code>import</code>, <code>globals()["x"] = 1</code>, another module doing <code>your_module.x = 1</code>), so names have to be looked up by name, every time. <code>LOAD_NAME</code> checks the local dictionary, then the global dictionary, then the builtins.</p>
+    </div>
+    <div class="stats" id="timing"></div>
+    <p class="muted" style="max-width:72ch">Those are the notebook's two timing cells (summing 1 to 9,999,999), measured with <code>time.perf_counter()</code> on a MacBook in Python 3.10.8; best of three runs. Your numbers will differ, but the gap won't go away: in 3.14 on the same machine it's 0.23 s against 0.61 s.</p>
+
+    <h3>Reading the C</h3>
+    <p class="muted" style="max-width:75ch">You don't have to take my word for it. Here are both instructions, quoted exactly from CPython 3.10.8's <code>Python/ceval.c</code>. Click a line number to see it on GitHub.</p>
+    <div class="pair">
+      <div class="code-panel">
+        <div class="code-head"><span><code>LOAD_FAST</code>: 12 lines</span><span><code>GETLOCAL(i)</code> is <code>fastlocals[i]</code></span></div>
+        <div class="code c-src" id="c-fast"></div>
+      </div>
+      <div class="code-panel">
+        <div class="code-head"><span><code>LOAD_NAME</code>: 63 lines</span><span>up to three dictionary lookups</span></div>
+        <div class="code c-src" id="c-name" style="max-height:26em;overflow-y:auto"></div>
+      </div>
+    </div>
+    <div class="prose">
+      <p>The other loads that come up, from fastest to slowest-ish:</p>
+      <ul>
+        <li><code>LOAD_CONST</code>: an index into the code object's constants. As cheap as <code>LOAD_FAST</code>.</li>
+        <li><code>LOAD_DEREF</code>: a variable from an enclosing function, for closures. One extra hop through a "cell" object.</li>
+        <li><code>LOAD_GLOBAL</code>: used inside functions for names that aren't local, like <code>range</code> or another function you defined. Two dictionary lookups: globals, then builtins.</li>
+        <li><code>LOAD_NAME</code>: module-level code. Up to three dictionary lookups.</li>
+        <li><code>LOAD_ATTR</code>: <code>obj.thing</code>. Can involve the instance's dictionary, its class, every parent class, and descriptors like <code>@property</code>.</li>
+      </ul>
+    </div>
+    <div class="callout">
+      <h3>See the call stack for yourself</h3>
+      <p>The notebook's <code>add_three_numbers</code> cell calls <code>traceback.print_stack()</code>, which prints every frame on the call stack, oldest first. It needs <code>import traceback</code> first, and the function has to actually be called. Saved as <code>stack_demo.py</code> and run:</p>
+      <pre class="loop-sketch" id="stack-src" style="background:var(--surface);color:var(--ink)"></pre>
+      <p>Output:</p>
+      <pre class="loop-sketch" id="stack-out" style="background:var(--surface);color:var(--ink)"></pre>
+      <p>Three frames: the module, <code>caller</code>, and <code>add_three_numbers</code> on top. Each one has its own slots and its own value stack.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="is-h">
+    <h2 id="is-h">Why is <code>257 is 257</code> sometimes <code>False</code>?</h2>
+    <div class="prose">
+      <p>The notebook's last section runs the same three lines in two places and gets two answers. Here's the function version's bytecode. Look at the two <code>LOAD_CONST</code> instructions:</p>
+    </div>
+    <div class="code-panel" style="max-width:640px">
+      <div class="code-head"><span><code>notebook_is()</code></span><span>both say constant <strong>1</strong></span></div>
+      <div class="code" id="is-dis"></div>
+    </div>
+    <div class="prose">
+      <p>Both assignments load <strong>constant 1</strong>. When the compiler builds a code object, it keeps one table of constants for the whole thing and stores each distinct value once. So both names end up pointing at the very same <code>257</code> object, and <code>is</code> (<code>IS_OP</code>, which checks "same object?") says <code>True</code>.</p>
+      <p>Whether you get one table or two depends on <strong>how much code gets compiled at once</strong>:</p>
+    </div>
+    <div class="table-wrap">
+      <table class="results">
+        <thead><tr><th>Where the three lines run</th><th>Compiled as</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td>Inside a function</td><td>One code object for the whole function</td><td class="t">True</td></tr>
+          <tr><td>A <code>.py</code> file, run with <code>python file.py</code></td><td>One code object for the whole module</td><td class="t">True</td></tr>
+          <tr><td>A Jupyter notebook cell</td><td>IPython compiles each statement in a cell separately</td><td class="f">False</td></tr>
+          <tr><td>The <code>&gt;&gt;&gt;</code> REPL, one line at a time</td><td>Each line separately</td><td class="f">False</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" style="max-width:72ch">All four checked in Python 3.10.8 (and IPython 8.34). With <code>256</code> instead, every row says <code>True</code>: CPython makes the integers from −5 to 256 once, at startup, and reuses them everywhere. The lesson isn't the numbers, though. It's that <code>is</code> asks about <em>objects</em>, and when two equal values happen to be the same object is up to the implementation. Use <code>==</code> for values.</p>
+  </section>
+
+  <section aria-labelledby="primer-h">
+    <h2 id="primer-h">Instruction primer</h2>
+    <p class="muted" style="max-width:75ch">The instructions that show up in the notebook, plus a few close relatives. The stack picture shows the top of the stack on the right: <code>… a, b → … a+b</code> means "pops <code>b</code>, then <code>a</code>, and pushes their sum." The dashed line says what newer Pythons call it. Ones with a tag show up in the step-through above.</p>
+    <div class="filter">
+      <label for="op-filter" class="label">Find an instruction</label>
+      <input id="op-filter" type="search" placeholder="e.g. LOAD, JUMP, CALL" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="primer" id="primer"></div>
+  </section>
+
+  <section aria-labelledby="new-h">
+    <h2 id="new-h">What newer Pythons show you</h2>
+    <div class="prose">
+      <p>If you run the notebook in Python 3.11 or later, your output won't match this page. The ideas are the same: frames, slots, a value stack, one instruction at a time. What changed is that the interpreter got much more aggressive about doing less work per instruction. Here's 3.10 next to <strong>Python 3.14.3</strong>, with every new kind of instruction highlighted.</p>
+    </div>
+    <div class="seg" id="cmp" role="group" aria-label="Which function to compare"></div>
+    <div class="pair">
+      <div class="code-panel">
+        <div class="code-head"><span>Python 3.10.8</span></div>
+        <div class="code" id="cmp-old"></div>
+      </div>
+      <div class="code-panel">
+        <div class="code-head"><span>Python 3.14.3</span><span id="cmp-count"></span></div>
+        <div class="code" id="cmp-new"></div>
+      </div>
+    </div>
+    <div class="diffs" id="diffs"></div>
+
+    <h3>The interpreter rewrites the bytecode while it runs</h3>
+    <div class="prose">
+      <p>This is the biggest change, and it's the real answer to "how does Python get faster without changing my code." Since 3.11, after an instruction has run a few times, the interpreter <strong>swaps it for a specialized version</strong> based on what it actually saw. <code>BINARY_OP</code> has to handle <code>+</code> for ints, floats, strings, lists, and your own classes. But if it has only ever seen two ints, it becomes <code>BINARY_OP_ADD_INT</code>, which skips the "what type is this?" checks. If a different type ever shows up, it switches back. You can watch it happen with <code>dis.dis(f, adaptive=True)</code>. Here's <code>looping_sum</code> before and after calling it 100 times:</p>
+    </div>
+    <div class="pair">
+      <div class="code-panel">
+        <div class="code-head"><span>3.14, before any calls</span></div>
+        <div class="code" id="ad-old"></div>
+      </div>
+      <div class="code-panel">
+        <div class="code-head"><span>3.14, after 100 calls, <code>adaptive=True</code></span></div>
+        <div class="code" id="ad-new"></div>
+      </div>
+    </div>
+    <div class="prose">
+      <ul>
+        <li><code>LOAD_GLOBAL_BUILTIN</code>: <code>range</code> was found in the builtins last time, so it checks a version number on the dictionaries and, if nothing changed, skips both lookups.</li>
+        <li><code>CALL_BUILTIN_CLASS</code>: calling a class that's written in C, like <code>range</code>.</li>
+        <li><code>FOR_ITER_RANGE</code>: it has seen a <code>range</code> iterator every time, so it steps that iterator directly instead of going through the general "call its <code>__next__</code>" path.</li>
+        <li><code>BINARY_OP_ADD_INT</code>: <code>+=</code> on two ints.</li>
+        <li><code>RESUME_CHECK</code> and <code>JUMP_BACKWARD_NO_JIT</code>: lighter versions of those instructions. (The <code>NO_JIT</code> is because 3.14 also ships an experimental just-in-time compiler, which is off unless you turn it on.)</li>
+      </ul>
+      <p>This is described in <a href="https://peps.python.org/pep-0659/">PEP 659, the Specializing Adaptive Interpreter</a>.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="more-h">
+    <h2 id="more-h">Go further</h2>
+    <ul class="refs">
+      <li><a href="https://docs.python.org/3.10/library/dis.html">The <code>dis</code> docs for 3.10</a>, with every instruction on this page, and <a href="https://docs.python.org/3/library/dis.html">the current version</a>, with every instruction in the newest Python.</li>
+      <li><a href="https://github.com/python/cpython/blob/v3.10.8/Python/ceval.c#L1739">CPython 3.10.8's main loop</a>. Search the file for <code>case TARGET(</code> to find any instruction.</li>
+      <li><a href="https://peps.python.org/pep-0659/">PEP 659</a>: the specializing interpreter (3.11). <a href="https://peps.python.org/pep-0709/">PEP 709</a>: inlined comprehensions (3.12).</li>
+      <li>Try it on your own code: <code>import dis; dis.dis(your_function)</code>. In 3.13 and later, <code>dis.dis(f, show_offsets=True)</code> brings back the byte offsets.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+const D310 = {"version":"3.10.8","text":{"add":"  2           0 LOAD_FAST                0 (a)\n              2 LOAD_FAST                1 (b)\n              4 BINARY_ADD\n              6 RETURN_VALUE\n","if":"  2           0 LOAD_FAST                0 (x)\n              2 LOAD_CONST               1 (5)\n              4 COMPARE_OP               2 (==)\n              6 POP_JUMP_IF_FALSE        6 (to 12)\n\n  3           8 LOAD_CONST               2 (True)\n             10 RETURN_VALUE\n\n  5     >>   12 LOAD_CONST               3 (False)\n             14 RETURN_VALUE\n","loop":"  2           0 LOAD_CONST               1 (0)\n              2 STORE_FAST               3 (result)\n\n  3           4 LOAD_GLOBAL              0 (range)\n              6 LOAD_FAST                0 (start)\n              8 LOAD_FAST                1 (end)\n             10 LOAD_FAST                2 (increment)\n             12 CALL_FUNCTION            3\n             14 GET_ITER\n        >>   16 FOR_ITER                 6 (to 30)\n             18 STORE_FAST               4 (item)\n\n  4          20 LOAD_FAST                3 (result)\n             22 LOAD_FAST                4 (item)\n             24 INPLACE_ADD\n             26 STORE_FAST               3 (result)\n             28 JUMP_ABSOLUTE            8 (to 16)\n\n  5     >>   30 LOAD_FAST                3 (result)\n             32 RETURN_VALUE\n","comp":"  2           0 LOAD_CONST               1 (<code object <listcomp>>)\n              2 LOAD_CONST               2 ('compy.<locals>.<listcomp>')\n              4 MAKE_FUNCTION            0\n              6 LOAD_GLOBAL              0 (range)\n              8 LOAD_CONST               3 (0)\n             10 LOAD_CONST               4 (3)\n             12 CALL_FUNCTION            2\n             14 GET_ITER\n             16 CALL_FUNCTION            1\n             18 STORE_FAST               0 (x)\n\n  3          20 LOAD_FAST                0 (x)\n             22 RETURN_VALUE\n\nDisassembly of <code object <listcomp>>:\n  2           0 BUILD_LIST               0\n              2 LOAD_FAST                0 (.0)\n        >>    4 FOR_ITER                 4 (to 14)\n              6 STORE_FAST               1 (i)\n              8 LOAD_FAST                1 (i)\n             10 LIST_APPEND              2\n             12 JUMP_ABSOLUTE            2 (to 4)\n        >>   14 RETURN_VALUE\n","is":"  2           0 LOAD_CONST               1 (257)\n              2 STORE_FAST               0 (two_hundred_fifty_seven)\n\n  3           4 LOAD_CONST               1 (257)\n              6 STORE_FAST               1 (two_hundred_fifty_seven_again)\n\n  4           8 LOAD_FAST                0 (two_hundred_fifty_seven)\n             10 LOAD_FAST                1 (two_hundred_fifty_seven_again)\n             12 IS_OP                    0\n             14 RETURN_VALUE\n","moduleLoop":"  1           0 LOAD_CONST               0 (0)\n              2 STORE_NAME               0 (result)\n\n  2           4 LOAD_NAME                1 (range)\n              6 LOAD_NAME                2 (start)\n              8 LOAD_NAME                3 (end)\n             10 LOAD_NAME                4 (increment)\n             12 CALL_FUNCTION            3\n             14 GET_ITER\n        >>   16 FOR_ITER                 6 (to 30)\n             18 STORE_NAME               5 (item)\n\n  3          20 LOAD_NAME                0 (result)\n             22 LOAD_NAME                5 (item)\n             24 INPLACE_ADD\n             26 STORE_NAME               0 (result)\n             28 JUMP_ABSOLUTE            8 (to 16)\n\n  2     >>   30 LOAD_CONST               1 (None)\n             32 RETURN_VALUE\n","onePlusOne":"  1           0 LOAD_CONST               0 (2)\n              2 RETURN_VALUE\n"},"walk":{"add":{"source":"def add_two_numbers(a, b):\n    return a + b\n\ntotal = add_two_numbers(2, 3)\n","module":{"name":"<module>","varnames":[],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":0,"argrepr":"<code object add_two_numbers>","line":1,"target":false,"argval":null,"code":"add_two_numbers"},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"'add_two_numbers'","line":null,"target":false,"argval":"add_two_numbers","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"add_two_numbers","line":null,"target":false,"argval":"add_two_numbers","code":null},{"offset":8,"op":"LOAD_NAME","arg":0,"argrepr":"add_two_numbers","line":4,"target":false,"argval":"add_two_numbers","code":null},{"offset":10,"op":"LOAD_CONST","arg":2,"argrepr":"2","line":null,"target":false,"argval":2,"code":null},{"offset":12,"op":"LOAD_CONST","arg":3,"argrepr":"3","line":null,"target":false,"argval":3,"code":null},{"offset":14,"op":"CALL_FUNCTION","arg":2,"argrepr":"","line":null,"target":false,"argval":2,"code":null},{"offset":16,"op":"STORE_NAME","arg":1,"argrepr":"total","line":null,"target":false,"argval":"total","code":null},{"offset":18,"op":"LOAD_CONST","arg":4,"argrepr":"None","line":null,"target":false,"argval":null,"code":null},{"offset":20,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"add_two_numbers","varnames":["a","b"],"instrs":[{"offset":0,"op":"LOAD_FAST","arg":0,"argrepr":"a","line":2,"target":false,"argval":"a","code":null},{"offset":2,"op":"LOAD_FAST","arg":1,"argrepr":"b","line":null,"target":false,"argval":"b","code":null},{"offset":4,"op":"BINARY_ADD","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null},{"offset":6,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[]}]}},"if":{"source":"def equals_five(x):\n    if x == 5:\n        return True\n    else:\n        return False\n","module":{"name":"<module>","varnames":[],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":0,"argrepr":"<code object equals_five>","line":1,"target":false,"argval":null,"code":"equals_five"},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"'equals_five'","line":null,"target":false,"argval":"equals_five","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"equals_five","line":null,"target":false,"argval":"equals_five","code":null},{"offset":8,"op":"LOAD_CONST","arg":2,"argrepr":"None","line":null,"target":false,"argval":null,"code":null},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"equals_five","varnames":["x"],"instrs":[{"offset":0,"op":"LOAD_FAST","arg":0,"argrepr":"x","line":2,"target":false,"argval":"x","code":null},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"5","line":null,"target":false,"argval":5,"code":null},{"offset":4,"op":"COMPARE_OP","arg":2,"argrepr":"==","line":null,"target":false,"argval":"==","code":null},{"offset":6,"op":"POP_JUMP_IF_FALSE","arg":6,"argrepr":"to 12","line":null,"target":false,"argval":12,"code":null},{"offset":8,"op":"LOAD_CONST","arg":2,"argrepr":"True","line":3,"target":false,"argval":true,"code":null},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null},{"offset":12,"op":"LOAD_CONST","arg":3,"argrepr":"False","line":5,"target":true,"argval":false,"code":null},{"offset":14,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[]}]}},"loop":{"source":"def looping_sum(start, end, increment):\n    result = 0\n    for item in range(start, end, increment):\n        result += item\n    return result\n","module":{"name":"<module>","varnames":[],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":0,"argrepr":"<code object looping_sum>","line":1,"target":false,"argval":null,"code":"looping_sum"},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"'looping_sum'","line":null,"target":false,"argval":"looping_sum","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"looping_sum","line":null,"target":false,"argval":"looping_sum","code":null},{"offset":8,"op":"LOAD_CONST","arg":2,"argrepr":"None","line":null,"target":false,"argval":null,"code":null},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"looping_sum","varnames":["start","end","increment","result","item"],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":1,"argrepr":"0","line":2,"target":false,"argval":0,"code":null},{"offset":2,"op":"STORE_FAST","arg":3,"argrepr":"result","line":null,"target":false,"argval":"result","code":null},{"offset":4,"op":"LOAD_GLOBAL","arg":0,"argrepr":"range","line":3,"target":false,"argval":"range","code":null},{"offset":6,"op":"LOAD_FAST","arg":0,"argrepr":"start","line":null,"target":false,"argval":"start","code":null},{"offset":8,"op":"LOAD_FAST","arg":1,"argrepr":"end","line":null,"target":false,"argval":"end","code":null},{"offset":10,"op":"LOAD_FAST","arg":2,"argrepr":"increment","line":null,"target":false,"argval":"increment","code":null},{"offset":12,"op":"CALL_FUNCTION","arg":3,"argrepr":"","line":null,"target":false,"argval":3,"code":null},{"offset":14,"op":"GET_ITER","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null},{"offset":16,"op":"FOR_ITER","arg":6,"argrepr":"to 30","line":null,"target":true,"argval":30,"code":null},{"offset":18,"op":"STORE_FAST","arg":4,"argrepr":"item","line":null,"target":false,"argval":"item","code":null},{"offset":20,"op":"LOAD_FAST","arg":3,"argrepr":"result","line":4,"target":false,"argval":"result","code":null},{"offset":22,"op":"LOAD_FAST","arg":4,"argrepr":"item","line":null,"target":false,"argval":"item","code":null},{"offset":24,"op":"INPLACE_ADD","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null},{"offset":26,"op":"STORE_FAST","arg":3,"argrepr":"result","line":null,"target":false,"argval":"result","code":null},{"offset":28,"op":"JUMP_ABSOLUTE","arg":8,"argrepr":"to 16","line":null,"target":false,"argval":16,"code":null},{"offset":30,"op":"LOAD_FAST","arg":3,"argrepr":"result","line":5,"target":true,"argval":"result","code":null},{"offset":32,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[]}]}},"comp":{"source":"def compy():\n    x = [i for i in range(0, 3)]\n    return x\n","module":{"name":"<module>","varnames":[],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":0,"argrepr":"<code object compy>","line":1,"target":false,"argval":null,"code":"compy"},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"'compy'","line":null,"target":false,"argval":"compy","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"compy","line":null,"target":false,"argval":"compy","code":null},{"offset":8,"op":"LOAD_CONST","arg":2,"argrepr":"None","line":null,"target":false,"argval":null,"code":null},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"compy","varnames":["x"],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":1,"argrepr":"<code object <listcomp>>","line":2,"target":false,"argval":null,"code":"<listcomp>"},{"offset":2,"op":"LOAD_CONST","arg":2,"argrepr":"'compy.<locals>.<listcomp>'","line":null,"target":false,"argval":"compy.<locals>.<listcomp>","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"LOAD_GLOBAL","arg":0,"argrepr":"range","line":null,"target":false,"argval":"range","code":null},{"offset":8,"op":"LOAD_CONST","arg":3,"argrepr":"0","line":null,"target":false,"argval":0,"code":null},{"offset":10,"op":"LOAD_CONST","arg":4,"argrepr":"3","line":null,"target":false,"argval":3,"code":null},{"offset":12,"op":"CALL_FUNCTION","arg":2,"argrepr":"","line":null,"target":false,"argval":2,"code":null},{"offset":14,"op":"GET_ITER","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null},{"offset":16,"op":"CALL_FUNCTION","arg":1,"argrepr":"","line":null,"target":false,"argval":1,"code":null},{"offset":18,"op":"STORE_FAST","arg":0,"argrepr":"x","line":null,"target":false,"argval":"x","code":null},{"offset":20,"op":"LOAD_FAST","arg":0,"argrepr":"x","line":3,"target":false,"argval":"x","code":null},{"offset":22,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"<listcomp>","varnames":[".0","i"],"instrs":[{"offset":0,"op":"BUILD_LIST","arg":0,"argrepr":"","line":2,"target":false,"argval":0,"code":null},{"offset":2,"op":"LOAD_FAST","arg":0,"argrepr":".0","line":null,"target":false,"argval":".0","code":null},{"offset":4,"op":"FOR_ITER","arg":4,"argrepr":"to 14","line":null,"target":true,"argval":14,"code":null},{"offset":6,"op":"STORE_FAST","arg":1,"argrepr":"i","line":null,"target":false,"argval":"i","code":null},{"offset":8,"op":"LOAD_FAST","arg":1,"argrepr":"i","line":null,"target":false,"argval":"i","code":null},{"offset":10,"op":"LIST_APPEND","arg":2,"argrepr":"","line":null,"target":false,"argval":2,"code":null},{"offset":12,"op":"JUMP_ABSOLUTE","arg":2,"argrepr":"to 4","line":null,"target":false,"argval":4,"code":null},{"offset":14,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":true,"argval":null,"code":null}],"children":[]}]}]}}}};
+const D314 = {"version":"3.14.3","text":{"add":"  1           RESUME                   0\n\n  2           LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (a, b)\n              BINARY_OP                0 (+)\n              RETURN_VALUE\n","if":"  1           RESUME                   0\n\n  2           LOAD_FAST_BORROW         0 (x)\n              LOAD_SMALL_INT           5\n              COMPARE_OP              88 (bool(==))\n              POP_JUMP_IF_FALSE        3 (to L1)\n              NOT_TAKEN\n\n  3           LOAD_CONST               1 (True)\n              RETURN_VALUE\n\n  5   L1:     LOAD_CONST               2 (False)\n              RETURN_VALUE\n","loop":"  1           RESUME                   0\n\n  2           LOAD_SMALL_INT           0\n              STORE_FAST               3 (result)\n\n  3           LOAD_GLOBAL              1 (range + NULL)\n              LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (start, end)\n              LOAD_FAST_BORROW         2 (increment)\n              CALL                     3\n              GET_ITER\n      L1:     FOR_ITER                11 (to L2)\n              STORE_FAST               4 (item)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 52 (result, item)\n              BINARY_OP               13 (+=)\n              STORE_FAST               3 (result)\n              JUMP_BACKWARD           13 (to L1)\n\n  3   L2:     END_FOR\n              POP_ITER\n\n  5           LOAD_FAST_BORROW         3 (result)\n              RETURN_VALUE\n","comp":"   1           RESUME                   0\n\n   2           LOAD_GLOBAL              1 (range + NULL)\n               LOAD_SMALL_INT           0\n               LOAD_SMALL_INT           3\n               CALL                     2\n               GET_ITER\n               LOAD_FAST_AND_CLEAR      0 (i)\n               SWAP                     2\n       L1:     BUILD_LIST               0\n               SWAP                     2\n       L2:     FOR_ITER                 4 (to L3)\n               STORE_FAST_LOAD_FAST     0 (i, i)\n               LIST_APPEND              2\n               JUMP_BACKWARD            6 (to L2)\n       L3:     END_FOR\n               POP_ITER\n       L4:     STORE_FAST               1 (x)\n               STORE_FAST               0 (i)\n\n   3           LOAD_FAST_BORROW         1 (x)\n               RETURN_VALUE\n\n  --   L5:     SWAP                     2\n               POP_TOP\n\n   2           SWAP                     2\n               STORE_FAST               0 (i)\n               RERAISE                  0\nExceptionTable:\n  L1 to L4 -> L5 [2]\n","is":"  1           RESUME                   0\n\n  2           LOAD_CONST               0 (257)\n              STORE_FAST               0 (two_hundred_fifty_seven)\n\n  3           LOAD_CONST               0 (257)\n              STORE_FAST               1 (two_hundred_fifty_seven_again)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (two_hundred_fifty_seven, two_hundred_fifty_seven_again)\n              IS_OP                    0 (is)\n              RETURN_VALUE\n","addAdaptive":"  1           RESUME_CHECK             0\n\n  2           LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (a, b)\n              BINARY_OP_ADD_INT        0 (+)\n              RETURN_VALUE\n","loopAdaptive":"  1           RESUME_CHECK             0\n\n  2           LOAD_SMALL_INT           0\n              STORE_FAST               3 (result)\n\n  3           LOAD_GLOBAL_BUILTIN      1 (range + NULL)\n              LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (start, end)\n              LOAD_FAST_BORROW         2 (increment)\n              CALL_BUILTIN_CLASS       3\n              GET_ITER\n      L1:     FOR_ITER_RANGE          11 (to L2)\n              STORE_FAST               4 (item)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 52 (result, item)\n              BINARY_OP_ADD_INT       13 (+=)\n              STORE_FAST               3 (result)\n              JUMP_BACKWARD_NO_JIT    13 (to L1)\n\n  3   L2:     END_FOR\n              POP_ITER\n\n  5           LOAD_FAST_BORROW         3 (result)\n              RETURN_VALUE\n"}};
+const CSRC = {"loadFast":[{"n":1858,"t":"        case TARGET(LOAD_FAST): {"},{"n":1859,"t":"            PyObject *value = GETLOCAL(oparg);"},{"n":1860,"t":"            if (value == NULL) {"},{"n":1861,"t":"                format_exc_check_arg(tstate, PyExc_UnboundLocalError,"},{"n":1862,"t":"                                     UNBOUNDLOCAL_ERROR_MSG,"},{"n":1863,"t":"                                     PyTuple_GetItem(co->co_varnames, oparg));"},{"n":1864,"t":"                goto error;"},{"n":1865,"t":"            }"},{"n":1866,"t":"            Py_INCREF(value);"},{"n":1867,"t":"            PUSH(value);"},{"n":1868,"t":"            DISPATCH();"},{"n":1869,"t":"        }"}],"loadName":[{"n":2894,"t":"        case TARGET(LOAD_NAME): {"},{"n":2895,"t":"            PyObject *name = GETITEM(names, oparg);"},{"n":2896,"t":"            PyObject *locals = f->f_locals;"},{"n":2897,"t":"            PyObject *v;"},{"n":2898,"t":"            if (locals == NULL) {"},{"n":2899,"t":"                _PyErr_Format(tstate, PyExc_SystemError,"},{"n":2900,"t":"                              \"no locals when loading %R\", name);"},{"n":2901,"t":"                goto error;"},{"n":2902,"t":"            }"},{"n":2903,"t":"            if (PyDict_CheckExact(locals)) {"},{"n":2904,"t":"                v = PyDict_GetItemWithError(locals, name);"},{"n":2905,"t":"                if (v != NULL) {"},{"n":2906,"t":"                    Py_INCREF(v);"},{"n":2907,"t":"                }"},{"n":2908,"t":"                else if (_PyErr_Occurred(tstate)) {"},{"n":2909,"t":"                    goto error;"},{"n":2910,"t":"                }"},{"n":2911,"t":"            }"},{"n":2912,"t":"            else {"},{"n":2913,"t":"                v = PyObject_GetItem(locals, name);"},{"n":2914,"t":"                if (v == NULL) {"},{"n":2915,"t":"                    if (!_PyErr_ExceptionMatches(tstate, PyExc_KeyError))"},{"n":2916,"t":"                        goto error;"},{"n":2917,"t":"                    _PyErr_Clear(tstate);"},{"n":2918,"t":"                }"},{"n":2919,"t":"            }"},{"n":2920,"t":"            if (v == NULL) {"},{"n":2921,"t":"                v = PyDict_GetItemWithError(f->f_globals, name);"},{"n":2922,"t":"                if (v != NULL) {"},{"n":2923,"t":"                    Py_INCREF(v);"},{"n":2924,"t":"                }"},{"n":2925,"t":"                else if (_PyErr_Occurred(tstate)) {"},{"n":2926,"t":"                    goto error;"},{"n":2927,"t":"                }"},{"n":2928,"t":"                else {"},{"n":2929,"t":"                    if (PyDict_CheckExact(f->f_builtins)) {"},{"n":2930,"t":"                        v = PyDict_GetItemWithError(f->f_builtins, name);"},{"n":2931,"t":"                        if (v == NULL) {"},{"n":2932,"t":"                            if (!_PyErr_Occurred(tstate)) {"},{"n":2933,"t":"                                format_exc_check_arg("},{"n":2934,"t":"                                        tstate, PyExc_NameError,"},{"n":2935,"t":"                                        NAME_ERROR_MSG, name);"},{"n":2936,"t":"                            }"},{"n":2937,"t":"                            goto error;"},{"n":2938,"t":"                        }"},{"n":2939,"t":"                        Py_INCREF(v);"},{"n":2940,"t":"                    }"},{"n":2941,"t":"                    else {"},{"n":2942,"t":"                        v = PyObject_GetItem(f->f_builtins, name);"},{"n":2943,"t":"                        if (v == NULL) {"},{"n":2944,"t":"                            if (_PyErr_ExceptionMatches(tstate, PyExc_KeyError)) {"},{"n":2945,"t":"                                format_exc_check_arg("},{"n":2946,"t":"                                            tstate, PyExc_NameError,"},{"n":2947,"t":"                                            NAME_ERROR_MSG, name);"},{"n":2948,"t":"                            }"},{"n":2949,"t":"                            goto error;"},{"n":2950,"t":"                        }"},{"n":2951,"t":"                    }"},{"n":2952,"t":"                }"},{"n":2953,"t":"            }"},{"n":2954,"t":"            PUSH(v);"},{"n":2955,"t":"            DISPATCH();"},{"n":2956,"t":"        }"}]};
+const STACK_DEMO = {"source": "import traceback\n\ndef add_three_numbers(a, b, c):\n    traceback.print_stack()\n    return a + b + c\n\ndef caller():\n    return add_three_numbers(1, 2, 3)\n\ncaller()\n", "output": "  File \"stack_demo.py\", line 10, in <module>\n    caller()\n  File \"stack_demo.py\", line 8, in caller\n    return add_three_numbers(1, 2, 3)\n  File \"stack_demo.py\", line 4, in add_three_numbers\n    traceback.print_stack()\n"};
+</script>
+<script>
+// A tiny Python 3.10 bytecode interpreter: just enough opcodes to run the
+// walkthrough programs, recording a snapshot of every frame after each instruction.
+function buildSteps(WALK, key, opts) {
+  "use strict";
+  const prog = WALK[key];
+
+  const findCode = (co, name) => {
+    if (co.name === name) return co;
+    for (const ch of co.children) {
+      const hit = findCode(ch, name);
+      if (hit) return hit;
+    }
+    return null;
+  };
+
+  // ---------- values ----------
+  const show = (v) => {
+    if (v === undefined) return "";
+    switch (v.t) {
+      case "int": return String(v.v);
+      case "bool": return v.v ? "True" : "False";
+      case "none": return "None";
+      case "str": return `'${v.v}'`;
+      case "code": return `<code ${v.name}>`;
+      case "func": return `<function ${v.name}>`;
+      case "class": return `<class '${v.name}'>`;
+      case "range": return v.step === 1 ? `range(${v.start}, ${v.stop})` : `range(${v.start}, ${v.stop}, ${v.step})`;
+      case "iter": return v.i < v.items.length ? `<range_iterator, next: ${show(v.items[v.i])}>` : "<range_iterator, empty>";
+      case "list": return `[${v.items.map(show).join(", ")}]`;
+    }
+    return "?";
+  };
+  const truthy = (v) => v.t === "bool" || v.t === "int" ? Boolean(v.v) : v.t !== "none";
+  const fromConst = (ins, co) => {
+    if (ins.code) return { t: "code", name: ins.code, co: findCode(co, ins.code) };
+    const a = ins.argval;
+    if (a === null) return { t: "none" };
+    if (typeof a === "boolean") return { t: "bool", v: a };
+    if (typeof a === "number") return { t: "int", v: a };
+    return { t: "str", v: a };
+  };
+  const BUILTINS = { range: { t: "class", name: "range" } };
+  const c = (s) => `<code>${String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")}</code>`;
+
+  // ---------- frames ----------
+  const newFrame = (co, args, isModule) => {
+    const fast = co.varnames.map((_, i) => args[i]);
+    return { co, ip: 0, fast, stack: [], isModule, names: isModule ? new Map() : null };
+  };
+  const ipOf = (co, offset) => co.instrs.findIndex((x) => x.offset === offset);
+
+  const root = prog.module;
+  let frames;
+  let start;
+  if (key === "add") {
+    frames = [newFrame(root, [], true)];
+    start = "The module's own code is about to run, starting at offset 0. Nothing has happened yet: not even the <code>def</code>.";
+  } else {
+    const fnName = root.children[0].name;
+    const fn = findCode(root, fnName);
+    const args = (opts.args || []).map((n) => ({ t: "int", v: n }));
+    frames = [newFrame(fn, args, false)];
+    const argText = fn.varnames.slice(0, args.length).map((n, i) => `${c(n)} = ${c(show(args[i]))}`).join(", ");
+    start = `We've just called ${c(`${fnName}(${(opts.args || []).join(", ")})`)}. Its frame is on the call stack with ${args.length ? `the arguments already in its slots: ${argText}` : "no arguments"}. The value stack is empty.`;
+  }
+
+  const snap = (ranFrameName, ranOffset, note, finished, result) => ({
+    note,
+    ran: ranFrameName === null ? null : { frame: ranFrameName, offset: ranOffset },
+    finished: !!finished,
+    result: result === undefined ? null : show(result),
+    frames: frames.map((f) => ({
+      name: f.co.name,
+      isModule: f.isModule,
+      next: f.ip < f.co.instrs.length ? f.co.instrs[f.ip].offset : null,
+      slots: f.co.varnames.map((n, i) => ({ name: n, value: show(f.fast[i]) })),
+      names: f.names ? [...f.names].map(([k, v]) => ({ name: k, value: show(v) })) : null,
+      stack: f.stack.map(show),
+    })),
+  });
+
+  const steps = [snap(null, null, start)];
+  let guard = 0;
+
+  while (frames.length && guard++ < 200) {
+    const f = frames[frames.length - 1];
+    const ins = f.co.instrs[f.ip];
+    const name = f.co.name;
+    f.ip += 1;
+    let note = "";
+    let finished = false;
+    let result;
+
+    switch (ins.op) {
+      case "LOAD_CONST": {
+        const v = fromConst(ins, f.co);
+        f.stack.push(v);
+        note = v.t === "code"
+          ? `Push constant ${ins.arg}: the code object for ${c(v.name)}. The compiler built it ahead of time; it's the function's body, already turned into bytecode.`
+          : `Push constant ${ins.arg}, ${c(show(v))}, from this code object's table of constants.`;
+        break;
+      }
+      case "LOAD_FAST": {
+        const n = f.co.varnames[ins.arg];
+        const v = f.fast[ins.arg];
+        f.stack.push(v);
+        note = `Copy slot ${ins.arg} (${c(n)}), which holds ${c(show(v))}, onto the stack. No looking anything up by name: the compiler already turned ${c(n)} into slot number ${ins.arg}.`;
+        if (n === ".0") note += ` (${c(".0")} is the comprehension's hidden argument, the iterator it loops over. It's a name you can't type, so it can't clash with yours.)`;
+        break;
+      }
+      case "STORE_FAST": {
+        const n = f.co.varnames[ins.arg];
+        const v = f.stack.pop();
+        f.fast[ins.arg] = v;
+        note = `Pop ${c(show(v))} off the stack and put it in slot ${ins.arg} (${c(n)}).`;
+        break;
+      }
+      case "LOAD_NAME": {
+        const v = f.names.get(ins.argval) || BUILTINS[ins.argval];
+        f.stack.push(v);
+        note = `Look up ${c(ins.argval)} <em>by name</em> in the module's dictionary. Found ${c(show(v))}; push it.`;
+        break;
+      }
+      case "STORE_NAME": {
+        const v = f.stack.pop();
+        f.names.set(ins.argval, v);
+        note = `Pop ${c(show(v))} and store it in the module's dictionary under the key ${c(`'${ins.argval}'`)}.`;
+        break;
+      }
+      case "LOAD_GLOBAL": {
+        const v = BUILTINS[ins.argval];
+        f.stack.push(v);
+        note = `${c(ins.argval)} isn't one of this function's slots, so look it up by name: first in the module's globals (not there), then in the builtins (found). Push the ${c(ins.argval)} class.`;
+        break;
+      }
+      case "MAKE_FUNCTION": {
+        const qual = f.stack.pop();
+        const code = f.stack.pop();
+        f.stack.push({ t: "func", name: code.name, co: code.co });
+        note = code.name === "<listcomp>"
+          ? `Pop the name ${c(show(qual))} and the code object and wrap them into a function object; push it. In Python 3.10, a list comprehension is a small function of its own.`
+          : `Pop the name and the code object and wrap them into a function object; push it. That's what ${c("def")} does, and it happens when this line runs, not before.`;
+        break;
+      }
+      case "CALL_FUNCTION": {
+        const args = f.stack.splice(f.stack.length - ins.arg, ins.arg);
+        const fn = f.stack.pop();
+        const argText = args.map((a) => c(show(a))).join(", ");
+        if (fn.t === "class" && fn.name === "range") {
+          const [s, e, st] = args.length === 1 ? [0, args[0].v, 1] : [args[0].v, args[1].v, args[2] ? args[2].v : 1];
+          const r = { t: "range", start: s, stop: e, step: st };
+          f.stack.push(r);
+          note = `Pop ${ins.arg} arguments (${argText}) and the callable under them, and call ${c(`range(${args.map(show).join(", ")})`)}. ${c("range")} is written in C, so it runs without a new frame; its result, ${c(show(r))}, goes straight onto this stack.`;
+        } else {
+          const callee = newFrame(fn.co, args, false);
+          frames.push(callee);
+          const slots = fn.co.varnames.slice(0, args.length).map((n, i) => `${c(n)} = ${c(show(args[i]))}`).join(", ");
+          note = `Pop ${ins.arg} argument${ins.arg === 1 ? "" : "s"} (${argText}) and the function under ${ins.arg === 1 ? "it" : "them"}. Calling a Python function <strong>pushes a new frame</strong> onto the call stack, with the arguments already in its slots (${slots}). ${c(name)} waits at offset ${f.co.instrs[f.ip].offset} until it returns.`;
+        }
+        break;
+      }
+      case "BINARY_ADD":
+      case "INPLACE_ADD": {
+        const r = f.stack.pop();
+        const l = f.stack.pop();
+        const v = { t: "int", v: l.v + r.v };
+        f.stack.push(v);
+        note = ins.op === "BINARY_ADD"
+          ? `Pop the top two values, ${c(show(r))} and ${c(show(l))}, add them, and push the sum, ${c(show(v))}.`
+          : `Pop the top two values and add them for ${c("+=")}: ${c(`${show(l)} + ${show(r)} = ${show(v)}`)}. Push ${c(show(v))}. Nothing is saved yet; the next instruction does that.`;
+        break;
+      }
+      case "COMPARE_OP": {
+        const r = f.stack.pop();
+        const l = f.stack.pop();
+        const v = { t: "bool", v: l.v === r.v };
+        f.stack.push(v);
+        note = `Pop ${c(show(r))} and ${c(show(l))}, compare them with ${c(ins.argrepr)}, and push the answer, ${c(show(v))}.`;
+        break;
+      }
+      case "POP_JUMP_IF_FALSE": {
+        const v = f.stack.pop();
+        if (!truthy(v)) {
+          f.ip = ipOf(f.co, ins.argval);
+          note = `Pop ${c(show(v))}. It's false, so <strong>jump</strong> to offset ${ins.argval}, skipping the instructions in between (the ${c("return True")} branch).`;
+        } else {
+          note = `Pop ${c(show(v))}. It's true, so <strong>don't jump</strong>: carry on to the next instruction, offset ${f.co.instrs[f.ip].offset}.`;
+        }
+        break;
+      }
+      case "GET_ITER": {
+        const r = f.stack.pop();
+        const items = [];
+        for (let x = r.start; r.step > 0 ? x < r.stop : x > r.stop; x += r.step) items.push({ t: "int", v: x });
+        f.stack.push({ t: "iter", items, i: 0 });
+        note = `Pop ${c(show(r))} and ask it for an iterator: an object that hands out one item at a time. Push the iterator.`;
+        break;
+      }
+      case "FOR_ITER": {
+        const it = f.stack[f.stack.length - 1];
+        if (it.i < it.items.length) {
+          const v = it.items[it.i++];
+          f.stack.push(v);
+          note = `Ask the iterator on top of the stack for its next item: ${c(show(v))}. Push it, and leave the iterator underneath for next time.`;
+        } else {
+          f.stack.pop();
+          f.ip = ipOf(f.co, ins.argval);
+          note = `The iterator is out of items. Pop it and <strong>jump</strong> to offset ${ins.argval}, past the end of the loop.`;
+        }
+        break;
+      }
+      case "JUMP_ABSOLUTE": {
+        f.ip = ipOf(f.co, ins.argval);
+        note = `<strong>Jump</strong> back to offset ${ins.argval}, the ${c("FOR_ITER")}, for the next item.`;
+        break;
+      }
+      case "BUILD_LIST": {
+        f.stack.push({ t: "list", items: [] });
+        note = `Push a new, empty list. The comprehension's values will go in here.`;
+        break;
+      }
+      case "LIST_APPEND": {
+        const v = f.stack.pop();
+        const list = f.stack[f.stack.length - ins.arg];
+        list.items.push(v);
+        note = `Pop ${c(show(v))} and append it to the list ${ins.arg} down the stack (under the iterator). The list is now ${c(show(list))}.`;
+        break;
+      }
+      case "RETURN_VALUE": {
+        const v = f.stack.pop();
+        frames.pop();
+        if (frames.length) {
+          const caller = frames[frames.length - 1];
+          caller.stack.push(v);
+          note = `Pop ${c(show(v))} and return it. This frame is finished, so it comes <strong>off the call stack</strong>, and ${c(show(v))} is pushed onto the stack of the frame that called it, ${c(caller.co.name)}, which picks up where it left off.`;
+        } else if (f.isModule) {
+          finished = true;
+          result = v;
+          note = `Every module's code ends by returning ${c("None")}, which nobody uses. The program is done.`;
+        } else {
+          finished = true;
+          result = v;
+          note = `Pop ${c(show(v))} and return it. The frame comes off the call stack, and ${c(show(v))} goes back to whoever called ${c(name)}.`;
+        }
+        break;
+      }
+      default:
+        throw new Error(`No simulation for ${ins.op}`);
+    }
+    steps.push(snap(name, ins.offset, note, finished, result));
+  }
+  return steps;
+}
+if (typeof module !== "undefined") module.exports = { buildSteps };
+
+</script>
+<script>
+(() => {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  // ---------- dis-style listings ----------
+  // Format one 3.10 instruction the way dis does (Instruction._disassemble).
+  const disLine = (ins, current) => {
+    const f = [];
+    f.push(ins.line != null ? String(ins.line).padStart(3) : "   ");
+    f.push(current ? "-->" : "   ");
+    f.push(ins.target ? ">>" : "  ");
+    f.push(String(ins.offset).padStart(4));
+    f.push(ins.op.padEnd(20));
+    if (ins.arg != null) {
+      f.push(String(ins.arg).padStart(5));
+      if (ins.argrepr) f.push(`(${ins.argrepr})`);
+    }
+    return f.join(" ").trimEnd();
+  };
+
+  // Static listings from dis text, with chosen opcodes (or tokens) highlighted.
+  const renderText = (el, text, marks = [], cls = "mark") => {
+    const re = marks.length ? new RegExp(`(${marks.map((m) => m.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})(?![A-Z_])`, "g") : null;
+    el.innerHTML = text.replace(/\n$/, "").split("\n").map((ln) => {
+      if (!ln.trim()) return `<span class="ln blank"></span>`;
+      if (/^(Disassembly of|ExceptionTable)/.test(ln)) return `<span class="ln hdr">${esc(ln)}</span>`;
+      let hit = false;
+      let html = esc(ln);
+      if (re) html = html.replace(re, (m) => { hit = true; return `<span class="tok">${m}</span>`; });
+      return `<span class="ln${hit ? " " + cls : ""}">${html}</span>`;
+    }).join("");
+  };
+
+  // ---------- anatomy of a dis line ----------
+  (() => {
+    const parts = [
+      { k: "line", t: "  5", label: "Source line", text: "Which line of your Python this instruction came from. Shown only on the first instruction of each line." },
+      { t: "     " },
+      { k: "target", t: ">>", label: "Jump target", text: "Some other instruction can jump here. Look for it: here, a POP_JUMP_IF_FALSE that says (to 12)." },
+      { t: "   " },
+      { k: "offset", t: "12", label: "Offset", text: "Where the instruction starts, in bytes from the start of the bytecode. In 3.10 every instruction is 2 bytes: one for the opcode, one for its argument." },
+      { t: " " },
+      { k: "op", t: "LOAD_CONST          ", label: "Instruction (opname)", text: "What to do. The primer below lists the common ones." },
+      { t: "     " },
+      { k: "arg", t: "3", label: "Argument", text: "A number the instruction uses, usually an index: here, constant number 3. For a jump in 3.10, the argument counts instructions, not bytes: 6 means byte 12." },
+      { t: " " },
+      { k: "repr", t: "(False)", label: "What the argument means", text: "dis looks the index up for you. Constant 3 in this code object is False." },
+    ];
+    const line = $("anatomy-line");
+    const keys = $("anatomy-keys");
+    line.innerHTML = parts.map((p) => p.k ? `<span data-k="${p.k}">${esc(p.t)}</span>` : esc(p.t)).join("");
+    keys.innerHTML = parts.filter((p) => p.k).map((p) => `<li data-k="${p.k}" tabindex="0"><b>${esc(p.t.trim())}</b><span><strong>${p.label}.</strong> ${esc(p.text)}</span></li>`).join("");
+    const light = (k) => {
+      document.querySelectorAll("#anatomy [data-k]").forEach((el) => el.classList.toggle("on", el.dataset.k === k));
+    };
+    document.querySelectorAll("#anatomy [data-k]").forEach((el) => {
+      el.addEventListener("mouseenter", () => light(el.dataset.k));
+      el.addEventListener("focus", () => light(el.dataset.k));
+      el.addEventListener("mouseleave", () => light(null));
+      el.addEventListener("blur", () => light(null));
+    });
+  })();
+
+  // ---------- walkthrough ----------
+  const PROGRAMS = [
+    { key: "add", label: "Call a function", src: "Notebook: The Stack" },
+    { key: "if", label: "An if", src: "Notebook: If", args: [[5], [7]] },
+    { key: "loop", label: "A for loop", src: "Notebook: Storing and loading names", args: [[1, 4, 1]] },
+    { key: "comp", label: "A list comprehension", src: "Notebook: compy(), with range(0, 3)" },
+  ];
+  let prog = PROGRAMS[0];
+  let argChoice = 0;
+  let steps = [];
+  let at = 0;
+  let timer = null;
+
+  const codeObjects = (root, key) => {
+    // The module comes first only when we step through the whole module.
+    const out = [];
+    const walk = (co) => { out.push(co); co.children.forEach(walk); };
+    if (key === "add") walk(root);
+    else root.children.forEach(walk);
+    return out;
+  };
+
+  const lineOf = (co, offset) => {
+    let line = null;
+    for (const ins of co.instrs) {
+      if (ins.line != null) line = ins.line;
+      if (ins.offset === offset) return line;
+    }
+    return null;
+  };
+
+  const renderProgramButtons = () => {
+    $("prog").innerHTML = PROGRAMS.map((p, i) => `<button type="button" data-i="${i}" aria-pressed="${p === prog}">${esc(p.label)}</button>`).join("");
+    const argEl = $("arg");
+    if (prog.args && prog.args.length > 1) {
+      argEl.hidden = false;
+      argEl.innerHTML = prog.args.map((a, i) => `<button type="button" data-i="${i}" aria-pressed="${i === argChoice}"><code>x = ${a.join(", ")}</code></button>`).join("");
+    } else {
+      argEl.hidden = true;
+      argEl.innerHTML = "";
+    }
+  };
+
+  const load = () => {
+    stop();
+    const args = prog.args ? prog.args[argChoice] : [];
+    steps = buildSteps(D310.walk, prog.key, { args });
+    at = 0;
+    $("scrub").max = steps.length - 1;
+    renderProgramButtons();
+    const callText = prog.key === "add" ? "the whole module" : prog.key === "if" ? `equals_five(${args.join(", ")})` : prog.key === "loop" ? `looping_sum(${args.join(", ")})` : "compy()";
+    $("src-note").textContent = `${prog.src} · running ${callText}`;
+    render(true);
+  };
+
+  const render = (fresh) => {
+    const s = steps[at];
+    const prev = at > 0 ? steps[at - 1] : null;
+    const W = D310.walk[prog.key];
+
+    // source, with the line that just ran
+    const cos = codeObjects(W.module, prog.key);
+    const ranCo = s.ran ? cos.find((co) => co.name === s.ran.frame) : null;
+    const ranLine = ranCo ? lineOf(ranCo, s.ran.offset) : null;
+    $("src").innerHTML = W.source.replace(/\n$/, "").split("\n").map((t, i) =>
+      `<span class="ln${ranLine === i + 1 ? " hot" : ""}"><span class="n">${String(i + 1).padStart(2)}</span>  ${esc(t)}</span>`).join("");
+
+    // bytecode, every code object in the program
+    const top = s.frames.length ? s.frames[s.frames.length - 1] : null;
+    const html = [];
+    cos.forEach((co, ci) => {
+      const label = co.name === "<module>" ? "the module" : `<code object ${co.name}>`;
+      if (ci > 0 || prog.key === "add") html.push(`<span class="ln hdr">${ci === 0 ? "The module's own code:" : `Disassembly of ${esc(label)}:`}</span>`);
+      let lastLine = null;
+      co.instrs.forEach((ins, ii) => {
+        if (ins.line != null && ii > 0 && ins.line !== lastLine) html.push(`<span class="ln blank"></span>`);
+        if (ins.line != null) lastLine = ins.line;
+        const isRan = s.ran && s.ran.frame === co.name && s.ran.offset === ins.offset;
+        const isNext = top && !s.finished && top.name === co.name && top.next === ins.offset;
+        const active = s.frames.some((f) => f.name === co.name) || isRan;
+        html.push(`<span class="ln${isRan ? " hot" : ""}${isNext ? " next" : ""}${active ? "" : " dim"}">${esc(disLine(ins, isRan))}</span>`);
+      });
+      if (ci < cos.length - 1) html.push(`<span class="ln blank"></span>`);
+    });
+    $("bytecode").innerHTML = html.join("");
+
+    // what just happened
+    const ranIns = s.ran && ranCo ? ranCo.instrs.find((x) => x.offset === s.ran.offset) : null;
+    const now = $("now");
+    now.classList.toggle("done", s.finished);
+    now.innerHTML = ranIns
+      ? `<span class="op">${esc(ranIns.op)}${ranIns.argrepr ? " " + esc(ranIns.argrepr) : ranIns.arg != null ? " " + ranIns.arg : ""}</span><span>${s.note}</span>`
+      : `<span class="op">Ready</span><span>${s.note}</span>`;
+
+    // call stack, top frame first
+    const framesEl = $("frames");
+    if (!s.frames.length) {
+      framesEl.innerHTML = `<div class="frame waiting"><div class="fh"><b>(empty)</b><span>every frame has returned</span></div></div>`;
+    } else {
+      framesEl.innerHTML = s.frames.slice().reverse().map((f, ri) => {
+        const idx = s.frames.length - 1 - ri;
+        const pf = prev && prev.frames[idx] && prev.frames[idx].name === f.name ? prev.frames[idx] : null;
+        const isTop = ri === 0;
+        const isNewFrame = !pf && at > 0;
+        const status = isTop ? (s.finished ? "returning" : `running · next: offset ${f.next}`) : `waiting at offset ${f.next}`;
+        const rows = f.isModule
+          ? (f.names.length
+            ? f.names.map((n) => {
+              const old = pf && pf.names.find((x) => x.name === n.name);
+              return `<tr><td class="k">${esc(n.name)}</td><td class="v${!old || old.value !== n.value ? " flash" : ""}">${esc(n.value)}</td></tr>`;
+            }).join("")
+            : `<tr><td class="v empty" colspan="2"></td></tr>`)
+          : f.slots.map((sl, i) => {
+            const changed = pf && pf.slots[i].value !== sl.value;
+            return `<tr><td class="i">${i}</td><td class="k">${esc(sl.name)}</td><td class="v${sl.value ? "" : " empty"}${changed ? " flash" : ""}">${esc(sl.value)}</td></tr>`;
+          }).join("");
+        const pushed = pf && f.stack.length > pf.stack.length;
+        const stack = f.stack.length
+          ? f.stack.map((v, i) => `<div class="item${i === f.stack.length - 1 ? " top" : ""}${pushed && i === f.stack.length - 1 ? " fresh" : ""}">${esc(v)}</div>`).join("")
+          : `<div class="empty">empty</div>`;
+        return `<div class="frame${isTop ? "" : " waiting"}${isNewFrame && isTop && !fresh ? " fresh" : ""}">
+          <div class="fh"><b>${esc(f.name)}</b><span>${esc(status)}</span></div>
+          <div class="body">
+            <div><h4>${f.isModule ? "Names (module dictionary)" : "Slots (local variables)"}</h4><table class="slots"><tbody>${rows}</tbody></table></div>
+            <div><h4>Value stack</h4><div class="vstack">${stack}</div></div>
+          </div>
+        </div>`;
+      }).join("");
+    }
+    $("result").textContent = s.finished && s.result !== null && prog.key !== "add" ? `returned ${s.result}` : "";
+
+    // the running log
+    const log = $("log");
+    log.innerHTML = steps.slice(1, at + 1).map((st, i) => {
+      const co = cos.find((c) => c.name === st.ran.frame);
+      const ins = co.instrs.find((x) => x.offset === st.ran.offset);
+      return `<li class="${i === at - 1 ? "cur" : ""}"><span class="op">${esc(ins.op)}</span> ${st.note}</li>`;
+    }).join("");
+    log.scrollTop = log.scrollHeight;
+
+    $("count").textContent = `step ${at} of ${steps.length - 1}`;
+    $("scrub").value = at;
+    $("back").disabled = at === 0;
+    $("next").disabled = at === steps.length - 1;
+    $("play").textContent = timer ? "Pause" : "Play";
+  };
+
+  const go = (i) => { at = Math.max(0, Math.min(steps.length - 1, i)); render(false); };
+  const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+  const play = () => {
+    if (timer) { stop(); render(false); return; }
+    if (at === steps.length - 1) at = 0;
+    timer = setInterval(() => {
+      if (at >= steps.length - 1) { stop(); render(false); return; }
+      go(at + 1);
+    }, 1100);
+    render(false);
+  };
+
+  $("prog").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    prog = PROGRAMS[+b.dataset.i];
+    argChoice = 0;
+    load();
+  });
+  $("arg").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    argChoice = +b.dataset.i;
+    load();
+  });
+  $("next").addEventListener("click", () => { stop(); go(at + 1); });
+  $("back").addEventListener("click", () => { stop(); go(at - 1); });
+  $("restart").addEventListener("click", () => { stop(); go(0); });
+  $("play").addEventListener("click", play);
+  $("scrub").addEventListener("input", (e) => { stop(); go(+e.target.value); });
+  $("walk").addEventListener("keydown", (e) => {
+    if (e.target.matches("input")) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); stop(); go(at + 1); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); stop(); go(at - 1); }
+  });
+  load();
+
+  // ---------- LOAD_FAST vs LOAD_NAME ----------
+  renderText($("fast-fn"), D310.text.loop, ["LOAD_FAST", "STORE_FAST", "LOAD_GLOBAL"]);
+  renderText($("fast-mod"), D310.text.moduleLoop, ["LOAD_NAME", "STORE_NAME"]);
+  $("timing").innerHTML = [
+    ["Inside a function", "0.24 s", "LOAD_FAST / STORE_FAST"],
+    ["At module level", "0.48 s", "LOAD_NAME / STORE_NAME"],
+    ["Slowdown", "2×", "same loop, same machine"],
+  ].map(([l, b, s]) => `<div class="stat"><span class="label">${l}</span><span class="big">${b}</span><span class="sub">${s}</span></div>`).join("");
+
+  const renderC = (el, snip) => {
+    el.innerHTML = snip.map((row) => row.gap
+      ? `<span class="ln gap"><span class="n"></span><span class="t">    …</span></span>`
+      : `<span class="ln${row.mark ? " mark" : ""}"><a class="n" href="https://github.com/python/cpython/blob/v3.10.8/Python/ceval.c#L${row.n}" target="_blank" rel="noopener">${row.n}</a><span class="t">${esc(row.t)}</span></span>`).join("");
+  };
+  renderC($("c-fast"), CSRC.loadFast);
+  renderC($("c-name"), CSRC.loadName);
+
+  $("stack-src").textContent = STACK_DEMO.source;
+  $("stack-out").textContent = STACK_DEMO.output;
+
+  // ---------- is ----------
+  renderText($("is-dis"), D310.text.is, ["(257)"]);
+
+  // ---------- primer ----------
+  const SEEN = new Set(["LOAD_CONST", "LOAD_FAST", "STORE_FAST", "LOAD_NAME", "STORE_NAME", "LOAD_GLOBAL", "MAKE_FUNCTION",
+    "CALL_FUNCTION", "RETURN_VALUE", "BINARY_ADD", "INPLACE_ADD", "COMPARE_OP", "POP_JUMP_IF_FALSE", "GET_ITER", "FOR_ITER",
+    "JUMP_ABSOLUTE", "BUILD_LIST", "LIST_APPEND"]);
+  const PRIMER = [
+    { group: "Loading and storing", ops: [
+      { op: "LOAD_CONST", eff: "… → … value", d: "Push a constant from the code object's table of constants. The argument is its index.", n: "3.14 uses <b>LOAD_SMALL_INT</b> for ints from 0 to 255, putting the number right in the argument." },
+      { op: "LOAD_FAST", eff: "… → … value", d: "Push a local variable. The argument is its slot number, chosen by the compiler. No name lookup at all.", n: "3.13 can fuse two into <b>LOAD_FAST_LOAD_FAST</b>. 3.14 often uses <b>LOAD_FAST_BORROW</b>, which skips updating the object's reference count when it's safe to." },
+      { op: "STORE_FAST", eff: "… value → …", d: "Pop the top of the stack into a local variable's slot.", n: "Same name. 3.13 can fuse it with a load: <b>STORE_FAST_LOAD_FAST</b>." },
+      { op: "LOAD_NAME", eff: "… → … value", d: "Push a variable by looking up its name: the local dictionary, then globals, then builtins. Used by module-level code and class bodies.", n: "Same name." },
+      { op: "STORE_NAME", eff: "… value → …", d: "Pop the top of the stack and store it in the local dictionary under a name.", n: "Same name." },
+      { op: "LOAD_GLOBAL", eff: "… → … value", d: "Inside a function, push a name that isn't local, like range or another function: globals, then builtins.", n: "3.11+ can also push a NULL for the call that follows; dis shows <b>(range + NULL)</b>." },
+      { op: "LOAD_DEREF", eff: "… → … value", d: "Push a variable that belongs to an enclosing function (a closure), through the 'cell' object that holds it.", n: "Same name." },
+      { op: "LOAD_ATTR", eff: "… obj → … obj.name", d: "Pop an object, push one of its attributes. Can check the instance, its class, and every parent class.", n: "Same name. 3.12+ also does method loading (see LOAD_METHOD)." },
+      { op: "POP_TOP", eff: "… value → …", d: "Throw away the top of the stack. Shows up after an expression whose result nobody uses, like a call on a line by itself.", n: "Same name." },
+    ] },
+    { group: "Math and comparisons", ops: [
+      { op: "BINARY_ADD", eff: "… a, b → … a+b", d: "Pop two values, add them, push the result. There's one of these for each operator: BINARY_SUBTRACT, BINARY_MULTIPLY, and so on.", n: "3.11+: <b>BINARY_OP</b>, one instruction for every operator, with the operator in its argument: <b>BINARY_OP 0 (+)</b>." },
+      { op: "INPLACE_ADD", eff: "… a, b → … a+=b", d: "The += version. For mutable things like lists it changes a in place; for ints and strings it makes a new object. The next instruction stores the result.", n: "3.11+: <b>BINARY_OP 13 (+=)</b>." },
+      { op: "COMPARE_OP", eff: "… a, b → … a<op>b", d: "Pop two values, compare them, push True or False. The argument picks the comparison: ==, <, >=, and so on.", n: "Same name. In 3.13+, the argument can also say 'turn the result into a bool,' shown as <b>bool(==)</b>." },
+      { op: "IS_OP", eff: "… a, b → … a is b", d: "Pop two values and push whether they're the same object. With argument 1 it's is not.", n: "Same name." },
+      { op: "CONTAINS_OP", eff: "… a, b → … a in b", d: "Pop two values and push whether a is in b. With argument 1 it's not in.", n: "Same name." },
+    ] },
+    { group: "Jumps and loops", ops: [
+      { op: "POP_JUMP_IF_FALSE", eff: "… value → …", d: "Pop a value. If it's false, jump to the target; otherwise carry on. This is how if works.", n: "Same name (3.11 briefly split it into forward and backward versions). 3.14 follows it with <b>NOT_TAKEN</b>, which does nothing but mark the branch for debuggers." },
+      { op: "JUMP_FORWARD", eff: "(no change)", d: "Skip ahead past some instructions. Shows up when an if has to jump over its else.", n: "Same name." },
+      { op: "JUMP_ABSOLUTE", eff: "(no change)", d: "Jump to an exact offset. In a loop, it's the jump back to the top.", n: "3.11+: <b>JUMP_BACKWARD</b>, which counts backward from where it is." },
+      { op: "GET_ITER", eff: "… obj → … iter(obj)", d: "Pop something you can loop over and push an iterator for it. Every for loop starts with one.", n: "Same name." },
+      { op: "FOR_ITER", eff: "… iter → … iter, item", d: "Ask the iterator on top for its next item and push it. When it runs out, pop the iterator and jump past the loop.", n: "Same name. 3.12+ ends loops with <b>END_FOR</b>, and 3.14 adds <b>POP_ITER</b>." },
+    ] },
+    { group: "Functions and calls", ops: [
+      { op: "MAKE_FUNCTION", eff: "… code, name → … function", d: "Pop a code object and a name and build a function object. This is what def does when its line runs.", n: "3.11+ no longer pushes the name first; the code object carries it." },
+      { op: "CALL_FUNCTION", eff: "… f, arg1, …, argN → … result", d: "Pop N arguments and the function under them, and call it. A Python function gets a new frame on the call stack; a built-in one, written in C, doesn't.", n: "3.11+: <b>CALL</b>." },
+      { op: "LOAD_METHOD", eff: "… obj → … method, obj", d: "Like LOAD_ATTR, for obj.method() calls. Skips building a 'bound method' object.", n: "3.12+: folded into <b>LOAD_ATTR</b>." },
+      { op: "CALL_METHOD", eff: "… method, obj, args → … result", d: "Call a method loaded by LOAD_METHOD.", n: "3.11+: <b>CALL</b>." },
+      { op: "RETURN_VALUE", eff: "… value → (frame ends)", d: "Pop the top of the stack and return it. The frame comes off the call stack and the value is pushed onto the caller's stack.", n: "Same name. 3.12 and 3.13 also had <b>RETURN_CONST</b> for returning a constant directly; 3.14 removed it again." },
+    ] },
+    { group: "Building things", ops: [
+      { op: "BUILD_LIST", eff: "… item1, …, itemN → … [items]", d: "Pop N items and push a new list of them. With 0, it pushes an empty list.", n: "Same name." },
+      { op: "LIST_APPEND", eff: "… list, …, value → … list, …", d: "Pop a value and append it to a list further down the stack. List comprehensions use it.", n: "Same name." },
+      { op: "BUILD_TUPLE", eff: "… item1, …, itemN → … (items)", d: "Pop N items and push a tuple of them. Also BUILD_MAP for dicts and BUILD_SET for sets.", n: "Same name." },
+    ] },
+    { group: "Only in 3.11 and later", ops: [
+      { op: "RESUME", eff: "(no change)", d: "The first instruction of every function. The interpreter uses it to check for things like tracing and interrupts when a frame starts or resumes.", n: "3.11+." },
+      { op: "BINARY_OP", eff: "… a, b → … a<op>b", d: "One instruction for every binary operator; the argument says which. Replaced BINARY_ADD, INPLACE_ADD, and the rest.", n: "3.11+." },
+      { op: "CALL", eff: "… f, NULL/self, args → … result", d: "One instruction for every kind of call. Replaced CALL_FUNCTION and CALL_METHOD.", n: "3.11+." },
+      { op: "TO_BOOL", eff: "… value → … bool(value)", d: "Turn the top of the stack into True or False, before a jump that needs one.", n: "3.13+." },
+    ] },
+  ];
+  const primerEl = $("primer");
+  const renderPrimer = (q) => {
+    const query = q.trim().toUpperCase();
+    let hits = 0;
+    primerEl.innerHTML = PRIMER.map((g) => {
+      const ops = g.ops.filter((o) => !query || o.op.includes(query) || o.d.toUpperCase().includes(query) || o.n.toUpperCase().includes(query));
+      hits += ops.length;
+      if (!ops.length) return "";
+      return `<div><h3>${esc(g.group)}</h3></div><div class="ops">${ops.map((o) =>
+        `<div class="op-card${SEEN.has(o.op) ? " seen" : ""}"><span class="nm">${o.op}</span><span class="eff">${esc(o.eff)}</span><span>${esc(o.d)}</span><span class="newer">${o.n}</span></div>`).join("")}</div>`;
+    }).join("") || `<p class="no-hits">No instruction matches “${esc(q)}”.</p>`;
+  };
+  $("op-filter").addEventListener("input", (e) => renderPrimer(e.target.value));
+  renderPrimer("");
+
+  // ---------- 3.10 vs 3.14 ----------
+  const NEW = ["RESUME", "LOAD_FAST_BORROW_LOAD_FAST_BORROW", "LOAD_FAST_BORROW", "LOAD_SMALL_INT", "NOT_TAKEN", "BINARY_OP",
+    "CALL", "JUMP_BACKWARD", "END_FOR", "POP_ITER", "LOAD_FAST_AND_CLEAR", "SWAP", "STORE_FAST_LOAD_FAST", "RERAISE", "bool(==)", "+ NULL"];
+  const CMP = [
+    { key: "add", label: "add_two_numbers" },
+    { key: "if", label: "equals_five" },
+    { key: "loop", label: "looping_sum" },
+    { key: "comp", label: "compy" },
+  ];
+  const DIFFS = {
+    add: [
+      ["RESUME", "3.11+", "Every function now starts with it. It's where the interpreter checks for tracing and interrupts as a frame starts. Does nothing to the stack."],
+      ["LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (a, b)", "3.13+ / 3.14", "Two loads fused into one instruction, a <em>superinstruction</em>: one trip through the loop instead of two. The argument packs both slot numbers. BORROW means it skips the reference-count bookkeeping."],
+      ["BINARY_OP 0 (+)", "3.11+", "One instruction for every operator. The argument says which one: 0 is +."],
+      ["No byte offsets", "3.13+", "dis hides the offsets now. Pass show_offsets=True to see them."],
+    ],
+    if: [
+      ["LOAD_SMALL_INT 5", "3.14", "Small ints go straight in the argument, so there's no trip to the constants table."],
+      ["COMPARE_OP 88 (bool(==))", "3.13+", "The argument encodes the comparison <em>and</em> 'make sure the result is a real bool,' so the jump after it can trust it."],
+      ["POP_JUMP_IF_FALSE 3 (to L1)", "3.12+ / 3.13+", "The argument is now a relative distance, counted in instructions (3.12+), and dis names jump targets with labels like L1 instead of offsets (3.13+)."],
+      ["NOT_TAKEN", "3.14", "Does nothing. It marks the path where the jump wasn't taken, so tools like coverage can see which way each branch went."],
+    ],
+    loop: [
+      ["LOAD_GLOBAL 1 (range + NULL)", "3.11+", "Pushes range and an empty placeholder that the call convention expects in the 'self' position."],
+      ["CALL 3", "3.11+", "Replaces CALL_FUNCTION and CALL_METHOD."],
+      ["BINARY_OP 13 (+=)", "3.11+", "INPLACE_ADD became BINARY_OP with argument 13."],
+      ["JUMP_BACKWARD 13 (to L1)", "3.11+", "Replaces JUMP_ABSOLUTE. Backward jumps are also where the interpreter checks for interrupts like Ctrl-C."],
+      ["END_FOR, POP_ITER", "3.12+ / 3.14", "Cleanup when the loop finishes, split out of FOR_ITER."],
+    ],
+    comp: [
+      ["No <listcomp> code object", "3.12+", "The comprehension is <em>inlined</em> (PEP 709): no separate function, no extra frame, no MAKE_FUNCTION or call. In the step-through, 3.10 pushes a whole new frame for it."],
+      ["LOAD_FAST_AND_CLEAR, SWAP, STORE_FAST 0 (i)", "3.12+", "Saves any i you already had and puts it back afterward, so the comprehension's i still doesn't leak out. Same behavior as 3.10, no frame needed."],
+      ["ExceptionTable, RERAISE", "3.11+", "If something goes wrong mid-comprehension, this table says where to jump to restore i. On the normal path it costs nothing: no instructions run for it."],
+    ],
+  };
+  let cmp = CMP[0];
+  const renderCmp = () => {
+    $("cmp").innerHTML = CMP.map((c, i) => `<button type="button" data-i="${i}" aria-pressed="${c === cmp}"><code>${c.label}</code></button>`).join("");
+    renderText($("cmp-old"), D310.text[cmp.key]);
+    renderText($("cmp-new"), D314.text[cmp.key], NEW, "new");
+    const countOps = (t) => t.split("\n").filter((l) => !/^(Disassembly|ExceptionTable)/.test(l) && /\b[A-Z][A-Z_]{3,}\b/.test(l)).length;
+    const n310 = countOps(D310.text[cmp.key]);
+    const n314 = countOps(D314.text[cmp.key]);
+    $("cmp-count").textContent = `${n314} instructions (3.10: ${n310})`;
+    $("diffs").innerHTML = DIFFS[cmp.key].map(([t, when, d]) =>
+      `<div class="card"><b>${esc(t)}</b><span class="when">${esc(when)}</span><span>${d}</span></div>`).join("");
+  };
+  $("cmp").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    cmp = CMP[+b.dataset.i];
+    renderCmp();
+  });
+  renderCmp();
+
+  renderText($("ad-old"), D314.text.loop);
+  renderText($("ad-new"), D314.text.loopAdaptive, ["LOAD_GLOBAL_BUILTIN", "CALL_BUILTIN_CLASS", "FOR_ITER_RANGE", "BINARY_OP_ADD_INT", "RESUME_CHECK", "JUMP_BACKWARD_NO_JIT"], "new");
+})();
+</script>
+</body>
+</html>
