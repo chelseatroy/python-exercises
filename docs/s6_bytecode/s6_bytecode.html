@@ -352,6 +352,29 @@ while True:
       <p>Each frame also has <strong>slots</strong> for its local variables, and remembers which instruction it's on.</p>
     </div>
 
+    <h3 id="codeobj-h">What's a code object?</h3>
+    <div class="prose">
+      <p>The compiler turns every block of code into a <strong>code object</strong>. The whole module gets one, and so does every function body (and, in 3.10, every list comprehension). A code object is data. It doesn't run by itself. It holds the bytecode as bytes, a table of constants that the bytecode refers to by number, and the names of its local variables. Here's the step-through's first program, compiled by hand so you can look inside:</p>
+    </div>
+    <div class="cells">
+      <div class="code-panel">
+        <div class="code-head"><span>Python 3.10.8</span></div>
+        <div class="code src" id="codeobj-src"></div>
+      </div>
+      <div class="code-panel">
+        <div class="code-head"><span>Output</span></div>
+        <div class="code" id="codeobj-out"></div>
+      </div>
+    </div>
+    <div class="prose">
+      <ul>
+        <li><strong>Line 8</strong> prints the module's table of constants. Entry 0 is a whole code object: the body of <code>add_two_numbers</code>, compiled before any of the module runs. Entry 1 is just a string, the function's name. Entries 2 and 3 are the arguments in <code>add_two_numbers(2, 3)</code>, and <code>None</code> is what the module returns when it finishes. (The address after <code>at</code> is different every time you run it.)</li>
+        <li><strong>Lines 11 to 13</strong> look inside that code object: its name, its slots (<code>a</code> and <code>b</code>), and its bytecode. Those 8 bytes are the 4 instructions <code>dis</code> shows, two bytes each: an opcode, then its argument. <code>|</code> is 124, <code>LOAD_FAST</code>; <code>\x17</code> is 23, <code>BINARY_ADD</code>; <code>S</code> is 83, <code>RETURN_VALUE</code>.</li>
+        <li><strong>Line 16</strong>: running the module made a function, and that function's <code>__code__</code> is the very same code object.</li>
+      </ul>
+      <p>So in the step-through, the module's first two instructions are the <em>same</em> instruction, <code>LOAD_CONST</code>, reading two different entries from that table. <code>LOAD_CONST</code> doesn't care what an entry is: a number, a string, or a whole code object. Next, <code>MAKE_FUNCTION</code> pops both and builds a function from them. You can't call a code object. A function is a code object plus what it needs at run time, like its name and the module's globals it looks names up in. That's why the function only exists once the <code>def</code> line runs.</p>
+    </div>
+
     <h3>How to read one line of <code>dis</code> output</h3>
     <div class="anatomy" id="anatomy">
       <div class="line" id="anatomy-line" aria-hidden="true"></div>
@@ -604,6 +627,8 @@ const CSRC = {"loadFast":[{"n":1858,"t":"        case TARGET(LOAD_FAST): {"},{"n
 const STACK_DEMO = {"source": "import traceback\n\ndef add_three_numbers(a, b, c):\n    traceback.print_stack(limit=3)  # just the 3 newest frames, not IPython's own\n    return a + b + c\n\ndef caller():\n    return add_three_numbers(1, 2, 3)\n\ncaller()", "output": "  File \"stack_demo.py\", line 10, in <module>\n    caller()\n  File \"stack_demo.py\", line 8, in caller\n    return add_three_numbers(1, 2, 3)\n  File \"stack_demo.py\", line 4, in add_three_numbers\n    traceback.print_stack(limit=3)  # just the 3 newest frames, not IPython's own\n"};
 // The notebook's own cells, by index, with what they print in Jupyter under Python 3.10.8.
 const NB = {"2": {"src": "dis.dis(\"1+1\")", "out": "  1           0 LOAD_CONST               0 (2)\n              2 RETURN_VALUE\n"}, "3": {"src": "def add_ones():\n    return 1 + 1\n\ndis.dis(add_ones)", "out": "  2           0 LOAD_CONST               1 (2)\n              2 RETURN_VALUE\n"}, "9": {"src": "def looping_sum(start, end, increment):\n    result = 0\n    for item in range(start, end, increment):\n        result += item\n    return result\n\ndis.dis(looping_sum)", "out": "  2           0 LOAD_CONST               1 (0)\n              2 STORE_FAST               3 (result)\n  3           4 LOAD_GLOBAL              0 (range)\n              6 LOAD_FAST                0 (start)\n              8 LOAD_FAST                1 (end)\n             10 LOAD_FAST                2 (increment)\n             12 CALL_FUNCTION            3\n             14 GET_ITER\n        >>   16 FOR_ITER                 6 (to 30)\n             18 STORE_FAST               4 (item)\n  4          20 LOAD_FAST                3 (result)\n             22 LOAD_FAST                4 (item)\n             24 INPLACE_ADD\n             26 STORE_FAST               3 (result)\n             28 JUMP_ABSOLUTE            8 (to 16)\n  5     >>   30 LOAD_FAST                3 (result)\n             32 RETURN_VALUE\n"}, "10": {"src": "dis.dis(\n\"\"\"\nresult = 0\nfor item in range(start, end, increment):\n    result += item\n\"\"\"\n)", "out": "  2           0 LOAD_CONST               0 (0)\n              2 STORE_NAME               0 (result)\n  3           4 LOAD_NAME                1 (range)\n              6 LOAD_NAME                2 (start)\n              8 LOAD_NAME                3 (end)\n             10 LOAD_NAME                4 (increment)\n             12 CALL_FUNCTION            3\n             14 GET_ITER\n        >>   16 FOR_ITER                 6 (to 30)\n             18 STORE_NAME               5 (item)\n  4          20 LOAD_NAME                0 (result)\n             22 LOAD_NAME                5 (item)\n             24 INPLACE_ADD\n             26 STORE_NAME               0 (result)\n             28 JUMP_ABSOLUTE            8 (to 16)\n  3     >>   30 LOAD_CONST               1 (None)\n             32 RETURN_VALUE\n"}, "16": {"src": "def notebook_is():\n    two_hundred_fifty_seven = 257\n    two_hundred_fifty_seven_again = 257\n    return two_hundred_fifty_seven is two_hundred_fifty_seven_again", "out": ""}, "17": {"src": "notebook_is()", "out": "True\n"}, "19": {"src": "\ntwo_hundred_fifty_seven = 257\ntwo_hundred_fifty_seven_again = 257\n\ntwo_hundred_fifty_seven is two_hundred_fifty_seven_again\n", "out": "False\n"}, "11": {"src": "import time\n\nstart = time.perf_counter()\nlooping_sum(1, 10000000, 1)\nend = time.perf_counter()\n\nprint(end - start)", "out": ""}, "12": {"src": "import time\n\nstart = time.perf_counter()\nresult = 0\nfor item in range(1, 10000000, 1):\n    result += item\nprint(result)\nend = time.perf_counter()\n\nprint(end - start)", "out": ""}};
+// A code object up close, run in Python 3.10.8.
+const CODEOBJ = {"source": "source = \"\"\"\ndef add_two_numbers(a, b):\n    return a + b\n\ntotal = add_two_numbers(2, 3)\n\"\"\"\nmodule_code = compile(source, \"<module>\", \"exec\")\nprint(module_code.co_consts)\n\nfunction_code = module_code.co_consts[0]\nprint(function_code.co_name)\nprint(function_code.co_varnames)\nprint(function_code.co_code)\n\nexec(module_code)\nprint(add_two_numbers.__code__ is function_code)\n", "output": "(<code object add_two_numbers at 0x104cf5210, file \"<module>\", line 2>, 'add_two_numbers', 2, 3, None)\nadd_two_numbers\n('a', 'b')\nb'|\\x00|\\x01\\x17\\x00S\\x00'\nTrue\n"};
 </script>
 <script>
 // A tiny Python 3.10 bytecode interpreter: just enough opcodes to run the
@@ -702,10 +727,13 @@ function buildSteps(WALK, key, opts) {
     switch (ins.op) {
       case "LOAD_CONST": {
         const v = fromConst(ins, f.co);
+        const afterCode = f.stack.length && f.stack[f.stack.length - 1].t === "code";
         f.stack.push(v);
         note = v.t === "code"
-          ? `Push constant ${ins.arg}: the code object for ${c(v.name)}. The compiler built it ahead of time; it's the function's body, already turned into bytecode.`
-          : `Push constant ${ins.arg}, ${c(show(v))}, from this code object's table of constants.`;
+          ? `Push constant ${ins.arg}, which is a whole <a href="#codeobj-h">code object</a>: the body of ${c(v.name)}, compiled to bytecode before any of this ran. ${c("LOAD_CONST")} doesn't care what kind of value an entry in the table is.`
+          : afterCode
+            ? `Push constant ${ins.arg}, the string ${c(show(v))}. This is the same instruction as the last step, reading the next entry in the same table. ${c("MAKE_FUNCTION")} needs both: the code object, and the name to give the function.`
+            : `Push constant ${ins.arg}, ${c(show(v))}, from this code object's table of constants.`;
         break;
       }
       case "LOAD_FAST": {
@@ -922,6 +950,8 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     { cell: 2, head: "Notebook cell: a string", note: "no addition" },
     { cell: 3, head: "Notebook cell: a function", note: "no addition" },
   ]);
+  renderSrc($("codeobj-src"), CODEOBJ.source);
+  renderText($("codeobj-out"), CODEOBJ.output);
 
   // ---------- anatomy of a dis line ----------
   (() => {
