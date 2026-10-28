@@ -158,10 +158,11 @@
 
   /* ---------- walkthrough ---------- */
   .picker { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
-  .walk { display: grid; grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.1fr); gap: 18px; align-items: start; }
-  .walk .left, .walk .right { display: grid; gap: 14px; min-width: 0; align-content: start; }
+  .walk { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 18px; align-items: start; }
+  .walk .col { display: grid; gap: 14px; min-width: 0; align-content: start; }
   @media (max-width: 960px) {
     .walk { grid-template-columns: minmax(0, 1fr); }
+    .walk .col.run { order: -1; }
   }
 
   .code-panel { background: var(--machine); color: var(--machine-ink); border-radius: 12px; padding: 12px 0; overflow-x: auto; }
@@ -183,51 +184,68 @@
   .count { font: 600 0.85rem var(--mono); color: var(--muted); min-width: 7.5em; }
   .kbd-hint { font-size: 0.8rem; color: var(--muted); }
 
-  .now { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--tag); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; }
-  .now .op { font: 700 0.95rem var(--mono); }
-  .now.done { border-left-color: var(--hit); }
+  /* The strip: every instruction in the order it ran, with the value stack after it. */
+  .strip { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 0; }
+  .strip .cap { display: flex; justify-content: space-between; gap: 10px; padding: 2px 14px 8px; font: 700 0.72rem var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .strip ol { list-style: none; margin: 0; padding: 0; max-height: 34em; overflow-y: auto; position: relative; }
+  .strip li { display: grid; grid-template-columns: auto minmax(0, 13.5em) minmax(0, 1fr); align-items: center; gap: 10px; padding: 3px 14px; cursor: pointer; border-left: 3px solid transparent; }
+  .strip li.later { opacity: 0.4; }
+  .strip li.cur { background: color-mix(in oklab, var(--accent) 12%, transparent); border-left-color: var(--accent); opacity: 1; }
+  .strip li.gap { cursor: default; padding-top: 0; padding-bottom: 0; }
+  .strip li.gap span { font: 0.72rem var(--body); color: var(--muted); }
+  .strip li.gap.later { opacity: 0.4; }
+  .strip .rails { display: flex; gap: 4px; align-self: stretch; }
+  .strip .rail { width: 3px; border-radius: 2px; background: var(--line); }
+  .strip .rail.fn { background: var(--obj-edge); }
+  .strip .op { font: 0.78rem var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .strip .op .off { color: var(--muted); display: inline-block; width: 2.2em; text-align: right; margin-right: 0.6em; }
+  .strip .mini { display: flex; gap: 3px; min-width: 0; overflow: hidden; }
+  .strip .mini b { font: 400 0.7rem var(--mono); padding: 1px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--slot); max-width: 9.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .strip .mini b.new { border-color: var(--accent); }
+  .strip .mini i { font: italic 0.7rem var(--body); color: var(--muted); white-space: nowrap; }
+  /* Two runs of the same function side by side, lined up by offset. */
+  .strip.par li { grid-template-columns: minmax(0, 13.5em) minmax(0, 1fr) minmax(0, 1fr); cursor: default; }
+  .strip.par li > .run { cursor: pointer; border-radius: 6px; padding: 2px 6px; margin: -2px -6px; }
+  .strip.par li > .run.later { opacity: 0.4; }
+  .strip.par li > .run.cur { background: color-mix(in oklab, var(--accent) 12%, transparent); box-shadow: inset 3px 0 0 var(--accent); }
+  .strip.par li.head { font: 700 0.72rem var(--mono); color: var(--muted); cursor: default; }
 
-  .callstack { display: grid; gap: 10px; }
-  .callstack .cap { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-  .frame {
-    background: var(--surface); border: 1.5px solid var(--ink); border-radius: 12px; padding: 12px 14px;
-    display: grid; gap: 10px; min-width: 0;
+  /* The machine: the frames, with an arrow for every value this instruction moved. */
+  .machine { position: relative; display: grid; gap: 12px; }
+  .machine svg.arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 2; }
+  .machine svg.arrows path { fill: none; stroke: var(--accent); stroke-width: 2; }
+  .instr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; min-height: 2.6em; }
+  .instr .op { font: 700 1.05rem var(--mono); }
+  .instr .say { font-size: 0.92rem; color: var(--muted); }
+  .frames { display: grid; gap: 12px; }
+  .pframe { background: var(--surface); border: 1.5px solid var(--ink); border-radius: 12px; padding: 10px 12px; display: grid; gap: 8px; }
+  .pframe.waiting { border-color: var(--line); }
+  .pframe.gone { border-style: dashed; border-color: var(--muted); opacity: 0.75; }
+  .pframe .fh { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; font-size: 0.8rem; color: var(--muted); }
+  .pframe .fh b { font: 700 0.95rem var(--mono); color: var(--ink); }
+  .pframe .bins { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+  .machine h4 { margin: 0 0 4px; font: 700 0.66rem var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .cell { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px; align-items: baseline; font: 0.74rem/1.35 var(--mono); padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; margin-bottom: 3px; background: var(--slot); overflow-wrap: anywhere; }
+  .cell .k { color: var(--muted); }
+  .cell .unset { color: var(--muted); font-style: italic; }
+  .cell.empty { color: var(--muted); font-style: italic; background: none; border-style: dashed; display: block; }
+  .cell.touch { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .pstack { display: flex; flex-direction: column-reverse; gap: 3px; }
+  .pstack .cell { grid-template-columns: minmax(0, 1fr); margin: 0; }
+  .popped .cell { border-style: dashed; background: none; color: var(--muted); }
+  .stackcol { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .builtins { justify-self: start; min-width: min(14em, 100%); }
+  .exit { justify-self: center; font: 0.78rem var(--mono); padding: 3px 8px; border: 1px dashed var(--muted); border-radius: 6px; color: var(--muted); }
+  @media (max-width: 560px) {
+    .strip li { grid-template-columns: auto minmax(0, 9em) minmax(0, 1fr); gap: 6px; padding: 3px 10px; }
+    .strip.par li { grid-template-columns: minmax(0, 9em) minmax(0, 1fr) minmax(0, 1fr); }
   }
-  .frame.waiting { border-color: var(--line); border-style: dashed; opacity: 0.8; }
-  .frame.fresh { animation: drop 0.35s ease; }
-  .frame .fh { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; align-items: baseline; }
-  .frame .fh b { font: 700 1rem var(--mono); }
-  .frame .fh span { font-size: 0.8rem; color: var(--muted); }
-  .frame .body { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; }
-  @media (max-width: 520px) { .frame .body { grid-template-columns: minmax(0, 1fr); } }
-  .frame h4 { margin: 0 0 4px; font: 700 0.72rem var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-  .slots { width: 100%; border-collapse: collapse; font: 0.8rem/1.3 var(--mono); }
-  .slots td { border: 1px solid var(--line); padding: 4px 6px; vertical-align: top; overflow-wrap: anywhere; }
-  .slots td.i { width: 2.2em; text-align: center; color: var(--muted); background: var(--slot); }
-  .slots td.k { width: 38%; color: var(--muted); }
-  .slots td.v.empty::before { content: "(empty)"; color: var(--muted); font-style: italic; }
-  .slots td.v.flash { animation: glow 1.2s ease; }
-  .vstack { display: flex; flex-direction: column-reverse; gap: 4px; min-height: 2.2em; justify-content: flex-start; }
-  .vstack .item {
-    font: 600 0.8rem/1.3 var(--mono); background: var(--obj); border: 1.3px solid var(--obj-edge); border-radius: 7px;
-    padding: 5px 8px; overflow-wrap: anywhere; position: relative;
-  }
-  .vstack .item.top::after { content: "← top"; position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font: 600 0.68rem var(--body); color: var(--muted); }
-  .vstack .item.top { padding-right: 46px; }
-  .vstack .item.fresh { animation: drop 0.3s ease; }
-  .vstack .empty { font: italic 0.8rem var(--body); color: var(--muted); border: 1px dashed var(--line); border-radius: 7px; padding: 5px 8px; }
-  .result { font: 700 0.95rem var(--mono); color: var(--hit); }
-
-  .log {
-    margin: 0; padding: 10px 12px 10px 34px; max-height: 15em; overflow-y: auto;
-    font-size: 0.86rem; line-height: 1.45; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
-    display: grid; gap: 6px; align-content: start;
-  }
-  .log:empty::before { content: "Each step's explanation collects here."; color: var(--muted); margin-left: -20px; font-style: italic; }
-  .log li { color: var(--muted); }
-  .log li::marker { font: 0.75rem var(--mono); }
-  .log li.cur { color: var(--ink); }
-  .log li .op { font: 700 0.8rem var(--mono); color: var(--ink); }
+  @media (max-width: 560px) { .pframe .bins { gap: 12px; } .cell { font-size: 0.68rem; grid-template-columns: minmax(0, 1fr); gap: 0; } }
+  .words { font-size: 0.9rem; }
+  .words summary, .listing summary { cursor: pointer; color: var(--muted); font-size: 0.85rem; }
+  .words p { margin: 6px 0 0; }
+  .listing .code-panel { margin-top: 8px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.84rem; color: var(--muted); }
   .sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; }
@@ -288,8 +306,6 @@
 
   .refs { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 75ch; }
 
-  @keyframes drop { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
-  @keyframes glow { 0% { background: var(--tag); color: var(--tag-ink); } 100% { } }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
@@ -393,7 +409,7 @@ while True:
 
   <section aria-labelledby="walk-h">
     <h2 id="walk-h">Step through it</h2>
-    <p class="muted" style="max-width:75ch">Pick a program, then step through it one instruction at a time. On the left is the bytecode, with the instruction that just ran highlighted. On the right is the <strong>call stack</strong>: the frame on top is the one running; any frames below it are waiting for a call to return. Use the arrow keys, or press play.</p>
+    <p class="muted" style="max-width:75ch">Pick a program, then step through it one instruction at a time. The list is every instruction in the order it ran, with the value stack after each one, top on the right, so you can see the shape of the whole run at once. For the <code>if</code>, it lines up both runs side by side, so you can see which instructions each one skipped. Click a row to jump there. The machine shows the call stack at the current step, top frame first. Each frame has its constants, its value stack, and its names or slots, and an arrow shows every value the instruction just moved. Use the arrow keys, or press play.</p>
 
     <div class="picker">
       <div class="seg" id="prog" role="group" aria-label="Which program to step through"></div>
@@ -401,31 +417,39 @@ while True:
     </div>
 
     <div class="walk" id="walk" tabindex="-1">
-      <div class="left">
+      <div class="col">
         <div class="code-panel">
           <div class="code-head"><span>Python source</span><span id="src-note"></span></div>
           <div class="code src" id="src"></div>
         </div>
-        <div class="code-panel">
-          <div class="code-head"><span>Bytecode, from <code>dis.dis()</code> in 3.10</span><span><code>--></code> just ran</span></div>
-          <div class="code" id="bytecode"></div>
+        <div class="strip" id="strip-box">
+          <div class="cap" id="strip-cap"></div>
+          <ol id="strip"></ol>
         </div>
+        <details class="listing">
+          <summary>The same bytecode as <code>dis.dis()</code> prints it</summary>
+          <div class="code-panel">
+            <div class="code-head"><span>Bytecode, from <code>dis.dis()</code> in 3.10</span><span><code>--></code> just ran</span></div>
+            <div class="code" id="bytecode"></div>
+          </div>
+        </details>
       </div>
-      <div class="right">
+      <div class="col run">
         <div class="controls">
           <button class="btn" type="button" id="back" aria-label="Back one instruction">← Back</button>
           <button class="primary" type="button" id="next">Next instruction →</button>
           <button class="btn" type="button" id="play">Play</button>
           <button class="btn" type="button" id="restart">Restart</button>
           <input type="range" id="scrub" min="0" value="0" aria-label="Jump to step">
-          <span class="count" id="count" aria-live="polite"></span>
+          <span class="count" id="count"></span>
         </div>
-        <div class="now" id="now" aria-live="polite"></div>
-        <div class="callstack">
-          <div class="cap"><span class="label">Call stack · top frame is running</span><span class="result" id="result"></span></div>
-          <div id="frames"></div>
+        <div class="machine" id="machine">
+          <div class="instr" id="instr"></div>
+          <div class="frames" id="frames"></div>
+          <svg class="arrows" id="arrows" aria-hidden="true"></svg>
         </div>
-        <ol class="log" id="log" aria-label="Every step so far"></ol>
+        <details class="words"><summary>Say it in words</summary><p id="note"></p></details>
+        <div class="sr-only" aria-live="polite" id="live"></div>
         <p class="kbd-hint">Keyboard: ← and → step back and forward while the walkthrough has focus.</p>
       </div>
     </div>
@@ -990,11 +1014,26 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     { key: "loop", label: "A for loop", src: "Notebook: Storing and loading names", args: [[1, 4, 1]] },
     { key: "comp", label: "A list comprehension", src: "Notebook: compy(), with range(0, 3)" },
   ];
+  // Each code object's real co_consts in 3.10.8, shown the way the walkthrough shows values.
+  const CONSTS = {
+    add: { "<module>": ["<code add_two_numbers>", "'add_two_numbers'", "2", "3", "None"], add_two_numbers: ["None"] },
+    if: { equals_five: ["None", "5", "True", "False"] },
+    loop: { looping_sum: ["None", "0"] },
+    comp: { compy: ["None", "<code <listcomp>>", "'compy.<locals>.<listcomp>'", "0", "3"], "<listcomp>": [] },
+  };
+  // How many values each instruction pops off its frame's stack. popCount handles the ones that depend on what happens.
+  const POPS = {
+    LOAD_CONST: 0, LOAD_FAST: 0, LOAD_NAME: 0, LOAD_GLOBAL: 0, BUILD_LIST: 0, JUMP_ABSOLUTE: 0,
+    STORE_NAME: 1, STORE_FAST: 1, GET_ITER: 1, POP_JUMP_IF_FALSE: 1, LIST_APPEND: 1, RETURN_VALUE: 1,
+    MAKE_FUNCTION: 2, BINARY_ADD: 2, INPLACE_ADD: 2, COMPARE_OP: 2,
+  };
   let prog = PROGRAMS[0];
   let argChoice = 0;
+  let runs = [];
   let steps = [];
   let at = 0;
   let timer = null;
+  let arrowsNow = [];
 
   const codeObjects = (root, key) => {
     // The module comes first only when we step through the whole module.
@@ -1014,6 +1053,188 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     return null;
   };
 
+  const W = () => D310.walk[prog.key];
+  const codeNamed = (name) => codeObjects(W().module, prog.key).find((co) => co.name === name);
+  const insOf = (st) => st.ran ? codeNamed(st.ran.frame).instrs.find((x) => x.offset === st.ran.offset) : null;
+  const label = (ins) => `${ins.op}${ins.arg != null ? " " + ins.arg : ""}${ins.argrepr ? ` (${ins.argrepr})` : ""}`;
+  const frameIdx = (frames, name) => frames.findIndex((f) => f.name === name);
+  const called = (st, prev) => st.frames.length > prev.frames.length;
+  const popCount = (ins, before, after) => {
+    if (ins.op === "CALL_FUNCTION") return ins.arg + 1;
+    if (ins.op === "FOR_ITER") return after.length > before.length ? 0 : 1;
+    return POPS[ins.op] ?? 0;
+  };
+  // Where the frame that ran goes next, if that isn't the next instruction down.
+  const jumpTo = (st, prev, ins) => {
+    const fi = frameIdx(prev.frames, st.ran.frame);
+    const f = st.frames[fi];
+    return f && f.name === st.ran.frame && f.next !== ins.offset + 2 ? f.next : null;
+  };
+
+  // Words only where the shape of things changes, not where a value just moves.
+  const say = (st, prev, ins) => {
+    const to = jumpTo(st, prev, ins);
+    switch (ins.op) {
+      case "MAKE_FUNCTION":
+        return st.ran.frame === "compy"
+          ? "code object + name → function. In 3.10 a comprehension is a function of its own."
+          : "code object + name → function. This is the moment def happens.";
+      case "CALL_FUNCTION":
+        return called(st, prev) ? "A new frame. The arguments become its slots." : "range is written in C, so no new frame: its result lands right here.";
+      case "RETURN_VALUE":
+        if (st.frames.length) return "The frame is done. Its value goes to the caller.";
+        return prog.key === "add" ? "The module is done. Nobody uses its None." : "The frame is done. Its value goes back to whoever called it.";
+      case "POP_JUMP_IF_FALSE": return to != null ? `False, so jump to ${to}.` : "True, so carry on to the next instruction.";
+      case "FOR_ITER": return to != null ? `Out of items: drop the iterator and jump to ${to}.` : null;
+      case "JUMP_ABSOLUTE": return `Back to ${to} for the next item.`;
+      case "LOAD_GLOBAL": return "Not a slot: look it up by name, in the module's globals, then the builtins.";
+    }
+    return null;
+  };
+
+  // ---------- the strip ----------
+  // The list has room for a short name; the full value is in the tooltip and in the machine.
+  const brief = (v) => v.startsWith("<range_iterator") ? "iterator" : v === "<class 'range'>" ? "range"
+    : v.replace(/^<function (.*)>$/, "fn $1").replace(/^<code (.*)>$/, "code $1");
+  const mini = (st, prev, ins) => {
+    const fi = frameIdx(prev.frames, st.ran.frame);
+    const before = prev.frames[fi].stack;
+    if (ins.op === "RETURN_VALUE") return `<i>returns ${esc(before[before.length - 1])}</i>`;
+    const after = st.frames[fi].stack;
+    const pushed = !called(st, prev) && after.length > before.length - popCount(ins, before, after);
+    return after.length
+      ? after.map((v, j) => `<b class="${pushed && j === after.length - 1 ? "new" : ""}" title="${esc(v)}">${esc(brief(v))}</b>`).join("")
+      : `<i>empty</i>`;
+  };
+  const opText = (ins) => `<span class="off">${ins.offset}</span>${esc(ins.op)}${ins.argrepr ? " " + esc(ins.argrepr) : ""}`;
+
+  const renderStrip = () => {
+    const box = $("strip-box");
+    const parallel = runs.length > 1;
+    box.classList.toggle("par", parallel);
+    const rows = [];
+    if (parallel) {
+      // Same function, different arguments: one row per instruction in the listing, one column per run.
+      $("strip-cap").innerHTML = `<span>Instruction, by offset</span><span>value stack after · top →</span>`;
+      const co = codeNamed(steps[1].ran.frame);
+      rows.push(`<li class="head"><span></span>${prog.args.map((a) => `<span>x = ${esc(a.join(", "))}</span>`).join("")}</li>`);
+      co.instrs.forEach((ins) => {
+        const cells = runs.map((rs, r) => {
+          const i = rs.findIndex((st) => st.ran && st.ran.offset === ins.offset);
+          return i < 0
+            ? `<span class="mini"><i>skipped</i></span>`
+            : `<span class="mini run" data-run="${r}" data-i="${i}">${mini(rs[i], rs[i - 1], ins)}</span>`;
+        });
+        rows.push(`<li><span class="op">${opText(ins)}</span>${cells.join("")}</li>`);
+      });
+    } else {
+      $("strip-cap").innerHTML = `<span>Instruction, in the order it ran</span><span>value stack after · top →</span>`;
+      steps.forEach((st, i) => {
+        if (i === 0) return;
+        const prev = steps[i - 1];
+        const ins = insOf(st);
+        const depth = frameIdx(prev.frames, st.ran.frame) + 1;
+        const rails = (n) => Array.from({ length: n }, (_, d) => `<span class="rail${d > 0 ? " fn" : ""}"></span>`).join("");
+        const gap = (n, text) => rows.push(`<li class="gap" data-after="${i}"><span class="rails">${rails(n)}</span><span>${text}</span><span></span></li>`);
+        rows.push(`<li data-i="${i}"><span class="rails">${rails(depth)}</span><span class="op">${opText(ins)}</span><span class="mini">${mini(st, prev, ins)}</span></li>`);
+        const to = jumpTo(st, prev, ins);
+        if (to != null) gap(depth, to < ins.offset ? `↺ back to offset ${to}` : `↷ jump to offset ${to}`);
+        if (called(st, prev)) gap(depth + 1, `↳ new frame: ${esc(st.frames[st.frames.length - 1].name)}`);
+        if (ins.op === "RETURN_VALUE" && st.frames.length) gap(depth - 1, `↲ back in ${esc(st.frames[st.frames.length - 1].name)}`);
+      });
+    }
+    $("strip").innerHTML = rows.join("");
+  };
+
+  // ---------- the machine ----------
+  const frameHTML = (f, idx, state, popped, touch) => {
+    const t = (key) => touch.has(key) ? " touch" : "";
+    const cell = (key, k, v) => `<div class="cell${t(key)}" data-a="${key}">${k != null ? `<span class="k">${esc(k)}</span>` : ""}<span>${v}</span></div>`;
+    const consts = CONSTS[prog.key][f.name] || [];
+    const constHTML = consts.length ? consts.map((v, i) => cell(`c${idx}-${i}`, i, esc(v))).join("") : `<div class="cell empty">none</div>`;
+    const vars = f.isModule
+      ? (f.names.length ? f.names.map((n) => cell(`n${idx}-${n.name}`, n.name, esc(n.value))).join("") : `<div class="cell empty" data-a="n${idx}-none">no names yet</div>`)
+      : f.slots.map((s, i) => cell(`s${idx}-${i}`, `${i} ${s.name}`, s.value ? esc(s.value) : `<span class="unset">empty</span>`)).join("");
+    const stack = f.stack.length
+      ? f.stack.map((v, i) => cell(`v${idx}-${i}`, null, esc(v))).join("")
+      : `<div class="cell empty" data-a="v${idx}-empty">empty</div>`;
+    const pop = popped.length
+      ? `<div><h4>Popped</h4><div class="pstack popped">${popped.map((v, i) => cell(`p${idx}-${i}`, null, esc(v))).join("")}</div></div>`
+      : "";
+    const status = state === "gone" ? "returned · off the call stack" : state === "top" ? `running · next offset ${f.next}` : `waiting at offset ${f.next}`;
+    return `<div class="pframe ${state === "top" ? "" : state}">
+      <div class="fh"><b data-a="f${idx}">${esc(f.name)}</b><span>${status}</span></div>
+      <div class="bins">
+        <div><h4>Constants</h4>${constHTML}</div>
+        <div class="stackcol"><div><h4>Value stack</h4><div class="pstack">${stack}</div></div>${pop}</div>
+        <div><h4>${f.isModule ? "Names" : "Slots"}</h4>${vars}</div>
+      </div>
+    </div>`;
+  };
+
+  // Which cells this step read and wrote, as arrows from → to.
+  const movesFor = (st, prev, ins) => {
+    if (!ins) return { arrows: [], popped: {}, touch: new Set() };
+    const fi = frameIdx(prev.frames, st.ran.frame);
+    const before = prev.frames[fi].stack;
+    const after = st.frames[fi] && st.frames[fi].name === st.ran.frame ? st.frames[fi].stack : [];
+    const nPop = popCount(ins, before, after);
+    const popped = { [fi]: before.slice(before.length - nPop) };
+    const top = `v${fi}-${after.length - 1}`;
+    const pops = popped[fi].map((_, i) => `p${fi}-${i}`);
+    const arrows = [];
+    switch (ins.op) {
+      case "LOAD_CONST": arrows.push([`c${fi}-${ins.arg}`, top]); break;
+      case "LOAD_FAST": arrows.push([`s${fi}-${ins.arg}`, top]); break;
+      case "LOAD_NAME": arrows.push([`n${fi}-${ins.argval}`, top]); break;
+      case "LOAD_GLOBAL": arrows.push([`g-${ins.argval}`, top]); break;
+      case "STORE_NAME": arrows.push([pops[0], `n${fi}-${ins.argval}`]); break;
+      case "STORE_FAST": arrows.push([pops[0], `s${fi}-${ins.arg}`]); break;
+      case "BUILD_LIST": arrows.push([null, top]); break;
+      case "MAKE_FUNCTION":
+      case "BINARY_ADD":
+      case "INPLACE_ADD":
+      case "COMPARE_OP":
+      case "GET_ITER": pops.forEach((p) => arrows.push([p, top])); break;
+      case "FOR_ITER": if (!nPop) arrows.push([`v${fi}-${before.length - 1}`, top]); break;
+      case "LIST_APPEND": arrows.push([pops[0], `v${fi}-${after.length - ins.arg}`]); break;
+      case "POP_JUMP_IF_FALSE": arrows.push([pops[0], null]); break;
+      case "CALL_FUNCTION":
+        if (called(st, prev)) {
+          arrows.push([pops[0], `f${fi + 1}`]);
+          pops.slice(1).forEach((p, i) => arrows.push([p, `s${fi + 1}-${i}`]));
+        } else pops.forEach((p) => arrows.push([p, top]));
+        break;
+      case "RETURN_VALUE":
+        arrows.push([pops[0], fi > 0 ? `v${fi - 1}-${st.frames[fi - 1].stack.length - 1}` : "exit"]);
+        break;
+    }
+    return { arrows: arrows.filter(([a, b]) => a && b), popped, touch: new Set(arrows.flat().filter(Boolean)) };
+  };
+
+  const drawArrows = (arrows) => {
+    const box = $("machine").getBoundingClientRect();
+    const find = (a) => $("machine").querySelector(`[data-a="${a}"]`);
+    const paths = arrows.map(([a, b]) => {
+      const ea = find(a), eb = find(b);
+      if (!ea || !eb) return "";
+      const ra = ea.getBoundingClientRect(), rb = eb.getBoundingClientRect();
+      const ax = ra.left + ra.width / 2 - box.left, ay = ra.top + ra.height / 2 - box.top;
+      const bx = rb.left + rb.width / 2 - box.left, by = rb.top + rb.height / 2 - box.top;
+      let x1, x2;
+      if (Math.abs(ax - bx) < 40) {
+        // same column: leave and enter on the left, bowing into the gap before it
+        x1 = ra.left - box.left; x2 = rb.left - box.left;
+        const bow = Math.min(x1, x2) - 16;
+        return `<path d="M${x1},${ay} C${bow},${ay} ${bow},${by} ${x2 - 3},${by}" marker-end="url(#head)"/>`;
+      }
+      if (ax < bx) { x1 = ra.right - box.left; x2 = rb.left - box.left - 3; } else { x1 = ra.left - box.left; x2 = rb.right - box.left + 3; }
+      const mid = (x1 + x2) / 2;
+      return `<path d="M${x1},${ay} C${mid},${ay} ${mid},${by} ${x2},${by}" marker-end="url(#head)"/>`;
+    }).join("");
+    $("arrows").innerHTML = `<defs><marker id="head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent);stroke:none"/></marker></defs>${paths}`;
+  };
+
   const renderProgramButtons = () => {
     $("prog").innerHTML = PROGRAMS.map((p, i) => `<button type="button" data-i="${i}" aria-pressed="${p === prog}">${esc(p.label)}</button>`).join("");
     const argEl = $("arg");
@@ -1026,120 +1247,113 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     }
   };
 
-  const load = () => {
-    stop();
+  const callText = () => {
     const args = prog.args ? prog.args[argChoice] : [];
-    steps = buildSteps(D310.walk, prog.key, { args });
-    at = 0;
-    $("scrub").max = steps.length - 1;
-    renderProgramButtons();
-    const callText = prog.key === "add" ? "the whole module" : prog.key === "if" ? `equals_five(${args.join(", ")})` : prog.key === "loop" ? `looping_sum(${args.join(", ")})` : "compy()";
-    $("src-note").textContent = `${prog.src} · running ${callText}`;
-    render(true);
+    return prog.key === "add" ? "the whole module" : prog.key === "if" ? `equals_five(${args.join(", ")})` : prog.key === "loop" ? `looping_sum(${args.join(", ")})` : "compy()";
   };
 
-  const render = (fresh) => {
-    const s = steps[at];
+  const load = (keepStrip) => {
+    stop();
+    runs = (prog.args || [[]]).map((args) => buildSteps(D310.walk, prog.key, { args }));
+    steps = runs[argChoice];
+    at = Math.min(at, steps.length - 1);
+    $("scrub").max = steps.length - 1;
+    renderProgramButtons();
+    $("src-note").textContent = `${prog.src} · running ${callText()}`;
+    if (!keepStrip) renderStrip();
+    render();
+  };
+
+  const render = () => {
+    const st = steps[at];
     const prev = at > 0 ? steps[at - 1] : null;
-    const W = D310.walk[prog.key];
+    const ins = insOf(st);
+    const cos = codeObjects(W().module, prog.key);
+    const { arrows, popped, touch } = movesFor(st, prev, ins);
 
     // source, with the line that just ran
-    const cos = codeObjects(W.module, prog.key);
-    const ranCo = s.ran ? cos.find((co) => co.name === s.ran.frame) : null;
-    const ranLine = ranCo ? lineOf(ranCo, s.ran.offset) : null;
-    $("src").innerHTML = W.source.replace(/\n$/, "").split("\n").map((t, i) =>
+    const ranLine = ins ? lineOf(codeNamed(st.ran.frame), ins.offset) : null;
+    $("src").innerHTML = W().source.replace(/\n$/, "").split("\n").map((t, i) =>
       `<span class="ln${ranLine === i + 1 ? " hot" : ""}"><span class="n">${String(i + 1).padStart(2)}</span>  ${esc(t)}</span>`).join("");
 
-    // bytecode, every code object in the program
-    const top = s.frames.length ? s.frames[s.frames.length - 1] : null;
+    // frames, top of the call stack first; a frame that just returned stays, dashed
+    const shown = st.frames.map((f, i) => ({ f, i, state: i === st.frames.length - 1 && !st.finished ? "top" : "waiting" }));
+    if (prev && prev.frames.length > st.frames.length) {
+      const i = prev.frames.length - 1;
+      shown.push({ f: { ...prev.frames[i], stack: [] }, i, state: "gone" });
+    }
+    const usesBuiltins = cos.some((co) => co.instrs.some((x) => x.op === "LOAD_GLOBAL"));
+    const builtins = usesBuiltins
+      ? `<div class="builtins"><h4>Builtins</h4><div class="cell${touch.has("g-range") ? " touch" : ""}" data-a="g-range"><span class="k">range</span><span>&lt;class 'range'&gt;</span></div></div>`
+      : "";
+    const exit = st.finished ? `<div class="exit" data-a="exit">${prog.key === "add" ? "program done" : `${esc(callText())} returned ${esc(st.result)}`}</div>` : "";
+    $("frames").innerHTML = builtins + shown.reverse().map(({ f, i, state }) => frameHTML(f, i, state, popped[i] || [], touch)).join("") + exit;
+
+    const words = ins && prev ? say(st, prev, ins) : null;
+    $("instr").innerHTML = ins
+      ? `<span class="op">${esc(label(ins))}</span>${words ? `<span class="say">${esc(words)}</span>` : ""}`
+      : `<span class="op">Ready</span><span class="say">${prog.key === "add" ? "Nothing has run yet, not even the def." : `${esc(callText())} was just called. Its arguments are already in its slots.`}</span>`;
+    $("note").innerHTML = st.note;
+    $("live").innerHTML = (ins ? esc(label(ins)) + ". " : "") + st.note;
+
+    // the strip: this step highlighted, later steps faded
+    const strip = $("strip");
+    if (runs.length > 1) {
+      strip.querySelectorAll(".run").forEach((el) => {
+        const mine = +el.dataset.run === argChoice;
+        el.classList.toggle("cur", mine && +el.dataset.i === at);
+        el.classList.toggle("later", mine && +el.dataset.i > at);
+      });
+    } else {
+      strip.querySelectorAll("li").forEach((li) => {
+        const i = li.dataset.i ? +li.dataset.i : +li.dataset.after + 0.5;
+        li.classList.toggle("cur", i === at);
+        li.classList.toggle("later", i > at);
+      });
+      const cur = strip.querySelector("li.cur");
+      if (cur && (cur.offsetTop < strip.scrollTop || cur.offsetTop + cur.offsetHeight > strip.scrollTop + strip.clientHeight)) {
+        strip.scrollTop = cur.offsetTop - strip.clientHeight / 2;
+      }
+    }
+
+    // the dis listing, every code object in the program
+    const top = st.frames.length ? st.frames[st.frames.length - 1] : null;
     const html = [];
     cos.forEach((co, ci) => {
-      const label = co.name === "<module>" ? "the module" : `<code object ${co.name}>`;
-      if (ci > 0 || prog.key === "add") html.push(`<span class="ln hdr">${ci === 0 ? "The module's own code:" : `Disassembly of ${esc(label)}:`}</span>`);
+      const name = co.name === "<module>" ? "the module" : `<code object ${co.name}>`;
+      if (ci > 0 || prog.key === "add") html.push(`<span class="ln hdr">${ci === 0 ? "The module's own code:" : `Disassembly of ${esc(name)}:`}</span>`);
       let lastLine = null;
-      co.instrs.forEach((ins, ii) => {
-        if (ins.line != null && ii > 0 && ins.line !== lastLine) html.push(`<span class="ln blank"></span>`);
-        if (ins.line != null) lastLine = ins.line;
-        const isRan = s.ran && s.ran.frame === co.name && s.ran.offset === ins.offset;
-        const isNext = top && !s.finished && top.name === co.name && top.next === ins.offset;
-        const active = s.frames.some((f) => f.name === co.name) || isRan;
-        html.push(`<span class="ln${isRan ? " hot" : ""}${isNext ? " next" : ""}${active ? "" : " dim"}">${esc(disLine(ins, isRan))}</span>`);
+      co.instrs.forEach((x, ii) => {
+        if (x.line != null && ii > 0 && x.line !== lastLine) html.push(`<span class="ln blank"></span>`);
+        if (x.line != null) lastLine = x.line;
+        const isRan = st.ran && st.ran.frame === co.name && st.ran.offset === x.offset;
+        const isNext = top && !st.finished && top.name === co.name && top.next === x.offset;
+        const active = st.frames.some((f) => f.name === co.name) || isRan;
+        html.push(`<span class="ln${isRan ? " hot" : ""}${isNext ? " next" : ""}${active ? "" : " dim"}">${esc(disLine(x, isRan))}</span>`);
       });
       if (ci < cos.length - 1) html.push(`<span class="ln blank"></span>`);
     });
     $("bytecode").innerHTML = html.join("");
-
-    // what just happened
-    const ranIns = s.ran && ranCo ? ranCo.instrs.find((x) => x.offset === s.ran.offset) : null;
-    const now = $("now");
-    now.classList.toggle("done", s.finished);
-    now.innerHTML = ranIns
-      ? `<span class="op">${esc(ranIns.op)}${ranIns.argrepr ? " " + esc(ranIns.argrepr) : ranIns.arg != null ? " " + ranIns.arg : ""}</span><span>${s.note}</span>`
-      : `<span class="op">Ready</span><span>${s.note}</span>`;
-
-    // call stack, top frame first
-    const framesEl = $("frames");
-    if (!s.frames.length) {
-      framesEl.innerHTML = `<div class="frame waiting"><div class="fh"><b>(empty)</b><span>every frame has returned</span></div></div>`;
-    } else {
-      framesEl.innerHTML = s.frames.slice().reverse().map((f, ri) => {
-        const idx = s.frames.length - 1 - ri;
-        const pf = prev && prev.frames[idx] && prev.frames[idx].name === f.name ? prev.frames[idx] : null;
-        const isTop = ri === 0;
-        const isNewFrame = !pf && at > 0;
-        const status = isTop ? (s.finished ? "returning" : `running · next: offset ${f.next}`) : `waiting at offset ${f.next}`;
-        const rows = f.isModule
-          ? (f.names.length
-            ? f.names.map((n) => {
-              const old = pf && pf.names.find((x) => x.name === n.name);
-              return `<tr><td class="k">${esc(n.name)}</td><td class="v${!old || old.value !== n.value ? " flash" : ""}">${esc(n.value)}</td></tr>`;
-            }).join("")
-            : `<tr><td class="v empty" colspan="2"></td></tr>`)
-          : f.slots.map((sl, i) => {
-            const changed = pf && pf.slots[i].value !== sl.value;
-            return `<tr><td class="i">${i}</td><td class="k">${esc(sl.name)}</td><td class="v${sl.value ? "" : " empty"}${changed ? " flash" : ""}">${esc(sl.value)}</td></tr>`;
-          }).join("");
-        const pushed = pf && f.stack.length > pf.stack.length;
-        const stack = f.stack.length
-          ? f.stack.map((v, i) => `<div class="item${i === f.stack.length - 1 ? " top" : ""}${pushed && i === f.stack.length - 1 ? " fresh" : ""}">${esc(v)}</div>`).join("")
-          : `<div class="empty">empty</div>`;
-        return `<div class="frame${isTop ? "" : " waiting"}${isNewFrame && isTop && !fresh ? " fresh" : ""}">
-          <div class="fh"><b>${esc(f.name)}</b><span>${esc(status)}</span></div>
-          <div class="body">
-            <div><h4>${f.isModule ? "Names (module dictionary)" : "Slots (local variables)"}</h4><table class="slots"><tbody>${rows}</tbody></table></div>
-            <div><h4>Value stack</h4><div class="vstack">${stack}</div></div>
-          </div>
-        </div>`;
-      }).join("");
-    }
-    $("result").textContent = s.finished && s.result !== null && prog.key !== "add" ? `returned ${s.result}` : "";
-
-    // the running log
-    const log = $("log");
-    log.innerHTML = steps.slice(1, at + 1).map((st, i) => {
-      const co = cos.find((c) => c.name === st.ran.frame);
-      const ins = co.instrs.find((x) => x.offset === st.ran.offset);
-      return `<li class="${i === at - 1 ? "cur" : ""}"><span class="op">${esc(ins.op)}</span> ${st.note}</li>`;
-    }).join("");
-    log.scrollTop = log.scrollHeight;
 
     $("count").textContent = `step ${at} of ${steps.length - 1}`;
     $("scrub").value = at;
     $("back").disabled = at === 0;
     $("next").disabled = at === steps.length - 1;
     $("play").textContent = timer ? "Pause" : "Play";
+    arrowsNow = arrows;
+    requestAnimationFrame(() => drawArrows(arrowsNow));
   };
 
-  const go = (i) => { at = Math.max(0, Math.min(steps.length - 1, i)); render(false); };
+  const go = (i) => { at = Math.max(0, Math.min(steps.length - 1, i)); render(); };
   const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
   const play = () => {
-    if (timer) { stop(); render(false); return; }
+    if (timer) { stop(); render(); return; }
     if (at === steps.length - 1) at = 0;
     timer = setInterval(() => {
-      if (at >= steps.length - 1) { stop(); render(false); return; }
+      if (at >= steps.length - 1) { stop(); render(); return; }
       go(at + 1);
-    }, 1100);
-    render(false);
+    }, 1400);
+    render();
   };
 
   $("prog").addEventListener("click", (e) => {
@@ -1147,13 +1361,26 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     if (!b) return;
     prog = PROGRAMS[+b.dataset.i];
     argChoice = 0;
+    at = 0;
     load();
   });
   $("arg").addEventListener("click", (e) => {
     const b = e.target.closest("button");
     if (!b) return;
     argChoice = +b.dataset.i;
-    load();
+    load(true);
+  });
+  $("strip").addEventListener("click", (e) => {
+    const el = e.target.closest("[data-i]");
+    if (!el) return;
+    stop();
+    if (el.dataset.run != null && +el.dataset.run !== argChoice) {
+      argChoice = +el.dataset.run;
+      at = +el.dataset.i;
+      load(true);
+      return;
+    }
+    go(+el.dataset.i);
   });
   $("next").addEventListener("click", () => { stop(); go(at + 1); });
   $("back").addEventListener("click", () => { stop(); go(at - 1); });
@@ -1165,6 +1392,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     if (e.key === "ArrowRight") { e.preventDefault(); stop(); go(at + 1); }
     if (e.key === "ArrowLeft") { e.preventDefault(); stop(); go(at - 1); }
   });
+  new ResizeObserver(() => drawArrows(arrowsNow)).observe($("machine"));
   load();
 
   // ---------- LOAD_FAST vs LOAD_NAME ----------
