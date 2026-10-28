@@ -23,7 +23,7 @@
   presenters:
     - name: Aurora Liu
       library: NumPy and Pandas
-      video: ""
+      video: https://youtu.be/VeHihSiuopI
     - name: Cindy Yao
       library: scikit-learn
       video: "https://youtu.be/pAQ9jt1LZqs?si=3ZiE2mYr6p-pZomj"
