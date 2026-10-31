@@ -318,7 +318,7 @@
     <div class="label">Session 6 · How Python runs your code</div>
     <h1>The Stack Machine</h1>
     <p class="lede">Before Python runs your code, it compiles it into <strong>bytecode</strong>: a list of tiny instructions like <code>LOAD_FAST</code> and <code>BINARY_ADD</code>. Then a loop in the interpreter runs those instructions one at a time. Almost every one of them does the same kind of thing: it pushes values onto a <strong>stack</strong>, or pops them off. Here's what that looks like.</p>
-    <p class="muted" style="max-width:72ch">This page goes with <a href="https://github.com/chelseatroy/python-exercises/blob/main/s6_disassembly.ipynb">the disassembly notebook</a>. Every listing below is real output from <code>dis.dis()</code> in <strong>Python 3.10.8</strong>, the version the notebook runs on. Newer Pythons print something different; the <a href="#new-h">last section</a> shows you what, and why.</p>
+    <p class="muted" style="max-width:72ch">Every listing below is real output from <code>dis.dis()</code> in <strong>Python 3.10.8</strong>. To run the examples yourself, start <code>python3.10</code> and type <code>import dis</code> first; every example assumes you have. Newer Pythons print something different; the <a href="#new-h">last section</a> shows you what, and why.</p>
   </header>
 
   <section aria-labelledby="how-h">
@@ -392,18 +392,27 @@ while True:
     </div>
 
     <h3>How to read one line of <code>dis</code> output</h3>
+    <div class="prose">
+      <p>Here's a function with an <code>if</code> in it, and what <code>dis</code> prints for it. Below that, the last line of the listing taken apart, piece by piece. Hover over or tab to a piece to see what it means.</p>
+    </div>
+    <div class="cells" id="if-cells"></div>
     <div class="anatomy" id="anatomy">
       <div class="line" id="anatomy-line" aria-hidden="true"></div>
       <ol id="anatomy-keys"></ol>
     </div>
     <h3>Where's the addition?</h3>
     <div class="prose">
-      <p>The notebook's first two <code>dis</code> cells disassemble <code>1 + 1</code>, first as a string and then inside a function. Here's each cell next to what it prints:</p>
+      <p>Start with the smallest addition there is: <code>1 + 1</code>. Here it is disassembled twice, first as a string and then inside a function, each next to what it prints:</p>
     </div>
     <div class="cells" id="fold-cells"></div>
     <div class="prose">
       <p>Neither listing has an addition in it. There's no <code>BINARY_ADD</code>, just a <code>LOAD_CONST</code> of the number <code>2</code> and a <code>RETURN_VALUE</code>. The compiler noticed that <code>1 + 1</code> can only ever be <code>2</code> and did the math ahead of time. That's called <strong>constant folding</strong>.</p>
       <p>In <code>add_ones</code> the <code>2</code> is constant 1, not constant 0. A function's constant 0 is always its docstring, and since <code>add_ones</code> doesn't have one, constant 0 is <code>None</code>.</p>
+      <p>To see an addition, give the compiler something it can't work out ahead of time, like two arguments:</p>
+    </div>
+    <div class="cells" id="add-cells"></div>
+    <div class="prose">
+      <p>Now there's a <code>BINARY_ADD</code>. The two <code>LOAD_FAST</code>s push <code>a</code> and <code>b</code>, <code>BINARY_ADD</code> pops them both and pushes their sum, and <code>RETURN_VALUE</code> hands that back to the caller. The step-through below runs this function, called as <code>add_two_numbers(2, 3)</code>.</p>
     </div>
   </section>
 
@@ -459,12 +468,12 @@ while True:
     <h2 id="fast-h">Why is it called <code>LOAD_FAST</code>? Is there a <code>LOAD_SLOW</code>?</h2>
     <div class="prose">
       <p>There's no instruction called <code>LOAD_SLOW</code>. But there is a slow way to load a variable, and it's what <code>FAST</code> is being compared to: <strong>looking the name up in a dictionary.</strong></p>
-      <p>The notebook's "Storing and loading names" section disassembles the same loop twice. The first cell puts it inside a function. The second passes it to <code>dis</code> as a string, which <code>dis</code> compiles the way it would compile the top level of a module (or a notebook cell). Same Python, same structure, but every <span style="background:color-mix(in oklab, var(--tag) 40%, transparent);padding:0 3px;border-radius:3px">highlighted</span> instruction is different.</p>
+      <p>Here's the same loop disassembled twice. The first time it's inside a function. The second time it goes to <code>dis</code> as a string, which <code>dis</code> compiles the way it would compile the top level of a module (or a line you type into the REPL). Same Python, same structure, but every <span style="background:color-mix(in oklab, var(--tag) 40%, transparent);padding:0 3px;border-radius:3px">highlighted</span> instruction is different.</p>
     </div>
     <div class="pair">
       <div class="stack-col">
         <div class="code-panel">
-          <div class="code-head"><span>Notebook cell: inside a function</span></div>
+          <div class="code-head"><span>Inside a function</span></div>
           <div class="code src" id="fast-fn-src"></div>
         </div>
         <div class="code-panel">
@@ -474,7 +483,7 @@ while True:
       </div>
       <div class="stack-col">
         <div class="code-panel">
-          <div class="code-head"><span>Notebook cell: at module level</span></div>
+          <div class="code-head"><span>At module level</span></div>
           <div class="code src" id="fast-mod-src"></div>
         </div>
         <div class="code-panel">
@@ -489,20 +498,20 @@ while True:
       <p><strong>At module level, it can't.</strong> Any code anywhere can add a global (<code>import</code>, <code>globals()["x"] = 1</code>, another module doing <code>your_module.x = 1</code>), so names have to be looked up by name, every time. <code>LOAD_NAME</code> checks the local dictionary, then the global dictionary, then the builtins.</p>
     </div>
     <div class="prose">
-      <p>Does the difference matter? The notebook's next two cells time the same sum both ways:</p>
+      <p>Does the difference matter? Here's the same sum timed both ways:</p>
     </div>
     <div class="pair">
       <div class="code-panel">
-        <div class="code-head"><span>Notebook cell: calls <code>looping_sum()</code></span></div>
+        <div class="code-head"><span>Calls <code>looping_sum()</code></span></div>
         <div class="code src" id="time-fn"></div>
       </div>
       <div class="code-panel">
-        <div class="code-head"><span>Notebook cell: the loop at module level</span></div>
+        <div class="code-head"><span>The loop at module level</span></div>
         <div class="code src" id="time-mod"></div>
       </div>
     </div>
     <div class="stats" id="timing"></div>
-    <p class="muted" style="max-width:72ch">Both cells sum 1 to 9,999,999. These are the times the last <code>print</code> in each cell showed on a MacBook in Python 3.10.8, best of three runs. Your numbers will differ, but the gap won't go away: in 3.14 on the same machine it's 0.23 s against 0.61 s.</p>
+    <p class="muted" style="max-width:72ch">Both sum 1 to 9,999,999. These are the times the last <code>print</code> in each one showed on a MacBook in Python 3.10.8, best of three runs. Your numbers will differ, but the gap won't go away: in 3.14 on the same machine it's 0.23 s against 0.61 s.</p>
 
     <h3>Reading the C</h3>
     <p class="muted" style="max-width:75ch">You don't have to take my word for it. Here are both instructions, quoted exactly from CPython 3.10.8's <code>Python/ceval.c</code>. Click a line number to see it on GitHub.</p>
@@ -528,34 +537,79 @@ while True:
     </div>
     <div class="callout">
       <h3>See the call stack for yourself</h3>
-      <p>The notebook's <code>add_three_numbers</code> cell calls <code>traceback.print_stack()</code>, which prints every frame on the call stack, oldest first. Here's that cell's code, minus its <code>dis.dis</code> line, saved as <code>stack_demo.py</code> and run with <code>python3 stack_demo.py</code>:</p>
+      <p><code>traceback.print_stack()</code> prints every frame on the call stack, oldest first. Here's a function that calls it, saved as <code>stack_demo.py</code> and run with <code>python3.10 stack_demo.py</code>:</p>
       <pre class="loop-sketch" id="stack-src" style="background:var(--surface);color:var(--ink)"></pre>
-      <p>Output:</p>
+      <p>Output (Python prints the file's full path; it's shortened here):</p>
       <pre class="loop-sketch" id="stack-out" style="background:var(--surface);color:var(--ink)"></pre>
-      <p>Three frames: the module, <code>caller</code>, and <code>add_three_numbers</code> on top. Each one has its own slots and its own value stack. In the notebook you'll see the same three frames, but with a temporary file name where this says <code>stack_demo.py</code>, and the first frame says line 11 instead of line 10 because of the <code>dis.dis</code> line.</p>
+      <p>Three frames: the module, <code>caller</code>, and <code>add_three_numbers</code> on top. Each one has its own slots and its own value stack.</p>
+    </div>
+    <div class="prose">
+      <p>Here's what <code>dis</code> shows for <code>add_three_numbers</code>. Line 2, the call to <code>print_stack</code>, ends in <code>CALL_FUNCTION_KW</code> because of the keyword argument <code>limit=3</code>, then <code>POP_TOP</code> throws away what <code>print_stack</code> returned. Line 3 adds twice, one <code>BINARY_ADD</code> for each <code>+</code>: <code>a + b</code> first, then that plus <code>c</code>.</p>
+    </div>
+    <div class="cells" id="add3-cells"></div>
+  </section>
+
+  <section aria-labelledby="comp-h">
+    <h2 id="comp-h">A loop or a list comprehension?</h2>
+    <div class="prose">
+      <p>These two functions build the same list, <code>[0, 1, …, 9]</code>. Here's what each one compiles to:</p>
+    </div>
+    <div class="pair">
+      <div class="stack-col">
+        <div class="code-panel">
+          <div class="code-head"><span>A <code>for</code> loop with <code>append</code></span></div>
+          <div class="code src" id="loopy-src"></div>
+        </div>
+        <div class="code-panel">
+          <div class="code-head"><span>Output</span><span>8 instructions per item</span></div>
+          <div class="code" id="loopy-out"></div>
+        </div>
+      </div>
+      <div class="stack-col">
+        <div class="code-panel">
+          <div class="code-head"><span>A list comprehension</span></div>
+          <div class="code src" id="compy-src"></div>
+        </div>
+        <div class="code-panel">
+          <div class="code-head"><span>Output</span><span>5 instructions per item</span></div>
+          <div class="code" id="compy-out"></div>
+        </div>
+      </div>
+    </div>
+    <div class="prose">
+      <p>Each listing's loop is the stretch from <code>FOR_ITER</code> to <code>JUMP_ABSOLUTE</code>, with <span style="background:color-mix(in oklab, var(--tag) 40%, transparent);padding:0 3px;border-radius:3px">highlighted</span> instructions running once for every item. The loop in <code>loopy</code> runs eight of them per item. To append, it has to push <code>x</code>, look up its <code>append</code> method with <code>LOAD_METHOD</code>, push <code>i</code>, call the method, and throw away the <code>None</code> it returns. The comprehension's loop runs five, because <code>LIST_APPEND</code> is a single instruction that appends to the list sitting further down the stack, no method lookup or call.</p>
+      <p>The comprehension also gets <strong>its own code object</strong>. <code>compy</code> builds a function out of <code>&lt;listcomp&gt;</code> with <code>MAKE_FUNCTION</code>, makes an iterator over <code>range(0, 10)</code>, and calls that function with the iterator as its only argument. That argument's name is <code>.0</code>, a name you couldn't write yourself, so it can't clash with yours. (The address after <code>at</code> is different every time you run it.) Calling that function means a second frame on the call stack. Python 3.12 and later skip it, and run the comprehension inline instead; the <a href="#new-h">last section</a> shows what that looks like.</p>
     </div>
   </section>
 
   <section aria-labelledby="is-h">
     <h2 id="is-h">Why is <code>257 is 257</code> sometimes <code>False</code>?</h2>
     <div class="prose">
-      <p>The notebook's last section runs the same three lines in two places and gets two answers. First inside a function:</p>
+      <p>Here are the same three lines, run in two places, with two different answers. First inside a function:</p>
     </div>
     <div class="cells" id="is-fn-cells"></div>
     <div class="prose">
-      <p>Then straight in a cell:</p>
-    </div>
-    <div class="cells" id="is-cell-cells"></div>
-    <div class="prose">
-      <p>To see why, the notebook disassembles the function with <code>dis.dis(notebook_is)</code>. Look at the two <code>LOAD_CONST</code> instructions:</p>
+      <p>Then typed into the <code>&gt;&gt;&gt;</code> REPL, one line at a time:</p>
     </div>
     <div class="code-panel" style="max-width:640px">
-      <div class="code-head"><span>Output of <code>dis.dis(notebook_is)</code></span><span>both say constant <strong>1</strong></span></div>
+      <div class="code-head"><span>The Python 3.10.8 REPL</span><span>different objects</span></div>
+      <div class="code" id="is-repl"></div>
+    </div>
+    <div class="prose">
+      <p>To see why, disassemble the function. Look at the two <code>LOAD_CONST</code> instructions:</p>
+    </div>
+    <div class="code-panel" style="max-width:640px">
+      <div class="code-head"><span>Output of <code>dis.dis(is_in_a_function)</code></span><span>both say constant <strong>1</strong></span></div>
       <div class="code" id="is-dis"></div>
     </div>
     <div class="prose">
       <p>Both assignments load <strong>constant 1</strong>. When the compiler builds a code object, it keeps one table of constants for the whole thing and stores each distinct value once. So both names end up pointing at the very same <code>257</code> object, and <code>is</code> (<code>IS_OP</code>, which checks "same object?") says <code>True</code>.</p>
-      <p>Whether you get one table or two depends on <strong>how much code gets compiled at once</strong>:</p>
+      <p>The REPL is different because it compiles each line on its own, as soon as you press Enter. Each line gets its own code object with its own table of constants, and each table makes its own <code>257</code>. Compile all three lines at once, though, and they share one table again. Passing them to <code>dis</code> as a single string does that:</p>
+    </div>
+    <div class="cells" id="is-str-cells"></div>
+    <div class="prose">
+      <p>Both loads are constant 0, the same <code>257</code>. That's how a <code>.py</code> file gets compiled too: the whole module at once.</p>
+      <p>So whether you get one table or two depends on <strong>how much code gets compiled at once</strong>:</p>
     </div>
     <div class="table-wrap">
       <table class="results">
@@ -573,7 +627,7 @@ while True:
 
   <section aria-labelledby="primer-h">
     <h2 id="primer-h">Instruction primer</h2>
-    <p class="muted" style="max-width:75ch">The instructions that show up in the notebook, plus a few close relatives. The stack picture shows the top of the stack on the right: <code>… a, b → … a+b</code> means "pops <code>b</code>, then <code>a</code>, and pushes their sum." The dashed line says what newer Pythons call it. Ones with a tag show up in the step-through above.</p>
+    <p class="muted" style="max-width:75ch">The instructions that show up on this page, plus a few close relatives. The stack picture shows the top of the stack on the right: <code>… a, b → … a+b</code> means "pops <code>b</code>, then <code>a</code>, and pushes their sum." The dashed line says what newer Pythons call it. Ones with a tag show up in the step-through above.</p>
     <div class="filter">
       <label for="op-filter" class="label">Find an instruction</label>
       <input id="op-filter" type="search" placeholder="e.g. LOAD, JUMP, CALL" autocomplete="off" spellcheck="false">
@@ -584,7 +638,7 @@ while True:
   <section aria-labelledby="new-h">
     <h2 id="new-h">What newer Pythons show you</h2>
     <div class="prose">
-      <p>If you run the notebook in Python 3.11 or later, your output won't match this page. The ideas are the same: frames, slots, a value stack, one instruction at a time. What changed is that the interpreter got much more aggressive about doing less work per instruction. Here's 3.10 next to <strong>Python 3.14.3</strong>, with every new kind of instruction highlighted.</p>
+      <p>If you run these examples in Python 3.11 or later, your output won't match this page. The ideas are the same: frames, slots, a value stack, one instruction at a time. What changed is that the interpreter got much more aggressive about doing less work per instruction. Here's 3.10 next to <strong>Python 3.14.3</strong>, with every new kind of instruction highlighted.</p>
     </div>
     <div class="seg" id="cmp" role="group" aria-label="Which function to compare"></div>
     <div class="code-panel">
@@ -648,9 +702,9 @@ while True:
 const D310 = {"version":"3.10.8","text":{"add":"  2           0 LOAD_FAST                0 (a)\n              2 LOAD_FAST                1 (b)\n              4 BINARY_ADD\n              6 RETURN_VALUE\n","if":"  2           0 LOAD_FAST                0 (x)\n              2 LOAD_CONST               1 (5)\n              4 COMPARE_OP               2 (==)\n              6 POP_JUMP_IF_FALSE        6 (to 12)\n\n  3           8 LOAD_CONST               2 (True)\n             10 RETURN_VALUE\n\n  5     >>   12 LOAD_CONST               3 (False)\n             14 RETURN_VALUE\n","loop":"  2           0 LOAD_CONST               1 (0)\n              2 STORE_FAST               3 (result)\n\n  3           4 LOAD_GLOBAL              0 (range)\n              6 LOAD_FAST                0 (start)\n              8 LOAD_FAST                1 (end)\n             10 LOAD_FAST                2 (increment)\n             12 CALL_FUNCTION            3\n             14 GET_ITER\n        >>   16 FOR_ITER                 6 (to 30)\n             18 STORE_FAST               4 (item)\n\n  4          20 LOAD_FAST                3 (result)\n             22 LOAD_FAST                4 (item)\n             24 INPLACE_ADD\n             26 STORE_FAST               3 (result)\n             28 JUMP_ABSOLUTE            8 (to 16)\n\n  5     >>   30 LOAD_FAST                3 (result)\n             32 RETURN_VALUE\n","comp":"  2           0 LOAD_CONST               1 (<code object <listcomp>>)\n              2 LOAD_CONST               2 ('compy.<locals>.<listcomp>')\n              4 MAKE_FUNCTION            0\n              6 LOAD_GLOBAL              0 (range)\n              8 LOAD_CONST               3 (0)\n             10 LOAD_CONST               4 (3)\n             12 CALL_FUNCTION            2\n             14 GET_ITER\n             16 CALL_FUNCTION            1\n             18 STORE_FAST               0 (x)\n\n  3          20 LOAD_FAST                0 (x)\n             22 RETURN_VALUE\n\nDisassembly of <code object <listcomp>>:\n  2           0 BUILD_LIST               0\n              2 LOAD_FAST                0 (.0)\n        >>    4 FOR_ITER                 4 (to 14)\n              6 STORE_FAST               1 (i)\n              8 LOAD_FAST                1 (i)\n             10 LIST_APPEND              2\n             12 JUMP_ABSOLUTE            2 (to 4)\n        >>   14 RETURN_VALUE\n","is":"  2           0 LOAD_CONST               1 (257)\n              2 STORE_FAST               0 (two_hundred_fifty_seven)\n\n  3           4 LOAD_CONST               1 (257)\n              6 STORE_FAST               1 (two_hundred_fifty_seven_again)\n\n  4           8 LOAD_FAST                0 (two_hundred_fifty_seven)\n             10 LOAD_FAST                1 (two_hundred_fifty_seven_again)\n             12 IS_OP                    0\n             14 RETURN_VALUE\n"},"walk":{"add":{"source":"def add_two_numbers(a, b):\n    return a + b\n\ntotal = add_two_numbers(2, 3)\n","module":{"name":"<module>","varnames":[],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":0,"argrepr":"<code object add_two_numbers>","line":1,"target":false,"argval":null,"code":"add_two_numbers"},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"'add_two_numbers'","line":null,"target":false,"argval":"add_two_numbers","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"add_two_numbers","line":null,"target":false,"argval":"add_two_numbers","code":null},{"offset":8,"op":"LOAD_NAME","arg":0,"argrepr":"add_two_numbers","line":4,"target":false,"argval":"add_two_numbers","code":null},{"offset":10,"op":"LOAD_CONST","arg":2,"argrepr":"2","line":null,"target":false,"argval":2,"code":null},{"offset":12,"op":"LOAD_CONST","arg":3,"argrepr":"3","line":null,"target":false,"argval":3,"code":null},{"offset":14,"op":"CALL_FUNCTION","arg":2,"argrepr":"","line":null,"target":false,"argval":2,"code":null},{"offset":16,"op":"STORE_NAME","arg":1,"argrepr":"total","line":null,"target":false,"argval":"total","code":null},{"offset":18,"op":"LOAD_CONST","arg":4,"argrepr":"None","line":null,"target":false,"argval":null,"code":null},{"offset":20,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"add_two_numbers","varnames":["a","b"],"instrs":[{"offset":0,"op":"LOAD_FAST","arg":0,"argrepr":"a","line":2,"target":false,"argval":"a","code":null},{"offset":2,"op":"LOAD_FAST","arg":1,"argrepr":"b","line":null,"target":false,"argval":"b","code":null},{"offset":4,"op":"BINARY_ADD","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null},{"offset":6,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[]}]}},"if":{"source":"def equals_five(x):\n    if x == 5:\n        return True\n    else:\n        return False\n","module":{"name":"<module>","varnames":[],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":0,"argrepr":"<code object equals_five>","line":1,"target":false,"argval":null,"code":"equals_five"},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"'equals_five'","line":null,"target":false,"argval":"equals_five","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"equals_five","line":null,"target":false,"argval":"equals_five","code":null},{"offset":8,"op":"LOAD_CONST","arg":2,"argrepr":"None","line":null,"target":false,"argval":null,"code":null},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"equals_five","varnames":["x"],"instrs":[{"offset":0,"op":"LOAD_FAST","arg":0,"argrepr":"x","line":2,"target":false,"argval":"x","code":null},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"5","line":null,"target":false,"argval":5,"code":null},{"offset":4,"op":"COMPARE_OP","arg":2,"argrepr":"==","line":null,"target":false,"argval":"==","code":null},{"offset":6,"op":"POP_JUMP_IF_FALSE","arg":6,"argrepr":"to 12","line":null,"target":false,"argval":12,"code":null},{"offset":8,"op":"LOAD_CONST","arg":2,"argrepr":"True","line":3,"target":false,"argval":true,"code":null},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null},{"offset":12,"op":"LOAD_CONST","arg":3,"argrepr":"False","line":5,"target":true,"argval":false,"code":null},{"offset":14,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[]}]}},"loop":{"source":"def looping_sum(start, end, increment):\n    result = 0\n    for item in range(start, end, increment):\n        result += item\n    return result\n","module":{"name":"<module>","varnames":[],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":0,"argrepr":"<code object looping_sum>","line":1,"target":false,"argval":null,"code":"looping_sum"},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"'looping_sum'","line":null,"target":false,"argval":"looping_sum","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"looping_sum","line":null,"target":false,"argval":"looping_sum","code":null},{"offset":8,"op":"LOAD_CONST","arg":2,"argrepr":"None","line":null,"target":false,"argval":null,"code":null},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"looping_sum","varnames":["start","end","increment","result","item"],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":1,"argrepr":"0","line":2,"target":false,"argval":0,"code":null},{"offset":2,"op":"STORE_FAST","arg":3,"argrepr":"result","line":null,"target":false,"argval":"result","code":null},{"offset":4,"op":"LOAD_GLOBAL","arg":0,"argrepr":"range","line":3,"target":false,"argval":"range","code":null},{"offset":6,"op":"LOAD_FAST","arg":0,"argrepr":"start","line":null,"target":false,"argval":"start","code":null},{"offset":8,"op":"LOAD_FAST","arg":1,"argrepr":"end","line":null,"target":false,"argval":"end","code":null},{"offset":10,"op":"LOAD_FAST","arg":2,"argrepr":"increment","line":null,"target":false,"argval":"increment","code":null},{"offset":12,"op":"CALL_FUNCTION","arg":3,"argrepr":"","line":null,"target":false,"argval":3,"code":null},{"offset":14,"op":"GET_ITER","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null},{"offset":16,"op":"FOR_ITER","arg":6,"argrepr":"to 30","line":null,"target":true,"argval":30,"code":null},{"offset":18,"op":"STORE_FAST","arg":4,"argrepr":"item","line":null,"target":false,"argval":"item","code":null},{"offset":20,"op":"LOAD_FAST","arg":3,"argrepr":"result","line":4,"target":false,"argval":"result","code":null},{"offset":22,"op":"LOAD_FAST","arg":4,"argrepr":"item","line":null,"target":false,"argval":"item","code":null},{"offset":24,"op":"INPLACE_ADD","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null},{"offset":26,"op":"STORE_FAST","arg":3,"argrepr":"result","line":null,"target":false,"argval":"result","code":null},{"offset":28,"op":"JUMP_ABSOLUTE","arg":8,"argrepr":"to 16","line":null,"target":false,"argval":16,"code":null},{"offset":30,"op":"LOAD_FAST","arg":3,"argrepr":"result","line":5,"target":true,"argval":"result","code":null},{"offset":32,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[]}]}},"comp":{"source":"def compy():\n    x = [i for i in range(0, 3)]\n    return x\n","module":{"name":"<module>","varnames":[],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":0,"argrepr":"<code object compy>","line":1,"target":false,"argval":null,"code":"compy"},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"'compy'","line":null,"target":false,"argval":"compy","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"compy","line":null,"target":false,"argval":"compy","code":null},{"offset":8,"op":"LOAD_CONST","arg":2,"argrepr":"None","line":null,"target":false,"argval":null,"code":null},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"compy","varnames":["x"],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":1,"argrepr":"<code object <listcomp>>","line":2,"target":false,"argval":null,"code":"<listcomp>"},{"offset":2,"op":"LOAD_CONST","arg":2,"argrepr":"'compy.<locals>.<listcomp>'","line":null,"target":false,"argval":"compy.<locals>.<listcomp>","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"LOAD_GLOBAL","arg":0,"argrepr":"range","line":null,"target":false,"argval":"range","code":null},{"offset":8,"op":"LOAD_CONST","arg":3,"argrepr":"0","line":null,"target":false,"argval":0,"code":null},{"offset":10,"op":"LOAD_CONST","arg":4,"argrepr":"3","line":null,"target":false,"argval":3,"code":null},{"offset":12,"op":"CALL_FUNCTION","arg":2,"argrepr":"","line":null,"target":false,"argval":2,"code":null},{"offset":14,"op":"GET_ITER","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null},{"offset":16,"op":"CALL_FUNCTION","arg":1,"argrepr":"","line":null,"target":false,"argval":1,"code":null},{"offset":18,"op":"STORE_FAST","arg":0,"argrepr":"x","line":null,"target":false,"argval":"x","code":null},{"offset":20,"op":"LOAD_FAST","arg":0,"argrepr":"x","line":3,"target":false,"argval":"x","code":null},{"offset":22,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"<listcomp>","varnames":[".0","i"],"instrs":[{"offset":0,"op":"BUILD_LIST","arg":0,"argrepr":"","line":2,"target":false,"argval":0,"code":null},{"offset":2,"op":"LOAD_FAST","arg":0,"argrepr":".0","line":null,"target":false,"argval":".0","code":null},{"offset":4,"op":"FOR_ITER","arg":4,"argrepr":"to 14","line":null,"target":true,"argval":14,"code":null},{"offset":6,"op":"STORE_FAST","arg":1,"argrepr":"i","line":null,"target":false,"argval":"i","code":null},{"offset":8,"op":"LOAD_FAST","arg":1,"argrepr":"i","line":null,"target":false,"argval":"i","code":null},{"offset":10,"op":"LIST_APPEND","arg":2,"argrepr":"","line":null,"target":false,"argval":2,"code":null},{"offset":12,"op":"JUMP_ABSOLUTE","arg":2,"argrepr":"to 4","line":null,"target":false,"argval":4,"code":null},{"offset":14,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":true,"argval":null,"code":null}],"children":[]}]}]}}}};
 const D314 = {"version":"3.14.3","text":{"add":"  1           RESUME                   0\n\n  2           LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (a, b)\n              BINARY_OP                0 (+)\n              RETURN_VALUE\n","if":"  1           RESUME                   0\n\n  2           LOAD_FAST_BORROW         0 (x)\n              LOAD_SMALL_INT           5\n              COMPARE_OP              88 (bool(==))\n              POP_JUMP_IF_FALSE        3 (to L1)\n              NOT_TAKEN\n\n  3           LOAD_CONST               1 (True)\n              RETURN_VALUE\n\n  5   L1:     LOAD_CONST               2 (False)\n              RETURN_VALUE\n","loop":"  1           RESUME                   0\n\n  2           LOAD_SMALL_INT           0\n              STORE_FAST               3 (result)\n\n  3           LOAD_GLOBAL              1 (range + NULL)\n              LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (start, end)\n              LOAD_FAST_BORROW         2 (increment)\n              CALL                     3\n              GET_ITER\n      L1:     FOR_ITER                11 (to L2)\n              STORE_FAST               4 (item)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 52 (result, item)\n              BINARY_OP               13 (+=)\n              STORE_FAST               3 (result)\n              JUMP_BACKWARD           13 (to L1)\n\n  3   L2:     END_FOR\n              POP_ITER\n\n  5           LOAD_FAST_BORROW         3 (result)\n              RETURN_VALUE\n","comp":"   1           RESUME                   0\n\n   2           LOAD_GLOBAL              1 (range + NULL)\n               LOAD_SMALL_INT           0\n               LOAD_SMALL_INT           3\n               CALL                     2\n               GET_ITER\n               LOAD_FAST_AND_CLEAR      0 (i)\n               SWAP                     2\n       L1:     BUILD_LIST               0\n               SWAP                     2\n       L2:     FOR_ITER                 4 (to L3)\n               STORE_FAST_LOAD_FAST     0 (i, i)\n               LIST_APPEND              2\n               JUMP_BACKWARD            6 (to L2)\n       L3:     END_FOR\n               POP_ITER\n       L4:     STORE_FAST               1 (x)\n               STORE_FAST               0 (i)\n\n   3           LOAD_FAST_BORROW         1 (x)\n               RETURN_VALUE\n\n  --   L5:     SWAP                     2\n               POP_TOP\n\n   2           SWAP                     2\n               STORE_FAST               0 (i)\n               RERAISE                  0\nExceptionTable:\n  L1 to L4 -> L5 [2]\n","is":"  1           RESUME                   0\n\n  2           LOAD_CONST               0 (257)\n              STORE_FAST               0 (two_hundred_fifty_seven)\n\n  3           LOAD_CONST               0 (257)\n              STORE_FAST               1 (two_hundred_fifty_seven_again)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (two_hundred_fifty_seven, two_hundred_fifty_seven_again)\n              IS_OP                    0 (is)\n              RETURN_VALUE\n","addAdaptive":"  1           RESUME_CHECK             0\n\n  2           LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (a, b)\n              BINARY_OP_ADD_INT        0 (+)\n              RETURN_VALUE\n","loopAdaptive":"  1           RESUME_CHECK             0\n\n  2           LOAD_SMALL_INT           0\n              STORE_FAST               3 (result)\n\n  3           LOAD_GLOBAL_BUILTIN      1 (range + NULL)\n              LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (start, end)\n              LOAD_FAST_BORROW         2 (increment)\n              CALL_BUILTIN_CLASS       3\n              GET_ITER\n      L1:     FOR_ITER_RANGE          11 (to L2)\n              STORE_FAST               4 (item)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 52 (result, item)\n              BINARY_OP_ADD_INT       13 (+=)\n              STORE_FAST               3 (result)\n              JUMP_BACKWARD_NO_JIT    13 (to L1)\n\n  3   L2:     END_FOR\n              POP_ITER\n\n  5           LOAD_FAST_BORROW         3 (result)\n              RETURN_VALUE\n"}};
 const CSRC = {"loadFast":[{"n":1858,"t":"        case TARGET(LOAD_FAST): {"},{"n":1859,"t":"            PyObject *value = GETLOCAL(oparg);"},{"n":1860,"t":"            if (value == NULL) {"},{"n":1861,"t":"                format_exc_check_arg(tstate, PyExc_UnboundLocalError,"},{"n":1862,"t":"                                     UNBOUNDLOCAL_ERROR_MSG,"},{"n":1863,"t":"                                     PyTuple_GetItem(co->co_varnames, oparg));"},{"n":1864,"t":"                goto error;"},{"n":1865,"t":"            }"},{"n":1866,"t":"            Py_INCREF(value);"},{"n":1867,"t":"            PUSH(value);"},{"n":1868,"t":"            DISPATCH();"},{"n":1869,"t":"        }"}],"loadName":[{"n":2894,"t":"        case TARGET(LOAD_NAME): {"},{"n":2895,"t":"            PyObject *name = GETITEM(names, oparg);"},{"n":2896,"t":"            PyObject *locals = f->f_locals;"},{"n":2897,"t":"            PyObject *v;"},{"n":2898,"t":"            if (locals == NULL) {"},{"n":2899,"t":"                _PyErr_Format(tstate, PyExc_SystemError,"},{"n":2900,"t":"                              \"no locals when loading %R\", name);"},{"n":2901,"t":"                goto error;"},{"n":2902,"t":"            }"},{"n":2903,"t":"            if (PyDict_CheckExact(locals)) {"},{"n":2904,"t":"                v = PyDict_GetItemWithError(locals, name);"},{"n":2905,"t":"                if (v != NULL) {"},{"n":2906,"t":"                    Py_INCREF(v);"},{"n":2907,"t":"                }"},{"n":2908,"t":"                else if (_PyErr_Occurred(tstate)) {"},{"n":2909,"t":"                    goto error;"},{"n":2910,"t":"                }"},{"n":2911,"t":"            }"},{"n":2912,"t":"            else {"},{"n":2913,"t":"                v = PyObject_GetItem(locals, name);"},{"n":2914,"t":"                if (v == NULL) {"},{"n":2915,"t":"                    if (!_PyErr_ExceptionMatches(tstate, PyExc_KeyError))"},{"n":2916,"t":"                        goto error;"},{"n":2917,"t":"                    _PyErr_Clear(tstate);"},{"n":2918,"t":"                }"},{"n":2919,"t":"            }"},{"n":2920,"t":"            if (v == NULL) {"},{"n":2921,"t":"                v = PyDict_GetItemWithError(f->f_globals, name);"},{"n":2922,"t":"                if (v != NULL) {"},{"n":2923,"t":"                    Py_INCREF(v);"},{"n":2924,"t":"                }"},{"n":2925,"t":"                else if (_PyErr_Occurred(tstate)) {"},{"n":2926,"t":"                    goto error;"},{"n":2927,"t":"                }"},{"n":2928,"t":"                else {"},{"n":2929,"t":"                    if (PyDict_CheckExact(f->f_builtins)) {"},{"n":2930,"t":"                        v = PyDict_GetItemWithError(f->f_builtins, name);"},{"n":2931,"t":"                        if (v == NULL) {"},{"n":2932,"t":"                            if (!_PyErr_Occurred(tstate)) {"},{"n":2933,"t":"                                format_exc_check_arg("},{"n":2934,"t":"                                        tstate, PyExc_NameError,"},{"n":2935,"t":"                                        NAME_ERROR_MSG, name);"},{"n":2936,"t":"                            }"},{"n":2937,"t":"                            goto error;"},{"n":2938,"t":"                        }"},{"n":2939,"t":"                        Py_INCREF(v);"},{"n":2940,"t":"                    }"},{"n":2941,"t":"                    else {"},{"n":2942,"t":"                        v = PyObject_GetItem(f->f_builtins, name);"},{"n":2943,"t":"                        if (v == NULL) {"},{"n":2944,"t":"                            if (_PyErr_ExceptionMatches(tstate, PyExc_KeyError)) {"},{"n":2945,"t":"                                format_exc_check_arg("},{"n":2946,"t":"                                            tstate, PyExc_NameError,"},{"n":2947,"t":"                                            NAME_ERROR_MSG, name);"},{"n":2948,"t":"                            }"},{"n":2949,"t":"                            goto error;"},{"n":2950,"t":"                        }"},{"n":2951,"t":"                    }"},{"n":2952,"t":"                }"},{"n":2953,"t":"            }"},{"n":2954,"t":"            PUSH(v);"},{"n":2955,"t":"            DISPATCH();"},{"n":2956,"t":"        }"}]};
-const STACK_DEMO = {"source": "import traceback\n\ndef add_three_numbers(a, b, c):\n    traceback.print_stack(limit=3)  # just the 3 newest frames, not IPython's own\n    return a + b + c\n\ndef caller():\n    return add_three_numbers(1, 2, 3)\n\ncaller()", "output": "  File \"stack_demo.py\", line 10, in <module>\n    caller()\n  File \"stack_demo.py\", line 8, in caller\n    return add_three_numbers(1, 2, 3)\n  File \"stack_demo.py\", line 4, in add_three_numbers\n    traceback.print_stack(limit=3)  # just the 3 newest frames, not IPython's own\n"};
-// The notebook's own cells, by index, with what they print in Jupyter under Python 3.10.8.
-const NB = {"2": {"src": "dis.dis(\"1+1\")", "out": "  1           0 LOAD_CONST               0 (2)\n              2 RETURN_VALUE\n"}, "3": {"src": "def add_ones():\n    return 1 + 1\n\ndis.dis(add_ones)", "out": "  2           0 LOAD_CONST               1 (2)\n              2 RETURN_VALUE\n"}, "9": {"src": "def looping_sum(start, end, increment):\n    result = 0\n    for item in range(start, end, increment):\n        result += item\n    return result\n\ndis.dis(looping_sum)", "out": "  2           0 LOAD_CONST               1 (0)\n              2 STORE_FAST               3 (result)\n  3           4 LOAD_GLOBAL              0 (range)\n              6 LOAD_FAST                0 (start)\n              8 LOAD_FAST                1 (end)\n             10 LOAD_FAST                2 (increment)\n             12 CALL_FUNCTION            3\n             14 GET_ITER\n        >>   16 FOR_ITER                 6 (to 30)\n             18 STORE_FAST               4 (item)\n  4          20 LOAD_FAST                3 (result)\n             22 LOAD_FAST                4 (item)\n             24 INPLACE_ADD\n             26 STORE_FAST               3 (result)\n             28 JUMP_ABSOLUTE            8 (to 16)\n  5     >>   30 LOAD_FAST                3 (result)\n             32 RETURN_VALUE\n"}, "10": {"src": "dis.dis(\n\"\"\"\nresult = 0\nfor item in range(start, end, increment):\n    result += item\n\"\"\"\n)", "out": "  2           0 LOAD_CONST               0 (0)\n              2 STORE_NAME               0 (result)\n  3           4 LOAD_NAME                1 (range)\n              6 LOAD_NAME                2 (start)\n              8 LOAD_NAME                3 (end)\n             10 LOAD_NAME                4 (increment)\n             12 CALL_FUNCTION            3\n             14 GET_ITER\n        >>   16 FOR_ITER                 6 (to 30)\n             18 STORE_NAME               5 (item)\n  4          20 LOAD_NAME                0 (result)\n             22 LOAD_NAME                5 (item)\n             24 INPLACE_ADD\n             26 STORE_NAME               0 (result)\n             28 JUMP_ABSOLUTE            8 (to 16)\n  3     >>   30 LOAD_CONST               1 (None)\n             32 RETURN_VALUE\n"}, "16": {"src": "def notebook_is():\n    two_hundred_fifty_seven = 257\n    two_hundred_fifty_seven_again = 257\n    return two_hundred_fifty_seven is two_hundred_fifty_seven_again", "out": ""}, "17": {"src": "notebook_is()", "out": "True\n"}, "19": {"src": "\ntwo_hundred_fifty_seven = 257\ntwo_hundred_fifty_seven_again = 257\n\ntwo_hundred_fifty_seven is two_hundred_fifty_seven_again\n", "out": "False\n"}, "11": {"src": "import time\n\nstart = time.perf_counter()\nlooping_sum(1, 10000000, 1)\nend = time.perf_counter()\n\nprint(end - start)", "out": ""}, "12": {"src": "import time\n\nstart = time.perf_counter()\nresult = 0\nfor item in range(1, 10000000, 1):\n    result += item\nprint(result)\nend = time.perf_counter()\n\nprint(end - start)", "out": ""}};
+const STACK_DEMO = {"source": "import traceback\n\ndef add_three_numbers(a, b, c):\n    traceback.print_stack(limit=3)  # just the 3 newest frames\n    return a + b + c\n\ndef caller():\n    return add_three_numbers(1, 2, 3)\n\ncaller()", "output": "  File \"stack_demo.py\", line 10, in <module>\n    caller()\n  File \"stack_demo.py\", line 8, in caller\n    return add_three_numbers(1, 2, 3)\n  File \"stack_demo.py\", line 4, in add_three_numbers\n    traceback.print_stack(limit=3)  # just the 3 newest frames\n"};
+// Every example's code, with what it prints in the Python 3.10.8 REPL.
+const EX = {"foldStr": {"src": "dis.dis(\"1+1\")", "out": "  1           0 LOAD_CONST               0 (2)\n              2 RETURN_VALUE\n"}, "foldFn": {"src": "def add_ones():\n    return 1 + 1\n\ndis.dis(add_ones)", "out": "  2           0 LOAD_CONST               1 (2)\n              2 RETURN_VALUE\n"}, "add2": {"src": "def add_two_numbers(a, b):\n    return a + b\n\ndis.dis(add_two_numbers)", "out": "  2           0 LOAD_FAST                0 (a)\n              2 LOAD_FAST                1 (b)\n              4 BINARY_ADD\n              6 RETURN_VALUE\n"}, "if": {"src": "def equals_five(x):\n    if x == 5:\n        return True\n    else:\n        return False\n\ndis.dis(equals_five)", "out": "  2           0 LOAD_FAST                0 (x)\n              2 LOAD_CONST               1 (5)\n              4 COMPARE_OP               2 (==)\n              6 POP_JUMP_IF_FALSE        6 (to 12)\n\n  3           8 LOAD_CONST               2 (True)\n             10 RETURN_VALUE\n\n  5     >>   12 LOAD_CONST               3 (False)\n             14 RETURN_VALUE\n"}, "add3": {"src": "def add_three_numbers(a, b, c):\n    traceback.print_stack(limit=3)  # just the 3 newest frames\n    return a + b + c\n\ndis.dis(add_three_numbers)", "out": "  2           0 LOAD_GLOBAL              0 (traceback)\n              2 LOAD_ATTR                1 (print_stack)\n              4 LOAD_CONST               1 (3)\n              6 LOAD_CONST               2 (('limit',))\n              8 CALL_FUNCTION_KW         1\n             10 POP_TOP\n\n  3          12 LOAD_FAST                0 (a)\n             14 LOAD_FAST                1 (b)\n             16 BINARY_ADD\n             18 LOAD_FAST                2 (c)\n             20 BINARY_ADD\n             22 RETURN_VALUE\n"}, "loopFn": {"src": "def looping_sum(start, end, increment):\n    result = 0\n    for item in range(start, end, increment):\n        result += item\n    return result\n\ndis.dis(looping_sum)", "out": "  2           0 LOAD_CONST               1 (0)\n              2 STORE_FAST               3 (result)\n\n  3           4 LOAD_GLOBAL              0 (range)\n              6 LOAD_FAST                0 (start)\n              8 LOAD_FAST                1 (end)\n             10 LOAD_FAST                2 (increment)\n             12 CALL_FUNCTION            3\n             14 GET_ITER\n        >>   16 FOR_ITER                 6 (to 30)\n             18 STORE_FAST               4 (item)\n\n  4          20 LOAD_FAST                3 (result)\n             22 LOAD_FAST                4 (item)\n             24 INPLACE_ADD\n             26 STORE_FAST               3 (result)\n             28 JUMP_ABSOLUTE            8 (to 16)\n\n  5     >>   30 LOAD_FAST                3 (result)\n             32 RETURN_VALUE\n"}, "loopMod": {"src": "dis.dis(\n\"\"\"\nresult = 0\nfor item in range(start, end, increment):\n    result += item\n\"\"\"\n)", "out": "  2           0 LOAD_CONST               0 (0)\n              2 STORE_NAME               0 (result)\n\n  3           4 LOAD_NAME                1 (range)\n              6 LOAD_NAME                2 (start)\n              8 LOAD_NAME                3 (end)\n             10 LOAD_NAME                4 (increment)\n             12 CALL_FUNCTION            3\n             14 GET_ITER\n        >>   16 FOR_ITER                 6 (to 30)\n             18 STORE_NAME               5 (item)\n\n  4          20 LOAD_NAME                0 (result)\n             22 LOAD_NAME                5 (item)\n             24 INPLACE_ADD\n             26 STORE_NAME               0 (result)\n             28 JUMP_ABSOLUTE            8 (to 16)\n\n  3     >>   30 LOAD_CONST               1 (None)\n             32 RETURN_VALUE\n"}, "timeFn": {"src": "import time\n\nstart = time.perf_counter()\nlooping_sum(1, 10000000, 1)\nend = time.perf_counter()\n\nprint(end - start)", "out": ""}, "timeMod": {"src": "import time\n\nstart = time.perf_counter()\nresult = 0\nfor item in range(1, 10000000, 1):\n    result += item\nprint(result)\nend = time.perf_counter()\n\nprint(end - start)", "out": ""}, "loopy": {"src": "def loopy():\n    x = []\n    for i in range(0, 10):\n        x.append(i)\n    return x\n\ndis.dis(loopy)", "out": "  2           0 BUILD_LIST               0\n              2 STORE_FAST               0 (x)\n\n  3           4 LOAD_GLOBAL              0 (range)\n              6 LOAD_CONST               1 (0)\n              8 LOAD_CONST               2 (10)\n             10 CALL_FUNCTION            2\n             12 GET_ITER\n        >>   14 FOR_ITER                 7 (to 30)\n             16 STORE_FAST               1 (i)\n\n  4          18 LOAD_FAST                0 (x)\n             20 LOAD_METHOD              1 (append)\n             22 LOAD_FAST                1 (i)\n             24 CALL_METHOD              1\n             26 POP_TOP\n             28 JUMP_ABSOLUTE            7 (to 14)\n\n  5     >>   30 LOAD_FAST                0 (x)\n             32 RETURN_VALUE\n"}, "compy": {"src": "def compy():\n    x = [i for i in range(0, 10)]\n    return x\n\ndis.dis(compy)", "out": "  2           0 LOAD_CONST               1 (<code object <listcomp> at 0x10456e8c0, file \"<stdin>\", line 2>)\n              2 LOAD_CONST               2 ('compy.<locals>.<listcomp>')\n              4 MAKE_FUNCTION            0\n              6 LOAD_GLOBAL              0 (range)\n              8 LOAD_CONST               3 (0)\n             10 LOAD_CONST               4 (10)\n             12 CALL_FUNCTION            2\n             14 GET_ITER\n             16 CALL_FUNCTION            1\n             18 STORE_FAST               0 (x)\n\n  3          20 LOAD_FAST                0 (x)\n             22 RETURN_VALUE\n\nDisassembly of <code object <listcomp> at 0x10456e8c0, file \"<stdin>\", line 2>:\n  2           0 BUILD_LIST               0\n              2 LOAD_FAST                0 (.0)\n        >>    4 FOR_ITER                 4 (to 14)\n              6 STORE_FAST               1 (i)\n              8 LOAD_FAST                1 (i)\n             10 LIST_APPEND              2\n             12 JUMP_ABSOLUTE            2 (to 4)\n        >>   14 RETURN_VALUE\n"}, "isDef": {"src": "def is_in_a_function():\n    two_hundred_fifty_seven = 257\n    two_hundred_fifty_seven_again = 257\n    return two_hundred_fifty_seven is two_hundred_fifty_seven_again", "out": ""}, "isCall": {"src": "is_in_a_function()", "out": "True\n"}, "isDis": {"src": "dis.dis(is_in_a_function)", "out": "  2           0 LOAD_CONST               1 (257)\n              2 STORE_FAST               0 (two_hundred_fifty_seven)\n\n  3           4 LOAD_CONST               1 (257)\n              6 STORE_FAST               1 (two_hundred_fifty_seven_again)\n\n  4           8 LOAD_FAST                0 (two_hundred_fifty_seven)\n             10 LOAD_FAST                1 (two_hundred_fifty_seven_again)\n             12 IS_OP                    0\n             14 RETURN_VALUE\n"}, "isStr": {"src": "dis.dis('''\ntwo_hundred_fifty_seven = 257\ntwo_hundred_fifty_seven_again = 257\n\ntwo_hundred_fifty_seven is two_hundred_fifty_seven_again\n''')", "out": "  2           0 LOAD_CONST               0 (257)\n              2 STORE_NAME               0 (two_hundred_fifty_seven)\n\n  3           4 LOAD_CONST               0 (257)\n              6 STORE_NAME               1 (two_hundred_fifty_seven_again)\n\n  5           8 LOAD_NAME                0 (two_hundred_fifty_seven)\n             10 LOAD_NAME                1 (two_hundred_fifty_seven_again)\n             12 IS_OP                    0\n             14 POP_TOP\n             16 LOAD_CONST               1 (None)\n             18 RETURN_VALUE\n"}};
 // A code object up close, run in Python 3.10.8.
 const CODEOBJ = {"source": "source = \"\"\"\ndef add_two_numbers(a, b):\n    return a + b\n\ntotal = add_two_numbers(2, 3)\n\"\"\"\nmodule_code = compile(source, \"<module>\", \"exec\")\nprint(module_code.co_consts)\n\nfunction_code = module_code.co_consts[0]\nprint(function_code.co_name)\nprint(function_code.co_varnames)\nprint(function_code.co_code)\n\nexec(module_code)\nprint(add_two_numbers.__code__ is function_code)\n", "output": "(<code object add_two_numbers at 0x104cf5210, file \"<module>\", line 2>, 'add_two_numbers', 2, 3, None)\nadd_two_numbers\n('a', 'b')\nb'|\\x00|\\x01\\x17\\x00S\\x00'\nTrue\n"};
 </script>
@@ -956,24 +1010,26 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
       `<span class="ln"><span class="n">${String(i + 1).padStart(2)}</span>  ${esc(t)}</span>`).join("");
   };
 
-  // Notebook cells, each next to what it prints. A cell with no output gets the full width.
+  // Examples, each next to what it prints. One with no output gets the full width.
   const renderCells = (el, cells) => {
-    el.innerHTML = cells.map(({ cell, head, note }, i) => {
+    el.innerHTML = cells.map(({ ex, head, note }, i) => {
       const src = `<div class="code-panel"><div class="code-head"><span>${head}</span></div><div class="code src" data-src="${i}"></div></div>`;
-      if (!NB[cell].out) return src;
+      if (!EX[ex].out) return src;
       return `<div class="pair">${src}<div class="code-panel"><div class="code-head"><span>Output</span>${note ? `<span>${note}</span>` : ""}</div><div class="code" data-out="${i}"></div></div></div>`;
     }).join("");
-    cells.forEach(({ cell, marks = [] }, i) => {
-      renderSrc(el.querySelector(`[data-src="${i}"]`), NB[cell].src);
+    cells.forEach(({ ex, marks = [] }, i) => {
+      renderSrc(el.querySelector(`[data-src="${i}"]`), EX[ex].src);
       const out = el.querySelector(`[data-out="${i}"]`);
-      if (out) renderText(out, NB[cell].out, marks);
+      if (out) renderText(out, EX[ex].out, marks);
     });
   };
 
   renderCells($("fold-cells"), [
-    { cell: 2, head: "Notebook cell: a string", note: "no addition" },
-    { cell: 3, head: "Notebook cell: a function", note: "no addition" },
+    { ex: "foldStr", head: "As a string", note: "no addition" },
+    { ex: "foldFn", head: "Inside a function", note: "no addition" },
   ]);
+  renderCells($("add-cells"), [{ ex: "add2", head: "Two arguments", note: "there it is", marks: ["BINARY_ADD"] }]);
+  renderCells($("if-cells"), [{ ex: "if", head: "A function with an if" }]);
   renderSrc($("codeobj-src"), CODEOBJ.source);
   renderText($("codeobj-out"), CODEOBJ.output);
 
@@ -1009,10 +1065,10 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
 
   // ---------- walkthrough ----------
   const PROGRAMS = [
-    { key: "add", label: "Call a function", src: "Notebook: The Stack" },
-    { key: "if", label: "An if", src: "Notebook: If", args: [[5], [7]] },
-    { key: "loop", label: "A for loop", src: "Notebook: Storing and loading names", args: [[1, 4, 1]] },
-    { key: "comp", label: "A list comprehension", src: "Notebook: compy(), with range(0, 3)" },
+    { key: "add", label: "Call a function" },
+    { key: "if", label: "An if", args: [[5], [7]] },
+    { key: "loop", label: "A for loop", args: [[1, 4, 1]] },
+    { key: "comp", label: "A list comprehension", src: "compy(), with range(0, 3) to keep it short" },
   ];
   // Each code object's real co_consts in 3.10.8, shown the way the walkthrough shows values.
   const CONSTS = {
@@ -1259,7 +1315,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     at = Math.min(at, steps.length - 1);
     $("scrub").max = steps.length - 1;
     renderProgramButtons();
-    $("src-note").textContent = `${prog.src} · running ${callText()}`;
+    $("src-note").textContent = [prog.src, `running ${callText()}`].filter(Boolean).join(" · ");
     if (!keepStrip) renderStrip();
     render();
   };
@@ -1396,12 +1452,12 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
   load();
 
   // ---------- LOAD_FAST vs LOAD_NAME ----------
-  renderSrc($("fast-fn-src"), NB[9].src);
-  renderText($("fast-fn"), NB[9].out, ["LOAD_FAST", "STORE_FAST", "LOAD_GLOBAL"]);
-  renderSrc($("fast-mod-src"), NB[10].src);
-  renderText($("fast-mod"), NB[10].out, ["LOAD_NAME", "STORE_NAME"]);
-  renderSrc($("time-fn"), NB[11].src);
-  renderSrc($("time-mod"), NB[12].src);
+  renderSrc($("fast-fn-src"), EX.loopFn.src);
+  renderText($("fast-fn"), EX.loopFn.out, ["LOAD_FAST", "STORE_FAST", "LOAD_GLOBAL"]);
+  renderSrc($("fast-mod-src"), EX.loopMod.src);
+  renderText($("fast-mod"), EX.loopMod.out, ["LOAD_NAME", "STORE_NAME"]);
+  renderSrc($("time-fn"), EX.timeFn.src);
+  renderSrc($("time-mod"), EX.timeMod.src);
   $("timing").innerHTML = [
     ["Inside a function", "0.24 s", "LOAD_FAST / STORE_FAST"],
     ["At module level", "0.48 s", "LOAD_NAME / STORE_NAME"],
@@ -1418,15 +1474,31 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
 
   $("stack-src").textContent = STACK_DEMO.source;
   $("stack-out").textContent = STACK_DEMO.output;
+  renderCells($("add3-cells"), [{ ex: "add3", head: "Disassemble it", marks: ["CALL_FUNCTION_KW", "BINARY_ADD"] }]);
+
+  // ---------- loop vs comprehension ----------
+  // Mark every instruction from FOR_ITER to the JUMP_ABSOLUTE back to it: the ones that run once per item.
+  const renderLoop = (el, text) => {
+    renderText(el, text);
+    let on = false;
+    el.querySelectorAll(".ln").forEach((ln) => {
+      if (/FOR_ITER/.test(ln.textContent)) on = true;
+      if (on) ln.classList.add("mark");
+      if (/JUMP_ABSOLUTE/.test(ln.textContent)) on = false;
+    });
+  };
+  renderSrc($("loopy-src"), EX.loopy.src);
+  renderLoop($("loopy-out"), EX.loopy.out);
+  renderSrc($("compy-src"), EX.compy.src);
+  renderLoop($("compy-out"), EX.compy.out);
 
   // ---------- is ----------
   renderCells($("is-fn-cells"), [
-    { cell: 16, head: "Notebook cell: define the function" },
-    { cell: 17, head: "Notebook cell: call it", note: "same object" },
+    { ex: "isDef", head: "Define the function" },
+    { ex: "isCall", head: "Call it", note: "same object" },
   ]);
-  renderCells($("is-cell-cells"), [
-    { cell: 19, head: "Notebook cell: the same three lines, no function", note: "different objects" },
-  ]);
+  renderText($("is-repl"), ">>> two_hundred_fifty_seven = 257\n>>> two_hundred_fifty_seven_again = 257\n>>> two_hundred_fifty_seven is two_hundred_fifty_seven_again\nFalse\n");
+  renderCells($("is-str-cells"), [{ ex: "isStr", head: "All three lines as one string", note: "both say constant 0", marks: ["(257)"] }]);
   renderText($("is-dis"), D310.text.is, ["(257)"]);
 
   // ---------- primer ----------
@@ -1501,7 +1573,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     { key: "add", label: "add_two_numbers" },
     { key: "if", label: "equals_five" },
     { key: "loop", label: "looping_sum" },
-    { key: "comp", label: "compy", note: "range(0, 3) here; the notebook uses range(0, 10)" },
+    { key: "comp", label: "compy", note: "range(0, 3) here, to match the step-through" },
   ];
   const DIFFS = {
     add: [
