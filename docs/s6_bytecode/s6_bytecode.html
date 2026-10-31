@@ -24,6 +24,9 @@
     --slot: #EDE6D8;
     --obj: #DCE4FB;
     --obj-edge: #7B8FD6;
+    --d-loc: #2a78d6;
+    --d-glob: #eb6834;
+    --d-blt: #1baf7a;
     --display: Georgia, "Times New Roman", serif;
     --body: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
     --mono: ui-monospace, Menlo, Consolas, monospace;
@@ -49,6 +52,9 @@
       --slot: #2A2636;
       --obj: #27304F;
       --obj-edge: #6F86E0;
+      --d-loc: #3987e5;
+      --d-glob: #d95926;
+      --d-blt: #199e70;
     }
   }
   :root[data-theme="dark"] {
@@ -71,6 +77,9 @@
     --slot: #2A2636;
     --obj: #27304F;
     --obj-edge: #6F86E0;
+    --d-loc: #3987e5;
+    --d-glob: #d95926;
+    --d-blt: #199e70;
   }
 
   * { box-sizing: border-box; }
@@ -306,6 +315,198 @@
 
   .refs { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 75ch; }
 
+
+  /* ---------- diagrams: boxes, stacks, and arrows that carry the explanations ---------- */
+  .dg { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 14px; min-width: 0; align-content: start; }
+  .dg-h { font: 700 0.72rem var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+  .dg-h span { font: 400 0.84rem var(--body); letter-spacing: 0; text-transform: none; color: var(--ink); }
+  .dg-h code { text-transform: none; letter-spacing: 0; color: var(--ink); font: 700 0.78rem var(--mono); }
+  .dg h4 { margin: 0 0 4px; font: 700 0.66rem var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
+  .bx { font: 0.78rem/1.3 var(--mono); border: 1.5px solid var(--ink); border-radius: 6px; padding: 4px 8px; background: var(--slot); white-space: nowrap; }
+  .bx .i { color: var(--muted); margin-right: 6px; }
+  .bx.hl { box-shadow: 0 0 0 3px var(--tag); }
+  .bx.ghost { border-style: dashed; border-color: var(--muted); background: none; color: var(--muted); }
+  .bx.fn { background: var(--obj); border-color: var(--obj-edge); }
+  .arr { color: var(--muted); font: 1.05rem var(--body); }
+  .arr-l { display: inline-grid; justify-items: center; color: var(--muted); font: 0.72rem/1.1 var(--body); }
+  .arr-l::after { content: "⟶"; font-size: 1.3rem; line-height: 1; }
+  .cap { font-size: 0.82rem; color: var(--muted); max-width: 72ch; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font: 600 0.8rem var(--mono); border: 2px solid currentColor; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+  .pill > span { color: var(--ink); }
+  .pill.loc { color: var(--d-loc); background: color-mix(in oklab, var(--d-loc) 12%, transparent); }
+  .pill.glob { color: var(--d-glob); background: color-mix(in oklab, var(--d-glob) 12%, transparent); }
+  .pill.blt { color: var(--d-blt); background: color-mix(in oklab, var(--d-blt) 12%, transparent); }
+  .pill.plain { color: var(--muted); }
+  .pill .yes { color: var(--hit); font-weight: 700; }
+  .pill .no { color: var(--clash); font-weight: 700; }
+  .sq { display: inline-grid; place-items: center; min-width: 1.9em; height: 1.9em; padding: 0 5px; border: 1.5px solid var(--ink); border-radius: 4px; background: var(--slot); font: 0.72rem var(--mono); }
+  .rnd { display: inline-grid; place-items: center; height: 1.9em; padding: 0 9px; border: 1.5px solid var(--obj-edge); border-radius: 999px; background: var(--obj); font: 0.72rem var(--mono); }
+  .ok { color: var(--hit); font: 700 0.95rem var(--mono); }
+  .bad { color: var(--clash); font: 700 0.95rem var(--mono); }
+  .go { justify-self: start; }
+
+  /* film strip: a few instructions, each with the value stack after it (top of stack on top) */
+  .film { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5em, 1fr)); gap: 10px; }
+  .film li { display: grid; grid-template-rows: auto 1fr auto; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: var(--ground); min-width: 0; }
+  .film .fo { font: 700 0.78rem var(--mono); overflow-wrap: anywhere; }
+  .film .fs { display: flex; flex-direction: column-reverse; justify-content: flex-start; gap: 3px; min-height: 4.4em; border-bottom: 2px solid var(--ink); padding-bottom: 3px; }
+  .film .fs .bx { text-align: center; overflow: hidden; text-overflow: ellipsis; }
+  .film .fs .bx.new { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .film .fs i { font: italic 0.74rem var(--body); color: var(--muted); text-align: center; }
+  .film .fn { font-size: 0.74rem; color: var(--muted); }
+
+  /* two kinds of stack */
+  .twostacks { grid-template-columns: minmax(0, 0.8fr) auto minmax(0, 1.6fr); align-items: center; }
+  .ts-frames { display: flex; flex-direction: column; gap: 6px; }
+  .ts-f { border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 12px; font: 700 0.85rem var(--mono); background: var(--surface); }
+  .ts-f.top { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 35%, transparent); }
+  .ts-pp { display: flex; justify-content: space-between; gap: 8px; font-size: 0.76rem; color: var(--muted); }
+  .ts-link { font-size: 1.6rem; color: var(--accent); }
+  .ts-zoom { border: 2px solid var(--accent); border-radius: 12px; padding: 12px; display: grid; gap: 10px; }
+  .ts-bins { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
+  .ts-bins .stk { display: flex; flex-direction: column-reverse; gap: 3px; }
+  .ts-bins .stk .bx, .ts-bins .slt .bx { display: block; margin-bottom: 3px; }
+  .ts-say { font-size: 0.78rem; color: var(--muted); }
+  @media (max-width: 760px) {
+    .twostacks { grid-template-columns: minmax(0, 1fr); }
+    .ts-link { transform: rotate(90deg); justify-self: center; }
+    .ts-bins { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  /* code object, opened up */
+  .consts { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+  .consts > .bx { align-self: start; }
+  .k-under { display: grid; gap: 4px; justify-items: center; align-content: start; }
+  .k-under small { font-size: 0.72rem; color: var(--muted); text-align: center; max-width: 12em; }
+  .codeobj { border: 2px solid var(--obj-edge); background: color-mix(in oklab, var(--obj) 55%, transparent); border-radius: 10px; padding: 10px 12px; display: grid; gap: 10px; min-width: 0; flex: 1 1 22em; }
+  .codeobj .t { font: 700 0.8rem var(--mono); }
+  .codeobj .t .i { color: var(--muted); margin-right: 6px; }
+  .attr { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 8px; align-items: center; }
+  .attr > code { font-size: 0.74rem; color: var(--muted); }
+  .bytes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  @media (max-width: 560px) { .attr { grid-template-columns: minmax(0, 1fr); gap: 4px; } .codeobj { padding: 10px 8px; } }
+  .bytes .ins { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; text-align: center; }
+  .bytes .b { font: 0.74rem/1.25 var(--mono); border: 1.5px solid var(--ink); padding: 3px 2px; background: var(--slot); }
+  .bytes .b small { display: block; color: var(--muted); font-size: 0.66rem; }
+  .bytes .b.op { border-radius: 5px 0 0 5px; background: color-mix(in oklab, var(--tag) 35%, var(--slot)); }
+  .bytes .b.ag { border-radius: 0 5px 5px 0; }
+  .bytes .nm { grid-column: 1 / -1; font: 0.68rem var(--mono); overflow-wrap: anywhere; padding-top: 3px; border-top: 2px solid var(--tag-edge); }
+  .bytes-key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.74rem; color: var(--muted); }
+  .eq { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .eq .big { font: 700 1.1rem var(--body); color: var(--muted); }
+  .fnbox { border: 2px solid var(--ink); border-radius: 10px; padding: 8px 12px; font: 700 0.85rem var(--mono); }
+
+  /* constant folding */
+  .fold { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  .fold .bx { font-size: 1rem; padding: 8px 14px; }
+
+  /* lookup diagrams */
+  .lk { display: grid; gap: 10px; }
+  .lk-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+  .lk-line > code { font: 700 0.82rem var(--mono); min-width: 9.5em; }
+  .slotrow { display: flex; flex-wrap: wrap; gap: 4px; }
+  .slotrow .bx { display: grid; justify-items: center; padding: 4px 8px; }
+  .slotrow .bx .i { margin: 0; font-size: 0.68rem; }
+  .cost { font: 700 0.8rem var(--body); }
+  .cost.one { color: var(--hit); }
+  .cost.many { color: var(--clash); }
+
+  /* bars sized by time */
+  .bars { display: grid; gap: 14px; }
+  .bars .grp { display: grid; gap: 5px; }
+  .bars .ver { font: 700 0.78rem var(--mono); }
+  .bars .br { display: grid; grid-template-columns: 9.5em minmax(0, 1fr); gap: 10px; align-items: center; font-size: 0.82rem; }
+  .bars .track { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .bars .fill { height: 18px; border-radius: 0 4px 4px 0; min-width: 4px; }
+  .bars .fill.fn { background: var(--ink); }
+  .bars .fill.mod { background: var(--d-glob); }
+  .bars .v { font: 600 0.8rem var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  @media (max-width: 560px) { .bars .br { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+
+  /* every load, by how much work it does */
+  .ladder { display: grid; gap: 8px; }
+  .ladder .rung { display: grid; grid-template-columns: 9.5em 11em minmax(0, 1fr); gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+  .ladder .rung:last-child { border-bottom: 0; }
+  .ladder .rung > code { font: 700 0.82rem var(--mono); }
+  .ladder .rung > small { font-size: 0.78rem; color: var(--muted); }
+  @media (max-width: 640px) { .ladder .rung { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+  .c-src .ln.loc { box-shadow: inset 4px 0 0 var(--d-loc); background: color-mix(in oklab, var(--d-loc) 14%, transparent); }
+  .c-src .ln.glob { box-shadow: inset 4px 0 0 var(--d-glob); background: color-mix(in oklab, var(--d-glob) 14%, transparent); }
+  .c-src .ln.blt { box-shadow: inset 4px 0 0 var(--d-blt); background: color-mix(in oklab, var(--d-blt) 14%, transparent); }
+
+  /* traceback, next to the stack it describes */
+  .tb { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+  .tb .loop-sketch .ln { display: block; }
+  .tb .num { display: inline-grid; place-items: center; width: 1.4em; height: 1.4em; border-radius: 999px; background: var(--tag); color: var(--tag-ink); font: 700 0.72rem var(--body); margin-right: 8px; }
+  .tb-stack { display: grid; gap: 6px; justify-items: stretch; }
+  .tb-stack .ts-f { color: var(--ink); display: flex; align-items: center; gap: 4px; }
+  .tb-stack .k { font: 0.72rem var(--body); color: var(--machine-muted); text-align: center; }
+  @media (max-width: 760px) { .tb { grid-template-columns: minmax(0, 1fr); } }
+  .code .ln .anno { margin-left: 2em; font: 600 0.72rem var(--body); color: var(--tag-ink); background: var(--tag); border-radius: 999px; padding: 1px 8px; }
+
+  /* per-item instructions, one block each: height is cost */
+  .per { display: grid; grid-template-columns: repeat(2, minmax(0, 15em)); gap: 24px; align-items: start; }
+  .per .colh { font: 700 0.85rem var(--mono); margin-bottom: 6px; display: flex; justify-content: space-between; gap: 8px; }
+  .per .colh span { font: 400 0.78rem var(--body); color: var(--muted); }
+  .per ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+  .per li { font: 0.74rem/1.3 var(--mono); border: 1.5px solid var(--line); border-radius: 5px; padding: 4px 8px; background: var(--slot); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .per li.slow { border-color: var(--clash); background: color-mix(in oklab, var(--clash) 14%, var(--surface)); }
+  .per li.quick { border-color: var(--hit); background: color-mix(in oklab, var(--hit) 14%, var(--surface)); }
+  .per .tot { margin-top: 8px; font: 700 0.85rem var(--mono); }
+  .per .grp-l { font: 600 0.72rem var(--body); color: var(--muted); margin: 2px 0; }
+  @media (max-width: 520px) { .per { grid-template-columns: minmax(0, 1fr); } }
+
+  .twoframes { display: grid; gap: 8px; max-width: 34em; }
+  .twoframes .pf { border: 1.5px solid var(--ink); border-radius: 10px; padding: 8px 10px; display: grid; gap: 6px; }
+  .twoframes .pf.top { border-color: var(--accent); }
+  .twoframes .pf b { font: 700 0.85rem var(--mono); }
+  .twoframes .mid { justify-self: center; font: 600 0.76rem var(--mono); color: var(--muted); }
+  .later-box { border: 1.5px dashed var(--muted); border-radius: 10px; padding: 8px 12px; font-size: 0.84rem; max-width: 34em; }
+
+  /* names pointing at objects */
+  .refs-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 860px) { .refs-pair { grid-template-columns: minmax(0, 1fr); } }
+  .refs-pair figure { margin: 0; display: grid; gap: 8px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--ground); }
+  .refs-pair figcaption { display: flex; justify-content: space-between; gap: 8px; font: 700 0.8rem var(--body); }
+  .refs-pair svg { width: 100%; height: auto; display: block; }
+  svg .nm-box { fill: var(--slot); stroke: var(--ink); stroke-width: 1.5; }
+  svg .nm-t { fill: var(--ink); font: 13px var(--mono); }
+  svg .grp-box { fill: none; stroke: var(--obj-edge); stroke-width: 1.5; stroke-dasharray: 5 4; }
+  svg .grp-t { fill: var(--muted); font: 600 12px var(--body); }
+  svg .obj { fill: var(--obj); stroke: var(--obj-edge); stroke-width: 2; }
+  svg .obj-t { fill: var(--ink); font: 700 14px var(--mono); }
+  svg .ref { fill: none; stroke: var(--accent); stroke-width: 2; }
+  svg .ref-head { fill: var(--accent); }
+  .isq { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 640px; }
+  .isq .dg { gap: 6px; }
+  .isq code.big { font: 700 1.05rem var(--mono); }
+
+  /* primer stack effects */
+  .eff2 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .eff2 .side { display: inline-flex; gap: 2px; align-items: center; }
+  .eff2 .side .sq { font-size: 0.68rem; height: 1.7em; }
+  .eff2 .side .sq.dots { border-style: dashed; border-color: var(--muted); background: none; color: var(--muted); }
+  .eff2 .side .sq:last-child:not(.dots) { box-shadow: 0 0 0 2px var(--accent); }
+  .eff2 .word { font: italic 0.76rem var(--body); color: var(--muted); }
+  .primer-key { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; font-size: 0.8rem; color: var(--muted); }
+
+  /* specialization */
+  .spec { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; max-width: 760px; }
+  .spec .gen { font: 700 0.85rem var(--mono); border: 1.5px solid var(--ink); border-radius: 8px; padding: 8px 12px; background: var(--slot); }
+  .spec .sp { font: 700 0.85rem var(--mono); border: 1.5px solid var(--obj-edge); border-radius: 8px; padding: 8px 12px; background: var(--obj); }
+  .spec .gen small, .spec .sp small { display: block; font: 400 0.74rem var(--body); color: var(--muted); }
+  .spec .ways { display: grid; gap: 6px; justify-items: center; font-size: 0.76rem; color: var(--muted); text-align: center; }
+  .spec .ways span::after { display: block; font-size: 1.3rem; line-height: 1; color: var(--ink); }
+  .spec .ways .fwd::after { content: "⟶"; }
+  .spec .ways .back::before { content: "⟵"; display: block; font-size: 1.3rem; line-height: 1; color: var(--ink); }
+  @media (max-width: 600px) { .spec { grid-template-columns: minmax(0, 1fr); } .spec .ways span::after, .spec .ways .back::before { transform: rotate(90deg); } }
+  .swaps { display: grid; grid-template-columns: max-content auto max-content minmax(0, 1fr); gap: 8px 10px; align-items: center; }
+  .swaps code { font: 0.78rem var(--mono); }
+  .swaps .sp { color: var(--ink); background: color-mix(in oklab, var(--obj-edge) 30%, transparent); border-radius: 4px; padding: 1px 5px; }
+  .swaps small { font-size: 0.8rem; color: var(--muted); }
+  @media (max-width: 700px) { .swaps { grid-template-columns: max-content auto minmax(0, 1fr); } .swaps small { grid-column: 1 / -1; margin-bottom: 6px; } }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
@@ -360,17 +561,32 @@ while True:
         ...                               <span class="c"># about 125 more cases</span></pre>
 
     <div class="prose">
-      <p>Two different things in there are called "the stack," and they're worth keeping apart:</p>
-      <ul>
-        <li><strong>The call stack</strong> is a stack of <strong>frames</strong>, one for every function call that hasn't returned yet. Calling a function pushes a frame; returning pops it. This is what a traceback prints.</li>
-        <li><strong>The value stack</strong> lives <em>inside</em> each frame. It's the scratch space the instructions work on: <code>LOAD_FAST</code> pushes onto it, <code>BINARY_ADD</code> pops two values off it and pushes one back.</li>
-      </ul>
-      <p>Each frame also has <strong>slots</strong> for its local variables, and remembers which instruction it's on.</p>
+      <p>Two different things in there are called "the stack":</p>
+    </div>
+    <div class="dg twostacks" role="img" aria-label="The call stack holds three frames: module, caller, and add_three_numbers on top. Inside the top frame are its slots a=1, b=2, c=3, its value stack holding 1 and 2, and its next instruction, BINARY_ADD.">
+      <div class="lk">
+        <div class="dg-h">The call stack <span>a frame for every call that hasn't returned</span></div>
+        <div class="ts-frames">
+          <div class="ts-f top">add_three_numbers</div>
+          <div class="ts-f">caller</div>
+          <div class="ts-f">&lt;module&gt;</div>
+        </div>
+        <div class="ts-pp"><span>↑ a call pushes a frame</span><span>a return pops it ↓</span></div>
+      </div>
+      <div class="ts-link" aria-hidden="true">⟶</div>
+      <div class="ts-zoom">
+        <div class="dg-h">Inside the top frame</div>
+        <div class="ts-bins">
+          <div class="slt"><h4>Slots</h4><span class="bx"><span class="i">0</span>a = 1</span><span class="bx"><span class="i">1</span>b = 2</span><span class="bx"><span class="i">2</span>c = 3</span></div>
+          <div><h4>Value stack</h4><div class="stk"><span class="bx">1</span><span class="bx hl">2</span></div><div class="ts-say">top ↑ · scratch space the instructions push and pop</div></div>
+          <div><h4>Next instruction</h4><span class="bx">16 BINARY_ADD</span><div class="ts-say" style="margin-top:6px">pops 2 and 1, pushes 3</div></div>
+        </div>
+      </div>
     </div>
 
     <h3 id="codeobj-h">What's a code object?</h3>
     <div class="prose">
-      <p>The compiler turns every block of code into a <strong>code object</strong>. The whole module gets one, and so does every function body (and, in 3.10, every list comprehension). A code object is data. It doesn't run by itself. It holds the bytecode as bytes, a table of constants that the bytecode refers to by number, and the names of its local variables. Here's the step-through's first program, compiled by hand so you can look inside:</p>
+      <p>The compiler turns the module, every function body, and (in 3.10) every list comprehension into a <strong>code object</strong>: data, not a running thing. Here's the step-through's first program, compiled by hand so you can look inside:</p>
     </div>
     <div class="cells">
       <div class="code-panel">
@@ -382,20 +598,43 @@ while True:
         <div class="code" id="codeobj-out"></div>
       </div>
     </div>
-    <div class="prose">
-      <ul>
-        <li><strong>Line 8</strong> prints the module's table of constants. Entry 0 is a whole code object: the body of <code>add_two_numbers</code>, compiled before any of the module runs. Entry 1 is just a string, the function's name. Entries 2 and 3 are the arguments in <code>add_two_numbers(2, 3)</code>, and <code>None</code> is what the module returns when it finishes. (The address after <code>at</code> is different every time you run it.)</li>
-        <li><strong>Lines 11 to 13</strong> look inside that code object: its name, its slots (<code>a</code> and <code>b</code>), and its bytecode. Those 8 bytes are the 4 instructions <code>dis</code> shows, two bytes each: an opcode, then its argument. <code>|</code> is 124, <code>LOAD_FAST</code>; <code>\x17</code> is 23, <code>BINARY_ADD</code>; <code>S</code> is 83, <code>RETURN_VALUE</code>.</li>
-        <li><strong>Line 16</strong>: running the module made a function, and that function's <code>__code__</code> is the very same code object.</li>
-      </ul>
-      <p>So in the step-through, the module's first two instructions are the <em>same</em> instruction, <code>LOAD_CONST</code>, reading two different entries from that table. <code>LOAD_CONST</code> doesn't care what an entry is: a number, a string, or a whole code object. Next, <code>MAKE_FUNCTION</code> pops both and builds a function from them. You can't call a code object. A function is a code object plus what it needs at run time, like its name and the module's globals it looks names up in. That's why the function only exists once the <code>def</code> line runs.</p>
+    <div class="dg" role="img" aria-label="The module's constants table has five entries: 0 is the code object for add_two_numbers, 1 is its name, 2 and 3 are the arguments, 4 is None. The code object holds its name, its slot names a and b, and 8 bytes that pair up into the 4 instructions LOAD_FAST a, LOAD_FAST b, BINARY_ADD, RETURN_VALUE.">
+      <div class="dg-h"><code>print(module_code.co_consts)</code> <span>the module's table of constants, opened up</span></div>
+      <div class="consts">
+        <div class="codeobj">
+          <div class="t"><span class="i">0</span>code object add_two_numbers</div>
+          <div class="attr"><code>.co_name</code><span><span class="bx">'add_two_numbers'</span></span></div>
+          <div class="attr"><code>.co_varnames</code><span class="row"><span class="bx"><span class="i">slot 0</span>a</span><span class="bx"><span class="i">slot 1</span>b</span></span></div>
+          <div class="attr" style="align-items:start"><code>.co_code</code>
+            <div style="display:grid;gap:6px;min-width:0">
+              <div class="bytes">
+                <div class="ins"><span class="b op">|<small>124</small></span><span class="b ag">\x00<small>0</small></span><span class="nm">LOAD_FAST 0 (a)</span></div>
+                <div class="ins"><span class="b op">|<small>124</small></span><span class="b ag">\x01<small>1</small></span><span class="nm">LOAD_FAST 1 (b)</span></div>
+                <div class="ins"><span class="b op">\x17<small>23</small></span><span class="b ag">\x00<small>0</small></span><span class="nm">BINARY_ADD</span></div>
+                <div class="ins"><span class="b op">S<small>83</small></span><span class="b ag">\x00<small>0</small></span><span class="nm">RETURN_VALUE</span></div>
+              </div>
+              <div class="bytes-key"><span><span class="sw" style="background:color-mix(in oklab, var(--tag) 35%, var(--slot));border:1px solid var(--ink)"></span>opcode byte</span><span><span class="sw" style="background:var(--slot);border:1px solid var(--ink)"></span>argument byte</span><span>8 bytes = 4 instructions</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="k-under"><span class="bx"><span class="i">1</span>'add_two_numbers'</span><small>the function's name</small></div>
+        <div class="k-under"><span class="row"><span class="bx"><span class="i">2</span>2</span><span class="bx"><span class="i">3</span>3</span></span><small>the arguments in add_two_numbers(2, 3)</small></div>
+        <div class="k-under"><span class="bx"><span class="i">4</span>None</span><small>what the module returns</small></div>
+      </div>
+    </div>
+    <div class="dg">
+      <div class="dg-h">When the <code>def</code> line runs <span>two LOAD_CONSTs read entries 0 and 1, then MAKE_FUNCTION builds a function out of them</span></div>
+      <ol class="film" id="film-def"></ol>
+      <div class="eq" aria-label="A function is a code object plus a name plus the module's globals">
+        <span class="fnbox">function add_two_numbers</span><span class="big">=</span>
+        <span class="bx fn">__code__: entry 0</span><span class="big">+</span><span class="bx">__name__</span><span class="big">+</span><span class="bx">__globals__</span>
+      </div>
+      <div class="row"><code style="font-size:0.82rem">add_two_numbers.__code__ is function_code</code><span class="arr">→</span><span class="ok">True</span><span class="cap">(same object; the address after <code>at</code> changes every run)</span></div>
     </div>
 
     <h3>How to read one line of <code>dis</code> output</h3>
-    <div class="prose">
-      <p>Here's a function with an <code>if</code> in it, and what <code>dis</code> prints for it. Below that, the last line of the listing taken apart, piece by piece. Hover over or tab to a piece to see what it means.</p>
-    </div>
     <div class="cells" id="if-cells"></div>
+    <p class="cap">The last line, taken apart. Hover over or tab to a piece.</p>
     <div class="anatomy" id="anatomy">
       <div class="line" id="anatomy-line" aria-hidden="true"></div>
       <ol id="anatomy-keys"></ol>
@@ -406,19 +645,30 @@ while True:
     </div>
     <div class="cells" id="fold-cells"></div>
     <div class="prose">
-      <p>Neither listing has an addition in it. There's no <code>BINARY_ADD</code>, just a <code>LOAD_CONST</code> of the number <code>2</code> and a <code>RETURN_VALUE</code>. The compiler noticed that <code>1 + 1</code> can only ever be <code>2</code> and did the math ahead of time. That's called <strong>constant folding</strong>.</p>
-      <p>In <code>add_ones</code> the <code>2</code> is constant 1, not constant 0. A function's constant 0 is always its docstring, and since <code>add_ones</code> doesn't have one, constant 0 is <code>None</code>.</p>
-      <p>To see an addition, give the compiler something it can't work out ahead of time, like two arguments:</p>
+      <p>Neither has a <code>BINARY_ADD</code>.</p>
     </div>
+    <div class="pair">
+      <div class="dg">
+        <div class="dg-h">Constant folding <span>the compiler does the math before anything runs</span></div>
+        <div class="fold"><span class="bx">1 + 1</span><span class="arr-l">compiler</span><span class="bx hl">2</span><span class="arr-l">stored as</span><span class="bx">LOAD_CONST 2</span></div>
+      </div>
+      <div class="dg">
+        <div class="dg-h"><code>add_ones</code>'s constants <span>why the 2 is constant 1</span></div>
+        <div class="row"><div class="k-under"><span class="bx ghost"><span class="i">0</span>None</span><small>always the docstring's spot; add_ones has none</small></div><div class="k-under"><span class="bx hl"><span class="i">1</span>2</span><small>the folded 1 + 1</small></div></div>
+      </div>
+    </div>
+    <p class="cap">Give it something it can't work out ahead of time:</p>
     <div class="cells" id="add-cells"></div>
-    <div class="prose">
-      <p>Now there's a <code>BINARY_ADD</code>. The two <code>LOAD_FAST</code>s push <code>a</code> and <code>b</code>, <code>BINARY_ADD</code> pops them both and pushes their sum, and <code>RETURN_VALUE</code> hands that back to the caller. The step-through below runs this function, called as <code>add_two_numbers(2, 3)</code>.</p>
+    <div class="dg">
+      <div class="dg-h"><code>add_two_numbers(2, 3)</code>, one instruction at a time <span>value stack after each, top on top</span></div>
+      <ol class="film" id="film-add"></ol>
+      <button class="btn go" type="button" data-walk="add">Step through it with the frames →</button>
     </div>
   </section>
 
   <section aria-labelledby="walk-h">
     <h2 id="walk-h">Step through it</h2>
-    <p class="muted" style="max-width:75ch">Pick a program, then step through it one instruction at a time. The list is every instruction in the order it ran, with the value stack after each one, top on the right, so you can see the shape of the whole run at once. For the <code>if</code>, it lines up both runs side by side, so you can see which instructions each one skipped. Click a row to jump there. The machine shows the call stack at the current step, top frame first. Each frame has its constants, its value stack, and its names or slots, and an arrow shows every value the instruction just moved. Use the arrow keys, or press play.</p>
+    <p class="cap">Pick a program, then step with → or <b>Next</b>. Click any row to jump there.</p>
 
     <div class="picker">
       <div class="seg" id="prog" role="group" aria-label="Which program to step through"></div>
@@ -468,7 +718,7 @@ while True:
     <h2 id="fast-h">Why is it called <code>LOAD_FAST</code>? Is there a <code>LOAD_SLOW</code>?</h2>
     <div class="prose">
       <p>There's no instruction called <code>LOAD_SLOW</code>. But there is a slow way to load a variable, and it's what <code>FAST</code> is being compared to: <strong>looking the name up in a dictionary.</strong></p>
-      <p>Here's the same loop disassembled twice. The first time it's inside a function. The second time it goes to <code>dis</code> as a string, which <code>dis</code> compiles the way it would compile the top level of a module (or a line you type into the REPL). Same Python, same structure, but every <span style="background:color-mix(in oklab, var(--tag) 40%, transparent);padding:0 3px;border-radius:3px">highlighted</span> instruction is different.</p>
+      <p>The same loop, inside a function and as a string (which <code>dis</code> compiles like the top level of a module). Every <span style="background:color-mix(in oklab, var(--tag) 40%, transparent);padding:0 3px;border-radius:3px">highlighted</span> instruction is different.</p>
     </div>
     <div class="pair">
       <div class="stack-col">
@@ -493,9 +743,20 @@ while True:
       </div>
     </div>
     <p class="muted" style="max-width:72ch">The line numbers in the second listing start at 2 because the string starts with a line break, right after the opening <code>"""</code>.</p>
-    <div class="prose">
-      <p><strong>Inside a function, the compiler can see every variable the function will ever have.</strong> It reads the whole <code>def</code> before running any of it, so it knows <code>result</code> and <code>item</code> are local, numbers them (slot 3, slot 4), and bakes those numbers into the bytecode. At run time, <code>LOAD_FAST 3</code> means "give me slot 3": one array index.</p>
-      <p><strong>At module level, it can't.</strong> Any code anywhere can add a global (<code>import</code>, <code>globals()["x"] = 1</code>, another module doing <code>your_module.x = 1</code>), so names have to be looked up by name, every time. <code>LOAD_NAME</code> checks the local dictionary, then the global dictionary, then the builtins.</p>
+    <div class="pair">
+      <div class="dg">
+        <div class="dg-h">Inside a function <span>the compiler saw every local before running, and numbered them</span></div>
+        <div class="lk-line"><code>LOAD_FAST 3</code><span class="arr">→</span>
+          <span class="slotrow"><span class="bx"><span class="i">0</span>start</span><span class="bx"><span class="i">1</span>end</span><span class="bx"><span class="i">2</span>increment</span><span class="bx hl"><span class="i">3</span>result</span><span class="bx"><span class="i">4</span>item</span></span></div>
+        <div class="cost one">1 step: index into slot 3</div>
+      </div>
+      <div class="dg">
+        <div class="dg-h">At module level <span>any code can add a name any time, so look it up by name, every time</span></div>
+        <div class="lk-line"><code>LOAD_NAME result</code><span class="arr">→</span><span class="pill loc">locals <span class="yes">✓</span></span></div>
+        <div class="lk-line"><code>LOAD_NAME range</code><span class="arr">→</span><span class="pill loc">locals <span class="no">✗</span></span><span class="arr">→</span><span class="pill glob">globals <span class="no">✗</span></span><span class="arr">→</span><span class="pill blt">builtins <span class="yes">✓</span></span></div>
+        <div class="cost many">up to 3 dictionary lookups, each hashing the name</div>
+        <p class="cap">At module level, locals and globals are the same dictionary, so <code>range</code> gets looked for in it twice.</p>
+      </div>
     </div>
     <div class="prose">
       <p>Does the difference matter? Here's the same sum timed both ways:</p>
@@ -510,11 +771,14 @@ while True:
         <div class="code src" id="time-mod"></div>
       </div>
     </div>
-    <div class="stats" id="timing"></div>
-    <p class="muted" style="max-width:72ch">Both sum 1 to 9,999,999. These are the times the last <code>print</code> in each one showed on a MacBook in Python 3.10.8, best of three runs. Your numbers will differ, but the gap won't go away: in 3.14 on the same machine it's 0.23 s against 0.61 s.</p>
+    <div class="dg">
+      <div class="dg-h">Seconds to sum 1 to 9,999,999 <span>the last <code>print</code> in each, on a MacBook, best of three runs</span></div>
+      <div class="bars" id="timing"></div>
+    </div>
 
     <h3>Reading the C</h3>
-    <p class="muted" style="max-width:75ch">You don't have to take my word for it. Here are both instructions, quoted exactly from CPython 3.10.8's <code>Python/ceval.c</code>. Click a line number to see it on GitHub.</p>
+    <p class="cap">Both instructions, quoted exactly from CPython 3.10.8's <code>Python/ceval.c</code>. Click a line number to see it on GitHub.</p>
+    <div class="row"><span class="pill loc">locals</span><span class="arr">→</span><span class="pill glob">globals</span><span class="arr">→</span><span class="pill blt">builtins</span><span class="cap">the three lookups in <code>LOAD_NAME</code></span></div>
     <div class="pair">
       <div class="code-panel">
         <div class="code-head"><span><code>LOAD_FAST</code>: 12 lines</span><span><code>GETLOCAL(i)</code> is <code>fastlocals[i]</code></span></div>
@@ -522,29 +786,35 @@ while True:
       </div>
       <div class="code-panel">
         <div class="code-head"><span><code>LOAD_NAME</code>: 63 lines</span><span>up to three dictionary lookups</span></div>
-        <div class="code c-src" id="c-name" style="max-height:26em;overflow-y:auto"></div>
+        <div class="code c-src" id="c-name"></div>
       </div>
     </div>
-    <div class="prose">
-      <p>The other loads that come up, from fastest to slowest-ish:</p>
-      <ul>
-        <li><code>LOAD_CONST</code>: an index into the code object's constants. As cheap as <code>LOAD_FAST</code>.</li>
-        <li><code>LOAD_DEREF</code>: a variable from an enclosing function, for closures. One extra hop through a "cell" object.</li>
-        <li><code>LOAD_GLOBAL</code>: used inside functions for names that aren't local, like <code>range</code> or another function you defined. Two dictionary lookups: globals, then builtins.</li>
-        <li><code>LOAD_NAME</code>: module-level code. Up to three dictionary lookups.</li>
-        <li><code>LOAD_ATTR</code>: <code>obj.thing</code>. Can involve the instance's dictionary, its class, every parent class, and descriptors like <code>@property</code>.</li>
-      </ul>
+    <div class="dg">
+      <div class="dg-h">Every load, from least work to most</div>
+      <div class="ladder">
+        <div class="rung"><code>LOAD_CONST</code><small>constants</small><span class="row"><span class="sq">[i]</span><span class="cap">index into the constants table</span></span></div>
+        <div class="rung"><code>LOAD_FAST</code><small>locals in a function</small><span class="row"><span class="sq">[i]</span><span class="cap">index into the slots</span></span></div>
+        <div class="rung"><code>LOAD_DEREF</code><small>a closure's variables</small><span class="row"><span class="sq">[i]</span><span class="arr">→</span><span class="rnd">cell</span><span class="arr">→</span><span class="cap">value</span></span></div>
+        <div class="rung"><code>LOAD_GLOBAL</code><small>non-locals in a function</small><span class="row"><span class="pill glob">globals</span><span class="arr">→</span><span class="pill blt">builtins</span></span></div>
+        <div class="rung"><code>LOAD_NAME</code><small>module level</small><span class="row"><span class="pill loc">locals</span><span class="arr">→</span><span class="pill glob">globals</span><span class="arr">→</span><span class="pill blt">builtins</span></span></div>
+        <div class="rung"><code>LOAD_ATTR</code><small><code>obj.thing</code></small><span class="row"><span class="pill plain">instance</span><span class="arr">→</span><span class="pill plain">class</span><span class="arr">→</span><span class="pill plain">parent classes …</span><span class="cap">plus descriptors like <code>@property</code></span></span></div>
+      </div>
     </div>
     <div class="callout">
       <h3>See the call stack for yourself</h3>
       <p><code>traceback.print_stack()</code> prints every frame on the call stack, oldest first. Here's a function that calls it, saved as <code>stack_demo.py</code> and run with <code>python3.10 stack_demo.py</code>:</p>
       <pre class="loop-sketch" id="stack-src" style="background:var(--surface);color:var(--ink)"></pre>
-      <p>Output (Python prints the file's full path; it's shortened here):</p>
-      <pre class="loop-sketch" id="stack-out" style="background:var(--surface);color:var(--ink)"></pre>
-      <p>Three frames: the module, <code>caller</code>, and <code>add_three_numbers</code> on top. Each one has its own slots and its own value stack.</p>
-    </div>
-    <div class="prose">
-      <p>Here's what <code>dis</code> shows for <code>add_three_numbers</code>. Line 2, the call to <code>print_stack</code>, ends in <code>CALL_FUNCTION_KW</code> because of the keyword argument <code>limit=3</code>, then <code>POP_TOP</code> throws away what <code>print_stack</code> returned. Line 3 adds twice, one <code>BINARY_ADD</code> for each <code>+</code>: <code>a + b</code> first, then that plus <code>c</code>.</p>
+      <p>Output, next to the stack it describes (Python prints the file's full path; it's shortened here):</p>
+      <div class="tb">
+        <pre class="loop-sketch" id="stack-out" style="background:var(--surface);color:var(--ink)"></pre>
+        <div class="tb-stack" aria-label="The same three frames as a stack: add_three_numbers on top, then caller, then module at the bottom">
+          <span class="k">newest, on top</span>
+          <div class="ts-f top"><span class="num">3</span>add_three_numbers</div>
+          <div class="ts-f"><span class="num">2</span>caller</div>
+          <div class="ts-f"><span class="num">1</span>&lt;module&gt;</div>
+          <span class="k">printed first</span>
+        </div>
+      </div>
     </div>
     <div class="cells" id="add3-cells"></div>
   </section>
@@ -552,7 +822,7 @@ while True:
   <section aria-labelledby="comp-h">
     <h2 id="comp-h">A loop or a list comprehension?</h2>
     <div class="prose">
-      <p>These two functions build the same list, <code>[0, 1, …, 9]</code>. Here's what each one compiles to:</p>
+      <p>Two ways to build <code>[0, 1, …, 9]</code>:</p>
     </div>
     <div class="pair">
       <div class="stack-col">
@@ -561,7 +831,7 @@ while True:
           <div class="code src" id="loopy-src"></div>
         </div>
         <div class="code-panel">
-          <div class="code-head"><span>Output</span><span>8 instructions per item</span></div>
+          <div class="code-head"><span>Output</span><span>highlighted: runs once per item</span></div>
           <div class="code" id="loopy-out"></div>
         </div>
       </div>
@@ -571,45 +841,84 @@ while True:
           <div class="code src" id="compy-src"></div>
         </div>
         <div class="code-panel">
-          <div class="code-head"><span>Output</span><span>5 instructions per item</span></div>
+          <div class="code-head"><span>Output</span><span>address changes every run</span></div>
           <div class="code" id="compy-out"></div>
         </div>
       </div>
     </div>
-    <div class="prose">
-      <p>Each listing's loop is the stretch from <code>FOR_ITER</code> to <code>JUMP_ABSOLUTE</code>, with <span style="background:color-mix(in oklab, var(--tag) 40%, transparent);padding:0 3px;border-radius:3px">highlighted</span> instructions running once for every item. The loop in <code>loopy</code> runs eight of them per item. To append, it has to push <code>x</code>, look up its <code>append</code> method with <code>LOAD_METHOD</code>, push <code>i</code>, call the method, and throw away the <code>None</code> it returns. The comprehension's loop runs five, because <code>LIST_APPEND</code> is a single instruction that appends to the list sitting further down the stack, no method lookup or call.</p>
-      <p>The comprehension also gets <strong>its own code object</strong>. <code>compy</code> builds a function out of <code>&lt;listcomp&gt;</code> with <code>MAKE_FUNCTION</code>, makes an iterator over <code>range(0, 10)</code>, and calls that function with the iterator as its only argument. That argument's name is <code>.0</code>, a name you couldn't write yourself, so it can't clash with yours. (The address after <code>at</code> is different every time you run it.) Calling that function means a second frame on the call stack. Python 3.12 and later skip it, and run the comprehension inline instead; the <a href="#new-h">last section</a> shows what that looks like.</p>
+    <div class="dg">
+      <div class="dg-h">What runs once for every item <span>one block per instruction</span></div>
+      <div class="per">
+        <div>
+          <div class="colh">loopy <span>x.append(i)</span></div>
+          <ol>
+            <li>FOR_ITER</li><li>STORE_FAST i</li>
+            <li class="slow">LOAD_FAST x</li><li class="slow">LOAD_METHOD append</li><li class="slow">LOAD_FAST i</li><li class="slow">CALL_METHOD 1</li><li class="slow">POP_TOP</li>
+            <li>JUMP_ABSOLUTE</li>
+          </ol>
+          <div class="tot">8 × 10 items = 80</div>
+        </div>
+        <div>
+          <div class="colh">compy <span>[i for i in …]</span></div>
+          <ol>
+            <li>FOR_ITER</li><li>STORE_FAST i</li>
+            <li class="quick">LOAD_FAST i</li><li class="quick">LIST_APPEND 2</li>
+            <li>JUMP_ABSOLUTE</li>
+          </ol>
+          <div class="tot">5 × 10 items = 50</div>
+        </div>
+      </div>
+      <div class="legend"><span><span class="sw" style="background:color-mix(in oklab, var(--clash) 30%, var(--surface));border:1.5px solid var(--clash)"></span>find append, call it, throw away its None</span><span><span class="sw" style="background:color-mix(in oklab, var(--hit) 30%, var(--surface));border:1.5px solid var(--hit)"></span>one instruction appends to the list further down the stack</span></div>
+    </div>
+    <div class="dg">
+      <div class="dg-h">The comprehension gets its own code object, and its own frame</div>
+      <div class="twoframes" aria-label="compy's frame calls a listcomp frame, passing a range iterator as the argument named .0">
+        <div class="pf top"><b>&lt;listcomp&gt;</b>
+          <div class="row"><h4 style="margin:0">Slots</h4><span class="bx"><span class="i">0</span>.0 = range iterator</span><span class="bx"><span class="i">1</span>i</span></div>
+          <div class="row"><h4 style="margin:0">Stack</h4><span class="bx">[0, 1, …]</span></div>
+        </div>
+        <div class="mid">↑ CALL_FUNCTION 1, passing the iterator</div>
+        <div class="pf"><b>compy</b>
+          <div class="row"><h4 style="margin:0">Stack</h4><span class="bx fn">&lt;listcomp&gt; function</span><span class="bx hl">range iterator</span></div>
+        </div>
+      </div>
+      <div class="row"><span class="bx">.0</span><span class="cap">a name you can't type, so it never clashes with yours</span></div>
+      <div class="later-box">3.12+: no second frame. The comprehension runs inline. <a href="#new-h">See it in the last section ↓</a></div>
+      <button class="btn go" type="button" data-walk="comp">Watch it run in the step-through →</button>
     </div>
   </section>
 
   <section aria-labelledby="is-h">
     <h2 id="is-h">Why is <code>257 is 257</code> sometimes <code>False</code>?</h2>
     <div class="prose">
-      <p>Here are the same three lines, run in two places, with two different answers. First inside a function:</p>
+      <p>The same three lines, two places, two answers. Inside a function:</p>
     </div>
     <div class="cells" id="is-fn-cells"></div>
     <div class="prose">
-      <p>Then typed into the <code>&gt;&gt;&gt;</code> REPL, one line at a time:</p>
+      <p>Typed into the <code>&gt;&gt;&gt;</code> REPL:</p>
     </div>
     <div class="code-panel" style="max-width:640px">
       <div class="code-head"><span>The Python 3.10.8 REPL</span><span>different objects</span></div>
       <div class="code" id="is-repl"></div>
     </div>
     <div class="prose">
-      <p>To see why, disassemble the function. Look at the two <code>LOAD_CONST</code> instructions:</p>
+      <p>Disassemble the function:</p>
     </div>
     <div class="code-panel" style="max-width:640px">
       <div class="code-head"><span>Output of <code>dis.dis(is_in_a_function)</code></span><span>both say constant <strong>1</strong></span></div>
       <div class="code" id="is-dis"></div>
     </div>
-    <div class="prose">
-      <p>Both assignments load <strong>constant 1</strong>. When the compiler builds a code object, it keeps one table of constants for the whole thing and stores each distinct value once. So both names end up pointing at the very same <code>257</code> object, and <code>is</code> (<code>IS_OP</code>, which checks "same object?") says <code>True</code>.</p>
-      <p>The REPL is different because it compiles each line on its own, as soon as you press Enter. Each line gets its own code object with its own table of constants, and each table makes its own <code>257</code>. Compile all three lines at once, though, and they share one table again. Passing them to <code>dis</code> as a single string does that:</p>
+    <div class="dg">
+      <div class="row"><div class="dg-h">Names, pointing at objects</div><div class="seg" id="int-pick" role="group" aria-label="Which number"></div></div>
+      <div class="refs-pair">
+        <figure><figcaption><span>Inside a function</span><span id="refs-fn-r"></span></figcaption><div id="refs-fn"></div></figure>
+        <figure><figcaption><span>In the REPL</span><span id="refs-repl-r"></span></figcaption><div id="refs-repl"></div></figure>
+      </div>
     </div>
+    <p class="cap">Compile all three lines at once, the way a <code>.py</code> file is compiled, and they share one table again:</p>
     <div class="cells" id="is-str-cells"></div>
     <div class="prose">
-      <p>Both loads are constant 0, the same <code>257</code>. That's how a <code>.py</code> file gets compiled too: the whole module at once.</p>
-      <p>So whether you get one table or two depends on <strong>how much code gets compiled at once</strong>:</p>
+      <p>It comes down to <strong>how much code gets compiled at once</strong>:</p>
     </div>
     <div class="table-wrap">
       <table class="results">
@@ -622,12 +931,20 @@ while True:
         </tbody>
       </table>
     </div>
-    <p class="muted" style="max-width:72ch">All four checked in Python 3.10.8 (and IPython 8.34). With <code>256</code> instead, every row says <code>True</code>: CPython makes the integers from −5 to 256 once, at startup, and reuses them everywhere. The lesson isn't the numbers, though. It's that <code>is</code> asks about <em>objects</em>, and when two equal values happen to be the same object is up to the implementation. Use <code>==</code> for values.</p>
+    <p class="cap">All four checked in Python 3.10.8 and IPython 8.34. With <code>256</code>, every row says <code>True</code>: flip the switch above to see why.</p>
+    <div class="isq">
+      <div class="dg"><code class="big">a is b</code><span>same <strong>object</strong>?</span><span class="cap">when equal values share an object is up to Python</span></div>
+      <div class="dg" style="border-color:var(--hit)"><code class="big">a == b</code><span>same <strong>value</strong>?</span><span class="ok" style="font-size:0.85rem">use this for values</span></div>
+    </div>
   </section>
 
   <section aria-labelledby="primer-h">
     <h2 id="primer-h">Instruction primer</h2>
-    <p class="muted" style="max-width:75ch">The instructions that show up on this page, plus a few close relatives. The stack picture shows the top of the stack on the right: <code>… a, b → … a+b</code> means "pops <code>b</code>, then <code>a</code>, and pushes their sum." The dashed line says what newer Pythons call it. Ones with a tag show up in the step-through above.</p>
+    <p class="cap">Every instruction on this page, plus a few relatives.</p>
+    <div class="primer-key">
+      <span class="eff2" id="key-eff"></span><span>value stack before → after, top on the right, outlined</span>
+      <span>below the dashed line: what newer Pythons call it</span>
+    </div>
     <div class="filter">
       <label for="op-filter" class="label">Find an instruction</label>
       <input id="op-filter" type="search" placeholder="e.g. LOAD, JUMP, CALL" autocomplete="off" spellcheck="false">
@@ -638,7 +955,7 @@ while True:
   <section aria-labelledby="new-h">
     <h2 id="new-h">What newer Pythons show you</h2>
     <div class="prose">
-      <p>If you run these examples in Python 3.11 or later, your output won't match this page. The ideas are the same: frames, slots, a value stack, one instruction at a time. What changed is that the interpreter got much more aggressive about doing less work per instruction. Here's 3.10 next to <strong>Python 3.14.3</strong>, with every new kind of instruction highlighted.</p>
+      <p>Same frames, slots, and value stack, different instructions. 3.10 next to <strong>Python 3.14.3</strong>, with every new kind of instruction highlighted:</p>
     </div>
     <div class="seg" id="cmp" role="group" aria-label="Which function to compare"></div>
     <div class="code-panel">
@@ -659,7 +976,17 @@ while True:
 
     <h3>The interpreter rewrites the bytecode while it runs</h3>
     <div class="prose">
-      <p>This is the biggest change, and it's the real answer to "how does Python get faster without changing my code." Since 3.11, after an instruction has run a few times, the interpreter <strong>swaps it for a specialized version</strong> based on what it actually saw. <code>BINARY_OP</code> has to handle <code>+</code> for ints, floats, strings, lists, and your own classes. But if it has only ever seen two ints, it becomes <code>BINARY_OP_ADD_INT</code>, which skips the "what type is this?" checks. If a different type ever shows up, it switches back. You can watch it happen with <code>dis.dis(f, adaptive=True)</code>. This code, run in 3.14 after <code>import dis</code>, disassembles <code>looping_sum</code> before and after calling it 100 times:</p>
+      <p>How Python gets faster without changing your code: since 3.11, once an instruction has run a few times, the interpreter swaps it for a version specialized to what it saw.</p>
+    </div>
+    <div class="dg">
+      <div class="spec" role="img" aria-label="BINARY_OP becomes BINARY_OP_ADD_INT after running a few times on two ints, and switches back when another type shows up.">
+        <div class="gen">BINARY_OP 13 (+=)<small>+ for anything: checks the types every time</small></div>
+        <div class="ways"><span class="fwd">ran a few times, always two ints</span><span class="back">a float showed up</span></div>
+        <div class="sp">BINARY_OP_ADD_INT<small>+ for two ints: skips the checks</small></div>
+      </div>
+    </div>
+    <div class="prose">
+      <p>Watch it happen with <code>adaptive=True</code>, in 3.14, after <code>import dis</code>:</p>
     </div>
     <div class="code-panel">
       <div class="code-head"><span>Python 3.14</span></div>
@@ -675,15 +1002,16 @@ while True:
         <div class="code" id="ad-new"></div>
       </div>
     </div>
-    <div class="prose">
-      <ul>
-        <li><code>LOAD_GLOBAL_BUILTIN</code>: <code>range</code> was found in the builtins last time, so it checks a version number on the dictionaries and, if nothing changed, skips both lookups.</li>
-        <li><code>CALL_BUILTIN_CLASS</code>: calling a class that's written in C, like <code>range</code>.</li>
-        <li><code>FOR_ITER_RANGE</code>: it has seen a <code>range</code> iterator every time, so it steps that iterator directly instead of going through the general "call its <code>__next__</code>" path.</li>
-        <li><code>BINARY_OP_ADD_INT</code>: <code>+=</code> on two ints.</li>
-        <li><code>RESUME_CHECK</code> and <code>JUMP_BACKWARD_NO_JIT</code>: lighter versions of those instructions. (The <code>NO_JIT</code> is because 3.14 also ships an experimental just-in-time compiler, which is off unless you turn it on.)</li>
-      </ul>
-      <p>This is described in <a href="https://peps.python.org/pep-0659/">PEP 659, the Specializing Adaptive Interpreter</a>.</p>
+    <div class="dg">
+      <div class="dg-h">What each one learned</div>
+      <div class="swaps">
+        <code>LOAD_GLOBAL</code><span class="arr">→</span><code class="sp">LOAD_GLOBAL_BUILTIN</code><small>range was in builtins last time: if the dictionaries haven't changed, skip both lookups</small>
+        <code>CALL</code><span class="arr">→</span><code class="sp">CALL_BUILTIN_CLASS</code><small>calling a class written in C, like range</small>
+        <code>FOR_ITER</code><span class="arr">→</span><code class="sp">FOR_ITER_RANGE</code><small>only ever saw a range iterator, so it steps it directly</small>
+        <code>BINARY_OP</code><span class="arr">→</span><code class="sp">BINARY_OP_ADD_INT</code><small>+= on two ints</small>
+        <code>RESUME</code><span class="arr">→</span><code class="sp">RESUME_CHECK</code><small>a lighter version</small>
+        <code>JUMP_BACKWARD</code><span class="arr">→</span><code class="sp">JUMP_BACKWARD_NO_JIT</code><small>a lighter version; NO_JIT because 3.14's experimental JIT compiler is off</small>
+      </div>
     </div>
   </section>
 
@@ -1030,6 +1358,23 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
   ]);
   renderCells($("add-cells"), [{ ex: "add2", head: "Two arguments", note: "there it is", marks: ["BINARY_ADD"] }]);
   renderCells($("if-cells"), [{ ex: "if", head: "A function with an if" }]);
+
+  // A few instructions in a row, each with the value stack after it.
+  const film = (el, steps) => {
+    el.innerHTML = steps.map(({ op, stack, fresh = [], note = "" }) =>
+      `<li><code class="fo">${esc(op)}</code><div class="fs">${stack.length ? stack.map((v, i) => `<span class="bx${fresh.includes(i) ? " new" : ""}">${esc(v)}</span>`).join("") : "<i>empty</i>"}</div><span class="fn">${note}</span></li>`).join("");
+  };
+  film($("film-def"), [
+    { op: "LOAD_CONST 0", stack: ["code add_two_numbers"], fresh: [0], note: "entry 0" },
+    { op: "LOAD_CONST 1", stack: ["code add_two_numbers", "'add_two_numbers'"], fresh: [1], note: "entry 1" },
+    { op: "MAKE_FUNCTION 0", stack: ["function add_two_numbers"], fresh: [0], note: "pops both, pushes a function" },
+  ]);
+  film($("film-add"), [
+    { op: "LOAD_FAST 0 (a)", stack: ["2"], fresh: [0], note: "push slot 0" },
+    { op: "LOAD_FAST 1 (b)", stack: ["2", "3"], fresh: [1], note: "push slot 1" },
+    { op: "BINARY_ADD", stack: ["5"], fresh: [0], note: "pop two, push the sum" },
+    { op: "RETURN_VALUE", stack: [], note: "pop 5 and hand it to the caller" },
+  ]);
   renderSrc($("codeobj-src"), CODEOBJ.source);
   renderText($("codeobj-out"), CODEOBJ.output);
 
@@ -1458,23 +1803,51 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
   renderText($("fast-mod"), EX.loopMod.out, ["LOAD_NAME", "STORE_NAME"]);
   renderSrc($("time-fn"), EX.timeFn.src);
   renderSrc($("time-mod"), EX.timeMod.src);
-  $("timing").innerHTML = [
-    ["Inside a function", "0.24 s", "LOAD_FAST / STORE_FAST"],
-    ["At module level", "0.48 s", "LOAD_NAME / STORE_NAME"],
-    ["Slowdown", "2×", "same loop, same machine"],
-  ].map(([l, b, s]) => `<div class="stat"><span class="label">${l}</span><span class="big">${b}</span><span class="sub">${s}</span></div>`).join("");
+  // Bar length is seconds, on one scale for both versions.
+  const TIMES = [
+    { ver: "Python 3.10.8", fn: 0.24, mod: 0.48 },
+    { ver: "Python 3.14", fn: 0.23, mod: 0.61 },
+  ];
+  const tMax = Math.max(...TIMES.map((t) => t.mod));
+  $("timing").innerHTML = TIMES.map((t) => `<div class="grp"><span class="ver">${t.ver}</span>${[
+    ["Inside a function", t.fn, "fn"], ["At module level", t.mod, "mod"],
+  ].map(([l, v, c]) => `<div class="br"><span>${l}</span><span class="track" title="${t.ver}, ${l.toLowerCase()}: ${v.toFixed(2)} s"><span class="fill ${c}" style="width:${(v / tMax) * 82}%"></span><span class="v">${v.toFixed(2)} s</span></span></div>`).join("")}</div>`).join("");
 
-  const renderC = (el, snip) => {
+  // Color each LOAD_NAME line by which dictionary it searches.
+  const zone = (n) => (n >= 2903 && n <= 2919 ? " loc" : n >= 2920 && n <= 2927 ? " glob" : n >= 2928 && n <= 2952 ? " blt" : "");
+  const renderC = (el, snip, zones = false) => {
     el.innerHTML = snip.map((row) => row.gap
       ? `<span class="ln gap"><span class="n"></span><span class="t">    …</span></span>`
-      : `<span class="ln${row.mark ? " mark" : ""}"><a class="n" href="https://github.com/python/cpython/blob/v3.10.8/Python/ceval.c#L${row.n}" target="_blank" rel="noopener">${row.n}</a><span class="t">${esc(row.t)}</span></span>`).join("");
+      : `<span class="ln${row.mark ? " mark" : ""}${zones ? zone(row.n) : ""}"><a class="n" href="https://github.com/python/cpython/blob/v3.10.8/Python/ceval.c#L${row.n}" target="_blank" rel="noopener">${row.n}</a><span class="t">${esc(row.t)}</span></span>`).join("");
   };
   renderC($("c-fast"), CSRC.loadFast);
-  renderC($("c-name"), CSRC.loadName);
+  renderC($("c-name"), CSRC.loadName, true);
 
   $("stack-src").textContent = STACK_DEMO.source;
-  $("stack-out").textContent = STACK_DEMO.output;
-  renderCells($("add3-cells"), [{ ex: "add3", head: "Disassemble it", marks: ["CALL_FUNCTION_KW", "BINARY_ADD"] }]);
+  // Number each traceback entry (two lines each) to match the stack picture beside it.
+  $("stack-out").innerHTML = STACK_DEMO.output.replace(/\n$/, "").split("\n").map((ln, i) =>
+    `<span class="ln">${i % 2 === 0 ? `<span class="num">${i / 2 + 1}</span>` : "<span style=\"display:inline-block;width:calc(1.4em + 8px)\"></span>"}${esc(ln)}</span>`).join("");
+  renderCells($("add3-cells"), [{ ex: "add3", head: "add_three_numbers, disassembled", marks: ["CALL_FUNCTION_KW", "BINARY_ADD"] }]);
+  // Label the lines worth noticing, right where they are.
+  (() => {
+    const notes = [[/\(\('limit',\)\)/, "keyword names"], [/CALL_FUNCTION_KW/, "print_stack(limit=3)"], [/POP_TOP/, "throw away what it returned"], [/BINARY_ADD/, "a + b"], [/BINARY_ADD/, "(a + b) + c"]];
+    const lines = [...$("add3-cells").querySelectorAll("[data-out] .ln")];
+    let from = 0;
+    notes.forEach(([re, text]) => {
+      const k = lines.findIndex((l, i) => i >= from && re.test(l.textContent));
+      if (k < 0) return;
+      lines[k].insertAdjacentHTML("beforeend", `<span class="anno">← ${esc(text)}</span>`);
+      from = k + 1;
+    });
+  })();
+
+  // Buttons elsewhere on the page that open a program in the step-through.
+  document.querySelectorAll("[data-walk]").forEach((b) => b.addEventListener("click", () => {
+    const i = PROGRAMS.findIndex((p) => p.key === b.dataset.walk);
+    document.querySelector(`#prog button[data-i="${i}"]`).click();
+    $("walk-h").scrollIntoView({ behavior: "smooth", block: "start" });
+    $("walk").focus({ preventScroll: true });
+  }));
 
   // ---------- loop vs comprehension ----------
   // Mark every instruction from FOR_ITER to the JUMP_ABSOLUTE back to it: the ones that run once per item.
@@ -1500,6 +1873,59 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
   renderText($("is-repl"), ">>> two_hundred_fifty_seven = 257\n>>> two_hundred_fifty_seven_again = 257\n>>> two_hundred_fifty_seven is two_hundred_fifty_seven_again\nFalse\n");
   renderCells($("is-str-cells"), [{ ex: "isStr", head: "All three lines as one string", note: "both say constant 0", marks: ["(257)"] }]);
   renderText($("is-dis"), D310.text.is, ["(257)"]);
+
+  // Names on the left, objects on the right, grouped by where they came from; an arrow per reference.
+  const NAMES = ["two_hundred_fifty_seven", "two_hundred_fifty_seven_again"];
+  const refsSvg = (groups, targets, label) => {
+    const W = 530, nameW = 252, gx = 312, gw = 200, gh = 64, gap = 14;
+    const H = Math.max(groups.length * (gh + gap) - gap, 2 * 44 + 20) + 4;
+    const nameY = [H / 2 - 30, H / 2 + 10];
+    const objPos = [];
+    const g = groups.map((grp, gi) => {
+      const y = 2 + gi * (gh + gap);
+      const objs = grp.objs.map((o, oi) => {
+        const cx = gx + gw / 2 + (oi - (grp.objs.length - 1) / 2) * 70, cy = y + gh / 2 + 6;
+        objPos.push({ cx, cy });
+        return `<circle class="obj" cx="${cx}" cy="${cy}" r="20"/><text class="obj-t" x="${cx}" y="${cy + 5}" text-anchor="middle">${o}</text>`;
+      }).join("");
+      return `<rect class="grp-box" x="${gx}" y="${y}" width="${gw}" height="${gh}" rx="10"/><text class="grp-t" x="${gx + 10}" y="${y + 15}">${esc(grp.label)}</text>${objs}`;
+    }).join("");
+    const names = NAMES.map((n, i) => `<rect class="nm-box" x="2" y="${nameY[i]}" width="${nameW}" height="26" rx="6"/><text class="nm-t" x="10" y="${nameY[i] + 17}">${n}</text>`).join("");
+    const arrows = targets.map((t, i) => {
+      const x1 = nameW + 2, y1 = nameY[i] + 13, { cx, cy } = objPos[t];
+      const x2 = cx - 22, y2 = cy + (i === 0 ? -6 : 6);
+      return `<path class="ref" d="M${x1} ${y1} C ${x1 + 40} ${y1}, ${x2 - 40} ${y2}, ${x2 - 6} ${y2}"/><path class="ref-head" d="M${x2} ${y2} l-8 -5 v10 z"/>`;
+    }).join("");
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">${g}${names}${arrows}</svg>`;
+  };
+  const verdict = (yes) => yes ? `<span class="ok">is → True</span>` : `<span class="bad">is → False</span>`;
+  let intPick = 257;
+  const renderRefs = () => {
+    $("int-pick").innerHTML = [257, 256].map((n) => `<button type="button" data-n="${n}" aria-pressed="${n === intPick}"><code>${n}</code></button>`).join("");
+    const n = intPick;
+    $("refs-fn").innerHTML = refsSvg(
+      n === 257 ? [{ label: "is_in_a_function's constants", objs: [n] }] : [{ label: "small ints, made once at startup", objs: [n] }],
+      [0, 0], `Inside a function, both names point at the same ${n} object.`);
+    $("refs-fn-r").innerHTML = verdict(true);
+    if (n === 257) {
+      $("refs-repl").innerHTML = refsSvg(
+        [{ label: "line 1's constants", objs: [n] }, { label: "line 2's constants", objs: [n] }],
+        [0, 1], "In the REPL, each line is compiled on its own, so each name points at a different 257 object.");
+      $("refs-repl-r").innerHTML = verdict(false);
+    } else {
+      $("refs-repl").innerHTML = refsSvg(
+        [{ label: "small ints, made once at startup", objs: [n] }],
+        [0, 0], "In the REPL with 256, both names point at the one 256 object Python made at startup.");
+      $("refs-repl-r").innerHTML = verdict(true);
+    }
+  };
+  $("int-pick").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    intPick = +b.dataset.n;
+    renderRefs();
+  });
+  renderRefs();
 
   // ---------- primer ----------
   const SEEN = new Set(["LOAD_CONST", "LOAD_FAST", "STORE_FAST", "LOAD_NAME", "STORE_NAME", "LOAD_GLOBAL", "MAKE_FUNCTION",
@@ -1551,6 +1977,19 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
       { op: "TO_BOOL", eff: "… value → … bool(value)", d: "Turn the top of the stack into True or False, before a jump that needs one.", n: "3.13+." },
     ] },
   ];
+  // "… a, b → … a+b" drawn as two little stacks, top on the right.
+  const effSide = (side) => {
+    side = side.trim();
+    if (!side.startsWith("…")) return `<span class="word">${esc(side)}</span>`;
+    const items = side.replace(/^…\s*/, "").split(/,\s*/).filter(Boolean);
+    return `<span class="side"><span class="sq dots">…</span>${items.map((t) => `<span class="sq${t === "…" ? " dots" : ""}">${esc(t)}</span>`).join("")}</span>`;
+  };
+  const effHtml = (eff) => {
+    if (!eff.includes("→")) return `<span class="word">${esc(eff)}</span>`;
+    const [a, b] = eff.split("→");
+    return `${effSide(a)}<span class="arr">→</span>${effSide(b)}`;
+  };
+  $("key-eff").innerHTML = effHtml("… a, b → … a+b");
   const primerEl = $("primer");
   const renderPrimer = (q) => {
     const query = q.trim().toUpperCase();
@@ -1560,7 +1999,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
       hits += ops.length;
       if (!ops.length) return "";
       return `<div><h3>${esc(g.group)}</h3></div><div class="ops">${ops.map((o) =>
-        `<div class="op-card${SEEN.has(o.op) ? " seen" : ""}"><span class="nm">${o.op}</span><span class="eff">${esc(o.eff)}</span><span>${esc(o.d)}</span><span class="newer">${o.n}</span></div>`).join("")}</div>`;
+        `<div class="op-card${SEEN.has(o.op) ? " seen" : ""}"><span class="nm">${o.op}</span><span class="eff2" aria-label="${esc(o.eff)}">${effHtml(o.eff)}</span><span>${esc(o.d)}</span><span class="newer">${o.n}</span></div>`).join("")}</div>`;
     }).join("") || `<p class="no-hits">No instruction matches “${esc(q)}”.</p>`;
   };
   $("op-filter").addEventListener("input", (e) => renderPrimer(e.target.value));
