@@ -112,6 +112,49 @@
   section { display: grid; gap: 16px; min-width: 0; }
   header { display: grid; gap: 14px; }
   .lede { font-size: 1.15rem; max-width: 70ch; }
+  /* Opening picture: an instruction pointer steps down the bytecode while blocks go on and off a stack. */
+  .intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 14px 32px; align-items: center; }
+  .intro-text { display: grid; gap: 14px; }
+  .sm { width: 100%; height: auto; overflow: visible; }
+  .sm .bar { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .sm .ln { stroke: var(--line); stroke-width: 5; stroke-linecap: round; }
+  .sm .well { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+  .sm .loop { fill: none; stroke: var(--muted); stroke-width: 2; stroke-dasharray: 4 4; }
+  .sm .loop-tip { fill: var(--muted); }
+  .sm .hl { fill: none; stroke: var(--accent); stroke-width: 3; transform: translateY(50px); animation: sm-hl 10s infinite; }
+  .sm .va { fill: var(--d-loc); }
+  .sm .vb { fill: var(--tag); }
+  .sm .vc { fill: var(--hit); }
+  .sm .blk { stroke: var(--ink); stroke-width: 1.5; }
+  .sm .pa { animation: sm-a 10s infinite; }
+  .sm .pb { animation: sm-b 10s infinite; }
+  .sm .pc { opacity: 0; animation: sm-c 10s infinite; }
+  .sm .ring { fill: none; stroke: var(--hit); stroke-width: 2.5; }
+  @keyframes sm-hl {
+    0%, 17% { transform: translateY(0); opacity: 1; }
+    20%, 37% { transform: translateY(50px); }
+    40%, 57% { transform: translateY(100px); }
+    60%, 77% { transform: translateY(150px); opacity: 1; }
+    83%, 95% { transform: translateY(150px); opacity: 0; }
+    97% { transform: translateY(0); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes sm-a {
+    0% { transform: translateY(-60px); opacity: 0; }
+    6%, 40% { transform: translateY(0); opacity: 1; }
+    47%, 100% { transform: translateY(0); opacity: 0; }
+  }
+  @keyframes sm-b {
+    0%, 20% { transform: translateY(-60px); opacity: 0; }
+    26%, 40% { transform: translateY(0); opacity: 1; }
+    47%, 100% { transform: translateY(42px); opacity: 0; }
+  }
+  @keyframes sm-c {
+    0%, 42% { transform: translate(0, 0); opacity: 0; }
+    48%, 62% { transform: translate(0, 0); opacity: 1; }
+    74%, 100% { transform: translate(70px, -160px); opacity: 0; }
+  }
+  @media (max-width: 760px) { .intro { grid-template-columns: minmax(0, 1fr); } .sm { max-width: 280px; justify-self: center; } }
   .prose { display: grid; gap: 10px; max-width: 72ch; }
   .prose ul, .prose ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
 
@@ -368,6 +411,21 @@
   .ts-bins .stk { display: flex; flex-direction: column-reverse; gap: 3px; }
   .ts-bins .stk .bx, .ts-bins .slt .bx { display: block; margin-bottom: 3px; }
   .ts-say { font-size: 0.78rem; color: var(--muted); }
+  /* The two things called "the stack": a pile of frames, each holding its own pile of values. */
+  .stk2 { margin-bottom: 12px; }
+  .stk2 .dg { justify-items: center; }
+  .stk2 .dg-h { justify-self: stretch; font-size: 0.8rem; color: var(--ink); }
+  .stk2 .cs { border-top: 4px solid var(--accent); }
+  .stk2 .vs { border-top: 4px solid var(--tag); }
+  .stk2 .io { display: flex; gap: 22px; font: 0.76rem var(--mono); color: var(--muted); }
+  .stk2 .io b { font: 700 1.2rem/1 var(--body); color: var(--ink); margin-right: 4px; vertical-align: -0.1em; }
+  .stk2 .well { border: 2.5px solid var(--ink); border-top: 0; border-radius: 0 0 8px 8px; padding: 8px; display: flex; flex-direction: column; gap: 5px; width: min(100%, 15em); min-height: 10.5em; justify-content: flex-end; }
+  .stk2 .vs .well { width: min(100%, 8em); }
+  .stk2 .fr { border: 1.5px solid var(--line); border-radius: 8px; padding: 5px 8px; background: var(--surface); font: 700 0.76rem var(--mono); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .stk2 .fr.top { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 35%, transparent); }
+  .stk2 .mini { display: flex; flex-direction: column-reverse; gap: 2px; padding: 2px 3px 3px; border: 1.5px solid var(--tag-edge); border-top: 0; border-radius: 0 0 4px 4px; min-height: 18px; justify-content: flex-start; }
+  .stk2 .mini i { display: block; width: 14px; height: 6px; border-radius: 2px; background: var(--tag); }
+  .stk2 .well > .bx { display: block; text-align: center; }
   @media (max-width: 760px) {
     .twostacks { grid-template-columns: minmax(0, 1fr); }
     .ts-link { transform: rotate(90deg); justify-self: center; }
@@ -518,8 +576,35 @@
   <header>
     <div class="label">Session 6 · How Python runs your code</div>
     <h1>The Stack Machine</h1>
-    <p class="lede">Before Python runs your code, it compiles it into <strong>bytecode</strong>: a list of tiny instructions like <code>LOAD_FAST</code> and <code>BINARY_ADD</code>. Then a loop in the interpreter runs those instructions one at a time. Almost every one of them does the same kind of thing: it pushes values onto a <strong>stack</strong>, or pops them off. Here's what that looks like.</p>
-    <p class="muted" style="max-width:72ch">Every listing below is real output from <code>dis.dis()</code> in <strong>Python 3.10.8</strong>. To run the examples yourself, start <code>python3.10</code> and type <code>import dis</code> first; every example assumes you have. Newer Pythons print something different; the <a href="#new-h">last section</a> shows you what, and why.</p>
+    <div class="intro">
+      <div class="intro-text">
+      <p class="lede">Before Python runs your code, it compiles it into <strong>bytecode</strong>: a list of tiny instructions like <code>LOAD_FAST</code> and <code>BINARY_ADD</code>. Then a loop in the interpreter runs those instructions one at a time. Almost every one of them does the same kind of thing: it pushes values onto a <strong>stack</strong>, or pops them off. Here's what that looks like.</p>
+      <p class="muted" style="max-width:72ch">Every listing below is real output from <code>dis.dis()</code> in <strong>Python 3.10.8</strong>. To run the examples yourself, start <code>python3.10</code> and type <code>import dis</code> first; every example assumes you have. Newer Pythons print something different; the <a href="#new-h">last section</a> shows you what, and why.</p>
+      </div>
+      <svg class="sm" viewBox="0 0 320 230" role="img" aria-label="An animation: a highlight steps down four instructions, one at a time, then loops back to the top. The first instruction pushes a blue block onto a stack, the second pushes a yellow block on top of it, the third pops both and pushes one green block, and the fourth pops the green block off the stack and out.">
+        <path class="loop" d="M30 197 H16 V31 H24"/>
+        <path class="loop-tip" d="M24 25 L33 31 L24 37 Z"/>
+        <g>
+          <rect class="bar" x="40" y="14" width="140" height="34" rx="8"/>
+          <rect class="va blk" x="52" y="22" width="18" height="18" rx="3"/>
+          <line class="ln" x1="82" y1="31" x2="160" y2="31"/>
+          <rect class="bar" x="40" y="64" width="140" height="34" rx="8"/>
+          <rect class="vb blk" x="52" y="72" width="18" height="18" rx="3"/>
+          <line class="ln" x1="82" y1="81" x2="150" y2="81"/>
+          <rect class="bar" x="40" y="114" width="140" height="34" rx="8"/>
+          <rect class="vc blk" x="52" y="122" width="18" height="18" rx="3"/>
+          <line class="ln" x1="82" y1="131" x2="166" y2="131"/>
+          <rect class="bar" x="40" y="164" width="140" height="34" rx="8"/>
+          <rect class="ring" x="53" y="173" width="16" height="16" rx="3"/>
+          <line class="ln" x1="82" y1="181" x2="140" y2="181"/>
+        </g>
+        <rect class="hl" x="37" y="11" width="146" height="40" rx="10"/>
+        <rect class="vc blk pc" x="222" y="168" width="76" height="34" rx="6"/>
+        <rect class="vb blk pb" x="222" y="126" width="76" height="34" rx="6"/>
+        <rect class="va blk pa" x="222" y="168" width="76" height="34" rx="6"/>
+        <path class="well" d="M212 70 V212 H308 V70"/>
+      </svg>
+    </div>
   </header>
 
   <section aria-labelledby="how-h">
@@ -562,6 +647,25 @@ while True:
 
     <div class="prose">
       <p>Two different things in there are called "the stack":</p>
+    </div>
+    <div class="pair stk2">
+      <div class="dg cs" role="img" aria-label="The call stack: a pile of frames, add_three_numbers on top of caller on top of module. A call pushes a frame; a return pops it. Each frame holds its own small value stack.">
+        <div class="dg-h">The call stack</div>
+        <div class="io" aria-hidden="true"><span><b>↓</b>call</span><span><b>↑</b>return</span></div>
+        <div class="well" aria-hidden="true">
+          <div class="fr top">add_three_numbers<span class="mini"><i></i><i></i></span></div>
+          <div class="fr">caller<span class="mini"><i></i></span></div>
+          <div class="fr">&lt;module&gt;<span class="mini"></span></div>
+        </div>
+      </div>
+      <div class="dg vs" role="img" aria-label="The value stack: a pile of values, 2 on top of 1. LOAD_FAST pushes a value; BINARY_ADD pops two.">
+        <div class="dg-h">The value stack</div>
+        <div class="io" aria-hidden="true"><span><b>↓</b>LOAD_FAST</span><span><b>↑</b>BINARY_ADD</span></div>
+        <div class="well" aria-hidden="true">
+          <span class="bx hl">2</span>
+          <span class="bx">1</span>
+        </div>
+      </div>
     </div>
     <div class="dg twostacks" role="img" aria-label="The call stack holds three frames: module, caller, and add_three_numbers on top. Inside the top frame are its slots a=1, b=2, c=3, its value stack holding 1 and 2, and its next instruction, BINARY_ADD.">
       <div class="lk">
