@@ -284,6 +284,9 @@
   .cell.touch { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
   .pstack { display: flex; flex-direction: column-reverse; gap: 3px; }
   .pstack .cell { grid-template-columns: minmax(0, 1fr); margin: 0; }
+  /* The value stack is a well with a floor: room is reserved for the deepest it gets, so values pile up from the bottom like pancakes. */
+  .pstack:not(.popped) { border: 2px solid var(--ink); border-top: 0; border-radius: 0 0 8px 8px; padding: 4px 4px 4px; }
+  .pstack .cell.spacer { visibility: hidden; }
   .popped .cell { border-style: dashed; background: none; color: var(--muted); }
   .stackcol { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .builtins { justify-self: start; min-width: min(14em, 100%); }
@@ -1537,6 +1540,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
   let runs = [];
   let steps = [];
   let at = 0;
+  let maxDepth = 1;
   let timer = null;
   let arrowsNow = [];
 
@@ -1663,6 +1667,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     const stack = f.stack.length
       ? f.stack.map((v, i) => cell(`v${idx}-${i}`, null, esc(v))).join("")
       : `<div class="cell empty" data-a="v${idx}-empty">empty</div>`;
+    const room = `<div class="cell spacer" aria-hidden="true">&nbsp;</div>`.repeat(Math.max(0, maxDepth - Math.max(1, f.stack.length)));
     const pop = popped.length
       ? `<div><h4>Popped</h4><div class="pstack popped">${popped.map((v, i) => cell(`p${idx}-${i}`, null, esc(v))).join("")}</div></div>`
       : "";
@@ -1671,7 +1676,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
       <div class="fh"><b data-a="f${idx}">${esc(f.name)}</b><span>${status}</span></div>
       <div class="bins">
         <div><h4>Constants</h4>${constHTML}</div>
-        <div class="stackcol"><div><h4>Value stack</h4><div class="pstack">${stack}</div></div>${pop}</div>
+        <div class="stackcol"><div><h4>Value stack</h4><div class="pstack">${stack}${room}</div></div>${pop}</div>
         <div><h4>${f.isModule ? "Names" : "Slots"}</h4>${vars}</div>
       </div>
     </div>`;
@@ -1775,6 +1780,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     const ins = insOf(st);
     const cos = codeObjects(W().module, prog.key);
     const { arrows, popped, touch } = movesFor(st, prev, ins);
+    maxDepth = Math.max(1, ...steps.flatMap((s) => s.frames.map((f) => f.stack.length)));
 
     // source, with the line that just ran
     const ranLine = ins ? lineOf(codeNamed(st.ran.frame), ins.offset) : null;
