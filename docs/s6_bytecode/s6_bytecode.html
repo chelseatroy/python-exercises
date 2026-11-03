@@ -668,16 +668,6 @@ while True:
     </div>
   </section>
 
-  <section aria-labelledby="read-h">
-    <h2 id="read-h">How to read one line of <code>dis</code> output</h2>
-    <div class="cells" id="if-cells"></div>
-    <p class="cap">The line with <code>L1:</code>, taken apart. Hover over or tab to a piece.</p>
-    <div class="anatomy" id="anatomy">
-      <div class="line" id="anatomy-line" aria-hidden="true"></div>
-      <ol id="anatomy-keys"></ol>
-    </div>
-  </section>
-
   <section aria-labelledby="walk-h">
     <h2 id="walk-h">Step through it</h2>
     <p class="cap">Pick a program, then step with → or <b>Next</b>. Click any row to jump there.</p>
@@ -723,6 +713,16 @@ while True:
         <div class="sr-only" aria-live="polite" id="live"></div>
         <p class="kbd-hint">Keyboard: ← and → step back and forward while the walkthrough has focus.</p>
       </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="read-h">
+    <h2 id="read-h">How to read one line of <code>dis</code> output</h2>
+    <div class="cells" id="if-cells"></div>
+    <p class="cap">The line with <code>L1:</code>, taken apart. Hover over or tab to a piece.</p>
+    <div class="anatomy" id="anatomy">
+      <div class="line" id="anatomy-line" aria-hidden="true"></div>
+      <ol id="anatomy-keys"></ol>
     </div>
   </section>
 
@@ -1053,10 +1053,10 @@ while True:
         </div>
       </details>
       <details class="faq">
-        <summary><h3 id="new-h">The interpreter rewrites the bytecode while it runs</h3></summary>
+        <summary><h3 id="new-h">How does Python get faster without changing my code?</h3></summary>
         <div class="faq-body">
     <div class="prose">
-      <p>How Python gets faster without changing your code: once an instruction has run a few times, the interpreter swaps it for a version specialized to what it saw. The cache bytes after an instruction are where it keeps notes for this.</p>
+      <p>The interpreter rewrites the bytecode while it runs: once an instruction has run a few times, it swaps it for a version specialized to what it saw. The cache bytes after an instruction are where it keeps notes for this.</p>
     </div>
     <div class="dg">
       <div class="spec" role="img" aria-label="BINARY_OP becomes BINARY_OP_ADD_INT after running a few times on two ints, and switches back when another type shows up.">
