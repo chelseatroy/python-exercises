@@ -187,7 +187,7 @@
     content: "→"; position: absolute; left: -10px; top: 50%; transform: translate(-50%, -50%);
     color: var(--muted); font-size: 1.1rem;
   }
-  .pipeline pre { margin: 0; font: 0.78rem/1.45 var(--mono); white-space: pre-wrap; }
+  .pipeline pre { margin: 0; font: 0.78rem/1.45 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
   @media (max-width: 760px) {
     .pipeline { grid-template-columns: minmax(0, 1fr); gap: 22px; }
     .pipeline .stage + .stage::before { content: "↓"; left: 50%; top: -12px; }
@@ -211,7 +211,7 @@
   /* ---------- walkthrough ---------- */
   .picker { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
   .walk { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 18px; align-items: start; }
-  .walk .col { display: grid; gap: 14px; min-width: 0; align-content: start; }
+  .walk .col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; align-content: start; }
   @media (max-width: 960px) {
     .walk { grid-template-columns: minmax(0, 1fr); }
     .walk .col.run { order: -1; }
@@ -240,7 +240,7 @@
   .strip { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 0; }
   .strip .cap { display: flex; justify-content: space-between; gap: 10px; padding: 2px 14px 8px; font: 700 0.72rem var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
   .strip ol { list-style: none; margin: 0; padding: 0; max-height: 34em; overflow-y: auto; position: relative; }
-  .strip li { display: grid; grid-template-columns: auto minmax(0, 13.5em) minmax(0, 1fr); align-items: center; gap: 10px; padding: 3px 14px; cursor: pointer; border-left: 3px solid transparent; }
+  .strip li { display: grid; grid-template-columns: auto minmax(0, 15em) minmax(0, 1fr); align-items: center; gap: 10px; padding: 3px 14px; cursor: pointer; border-left: 3px solid transparent; }
   .strip li.later { opacity: 0.4; }
   .strip li.cur { background: color-mix(in oklab, var(--accent) 12%, transparent); border-left-color: var(--accent); opacity: 1; }
   .strip li.gap { cursor: default; padding-top: 0; padding-bottom: 0; }
@@ -249,14 +249,14 @@
   .strip .rails { display: flex; gap: 4px; align-self: stretch; }
   .strip .rail { width: 3px; border-radius: 2px; background: var(--line); }
   .strip .rail.fn { background: var(--obj-edge); }
-  .strip .op { font: 0.78rem var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .strip .op { font: 0.78rem var(--mono); overflow-wrap: anywhere; padding-left: 2.8em; text-indent: -2.8em; }
   .strip .op .off { color: var(--muted); display: inline-block; width: 2.2em; text-align: right; margin-right: 0.6em; }
   .strip .mini { display: flex; gap: 3px; min-width: 0; overflow: hidden; }
   .strip .mini b { font: 400 0.7rem var(--mono); padding: 1px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--slot); max-width: 9.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .strip .mini b.new { border-color: var(--accent); }
   .strip .mini i { font: italic 0.7rem var(--body); color: var(--muted); white-space: nowrap; }
   /* Two runs of the same function side by side, lined up by offset. */
-  .strip.par li { grid-template-columns: minmax(0, 13.5em) minmax(0, 1fr) minmax(0, 1fr); cursor: default; }
+  .strip.par li { grid-template-columns: minmax(0, 15em) minmax(0, 1fr) minmax(0, 1fr); cursor: default; }
   .strip.par li > .run { cursor: pointer; border-radius: 6px; padding: 2px 6px; margin: -2px -6px; }
   .strip.par li > .run.later { opacity: 0.4; }
   .strip.par li > .run.cur { background: color-mix(in oklab, var(--accent) 12%, transparent); box-shadow: inset 3px 0 0 var(--accent); }
@@ -267,7 +267,7 @@
   .machine svg.arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 2; }
   .machine svg.arrows path { fill: none; stroke: var(--accent); stroke-width: 2; }
   .instr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; min-height: 2.6em; }
-  .instr .op { font: 700 1.05rem var(--mono); }
+  .instr .op { font: 700 1.05rem var(--mono); overflow-wrap: anywhere; min-width: 0; }
   .instr .say { font-size: 0.92rem; color: var(--muted); }
   .frames { display: grid; gap: 12px; }
   .pframe { background: var(--surface); border: 1.5px solid var(--ink); border-radius: 12px; padding: 10px 12px; display: grid; gap: 8px; }
@@ -339,8 +339,6 @@
   .op-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 7px; align-content: start; }
   .op-card .nm { font: 700 0.95rem var(--mono); overflow-wrap: anywhere; }
   .op-card .eff { font: 0.8rem/1.4 var(--mono); background: var(--slot); border-radius: 6px; padding: 5px 8px; overflow-wrap: anywhere; }
-  .op-card .newer { font-size: 0.82rem; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 6px; }
-  .op-card .newer b { color: var(--ink); font-weight: 600; }
   .op-card.seen { border-color: var(--tag-edge); }
   .op-card.seen .nm::after { content: "in the step-through"; margin-left: 8px; font: 600 0.66rem var(--body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--tag-ink); background: var(--tag); border-radius: 999px; padding: 2px 7px; vertical-align: 2px; }
   .no-hits { color: var(--muted); font-style: italic; }
@@ -350,10 +348,7 @@
   .callout code { color: var(--tag); }
   .callout a { color: var(--tag); }
 
-  .diffs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 10px; }
-  .diffs .card { gap: 6px; padding: 14px 16px; }
-  .diffs .card b { font: 700 0.88rem var(--mono); overflow-wrap: anywhere; }
-  .diffs .card .when { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+
 
   .reveal { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
   .reveal summary { cursor: pointer; padding: 14px 18px; font-weight: 600; }
@@ -422,13 +417,17 @@
   .codeobj .t .i { color: var(--muted); margin-right: 6px; }
   .attr { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 8px; align-items: center; }
   .attr > code { font-size: 0.74rem; color: var(--muted); }
-  .bytes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .bytes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.6fr) minmax(0, 1fr); gap: 6px; }
+  @media (max-width: 700px) { .bytes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 560px) { .attr { grid-template-columns: minmax(0, 1fr); gap: 4px; } .codeobj { padding: 10px 8px; } }
   .bytes .ins { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; text-align: center; }
   .bytes .b { font: 0.74rem/1.25 var(--mono); border: 1.5px solid var(--ink); padding: 3px 2px; background: var(--slot); }
   .bytes .b small { display: block; color: var(--muted); font-size: 0.66rem; }
   .bytes .b.op { border-radius: 5px 0 0 5px; background: color-mix(in oklab, var(--tag) 35%, var(--slot)); }
   .bytes .b.ag { border-radius: 0 5px 5px 0; }
+  .bytes .ins.cache { grid-template-columns: 1fr; }
+  .bytes .b.ch { border-style: dashed; border-radius: 5px; }
+  .bytes .ins.cache .nm { border-top-style: dashed; }
   .bytes .nm { grid-column: 1 / -1; font: 0.68rem var(--mono); overflow-wrap: anywhere; padding-top: 3px; border-top: 2px solid var(--tag-edge); }
   .bytes-key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.74rem; color: var(--muted); }
   .eq { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -496,8 +495,19 @@
   .twoframes .pf { border: 1.5px solid var(--ink); border-radius: 10px; padding: 8px 10px; display: grid; gap: 6px; }
   .twoframes .pf.top { border-color: var(--accent); }
   .twoframes .pf b { font: 700 0.85rem var(--mono); }
-  .twoframes .mid { justify-self: center; font: 600 0.76rem var(--mono); color: var(--muted); }
-  .later-box { border: 1.5px dashed var(--muted); border-radius: 10px; padding: 8px 12px; font-size: 0.84rem; max-width: 34em; }
+  .inline-stack { display: flex; flex-wrap: wrap; align-items: end; gap: 6px; }
+  .inline-stack .col { display: grid; gap: 3px; justify-items: center; max-width: 11em; }
+  .inline-stack small { font-size: 0.72rem; color: var(--muted); text-align: center; }
+  .fuse { display: grid; gap: 8px; }
+  .argbits { display: grid; grid-template-columns: max-content max-content max-content max-content max-content; gap: 6px 10px; align-items: center; justify-content: start; }
+  .argbits code { font-size: 0.82rem; }
+  .argbits .nib { justify-self: start; font: 700 0.82rem var(--mono); padding: 2px 6px; border: 1.5px solid var(--ink); border-radius: 5px; background: var(--slot); }
+  .argbits .nib.hi { background: color-mix(in oklab, var(--tag) 35%, var(--slot)); }
+  @media (max-width: 560px) { .argbits { grid-template-columns: max-content max-content 1fr; } .argbits .arr { display: none; } .argbits .to { grid-column: 1 / -1; margin-bottom: 6px; } }
+  .refcount { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .refcount .n { font: 700 0.85rem var(--mono); padding: 2px 8px; border-radius: 999px; border: 1.5px solid var(--ink); background: var(--surface); }
+  .refcount .n.ch { background: color-mix(in oklab, var(--clash) 30%, var(--surface)); border-color: var(--clash); }
+  .refcount .n.same { background: color-mix(in oklab, var(--hit) 30%, var(--surface)); border-color: var(--hit); }
 
   /* names pointing at objects */
   .refs-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -555,8 +565,8 @@
     <h1>The Stack Machine</h1>
     <div class="intro">
       <div class="intro-text">
-      <p class="lede">Before Python runs your code, it compiles it into <strong>bytecode</strong>: a list of tiny instructions like <code>LOAD_FAST</code> and <code>BINARY_ADD</code>. Then a loop in the interpreter runs those instructions one at a time. Almost every one of them does the same kind of thing: it pushes values onto a <strong>stack</strong>, or pops them off. Here's what that looks like.</p>
-      <p class="muted" style="max-width:72ch">Every listing below is real output from <code>dis.dis()</code> in <strong>Python 3.10.8</strong>. To run the examples yourself, start <code>python3.10</code> and type <code>import dis</code> first; every example assumes you have. Newer Pythons print something different; the <a href="#new-h">last section</a> shows you what, and why.</p>
+      <p class="lede">Before Python runs your code, it compiles it into <strong>bytecode</strong>: a list of tiny instructions like <code>LOAD_SMALL_INT</code> and <code>BINARY_OP</code>. Then a loop in the interpreter runs those instructions one at a time. Almost every one of them does the same kind of thing: it pushes values onto a <strong>stack</strong>, or pops them off. Here's what that looks like.</p>
+      <p class="muted" style="max-width:72ch">Every listing below is real output from <code>dis.dis()</code> in <strong>Python 3.14.3</strong>. To run the examples yourself, start <code>python3.14</code> and type <code>import dis</code> first; every example assumes you have. Bytecode changes from one Python version to the next, so any other version will print something a little different.</p>
       </div>
       <svg class="sm" viewBox="0 0 320 230" role="img" aria-label="An animation: a highlight steps down four instructions, one at a time, then loops back to the top. The first instruction pushes a blue block onto a stack, the second pushes a yellow block on top of it, the third pops both and pushes one green block, and the fourth pops the green block off the stack and out.">
         <path class="loop" d="M30 197 H16 V31 H24"/>
@@ -598,9 +608,9 @@
       </div>
       <div class="card stage">
         <div class="label">3 · <code>dis</code> shows you</div>
-        <pre>LOAD_FAST    0 (a)
-LOAD_FAST    1 (b)
-BINARY_ADD
+        <pre>RESUME 0
+LOAD_FAST_BORROW_<wbr>LOAD_FAST_BORROW 1 (a, b)
+BINARY_OP 0 (+)
 RETURN_VALUE</pre>
       </div>
       <div class="card stage">
@@ -615,12 +625,12 @@ RETURN_VALUE</pre>
     <pre class="loop-sketch"><span class="c"># the shape of CPython's main loop (the real one is C, in Python/ceval.c)</span>
 while True:
     instruction = code[next_offset]
-    next_offset += 2                      <span class="c"># each 3.10 instruction is 2 bytes</span>
+    next_offset += instruction.size        <span class="c"># 2 bytes, plus any cache after it</span>
     match instruction.name:
-        case "LOAD_FAST":   stack.push(slots[instruction.arg])
-        case "BINARY_ADD":  right = stack.pop(); left = stack.pop(); stack.push(left + right)
+        case "LOAD_FAST_BORROW": stack.push(slots[instruction.arg])
+        case "BINARY_OP":   right = stack.pop(); left = stack.pop(); stack.push(left + right)
         case "RETURN_VALUE": return stack.pop()
-        ...                               <span class="c"># about 125 more cases</span></pre>
+        ...                               <span class="c"># over 200 more cases</span></pre>
 
     <div class="prose">
       <p>Two different things in there are called "the stack":</p>
@@ -635,9 +645,9 @@ while True:
           <div class="fr">&lt;module&gt;<span class="mini"></span></div>
         </div>
       </div>
-      <div class="dg vs" role="img" aria-label="The value stack: a pile of values, 2 on top of 1. LOAD_FAST pushes a value; BINARY_ADD pops two.">
+      <div class="dg vs" role="img" aria-label="The value stack: a pile of values, 2 on top of 1. LOAD_FAST_BORROW pushes a value; BINARY_OP pops two.">
         <div class="dg-h">The value stack</div>
-        <div class="io" aria-hidden="true"><span><b>↓</b>LOAD_FAST</span><span><b>↑</b>BINARY_ADD</span></div>
+        <div class="io" aria-hidden="true"><span><b>↓</b>LOAD_FAST_BORROW</span><span><b>↑</b>BINARY_OP</span></div>
         <div class="well" aria-hidden="true">
           <span class="bx hl">2</span>
           <span class="bx">1</span>
@@ -646,11 +656,11 @@ while True:
     </div>
     <h3 id="codeobj-h">What's a code object?</h3>
     <div class="prose">
-      <p>The compiler turns the module, every function body, and (in 3.10) every list comprehension into a <strong>code object</strong>: data, not a running thing. Here's the step-through's first program, compiled by hand so you can look inside:</p>
+      <p>The compiler turns the module and every function body into a <strong>code object</strong>: data, not a running thing. Here's the step-through's first program, compiled by hand so you can look inside:</p>
     </div>
     <div class="cells">
       <div class="code-panel">
-        <div class="code-head"><span>Python 3.10.8</span></div>
+        <div class="code-head"><span>Python 3.14.3</span></div>
         <div class="code src" id="codeobj-src"></div>
       </div>
       <div class="code-panel">
@@ -658,7 +668,7 @@ while True:
         <div class="code" id="codeobj-out"></div>
       </div>
     </div>
-    <div class="dg" role="img" aria-label="The module's constants table has five entries: 0 is the code object for add_two_numbers, 1 is its name, 2 and 3 are the arguments, 4 is None. The code object holds its name, its slot names a and b, and 8 bytes that pair up into the 4 instructions LOAD_FAST a, LOAD_FAST b, BINARY_ADD, RETURN_VALUE.">
+    <div class="dg" role="img" aria-label="The module's constants table has two entries: 0 is the code object for add_two_numbers, and 1 is None. The code object holds its name, its slot names a and b, and 18 bytes: four instructions of 2 bytes each, plus 10 bytes of cache after BINARY_OP.">
       <div class="dg-h"><code>print(module_code.co_consts)</code> <span>the module's table of constants, opened up</span></div>
       <div class="consts">
         <div class="codeobj">
@@ -668,35 +678,59 @@ while True:
           <div class="attr" style="align-items:start"><code>.co_code</code>
             <div style="display:grid;gap:6px;min-width:0">
               <div class="bytes">
-                <div class="ins"><span class="b op">|<small>124</small></span><span class="b ag">\x00<small>0</small></span><span class="nm">LOAD_FAST 0 (a)</span></div>
-                <div class="ins"><span class="b op">|<small>124</small></span><span class="b ag">\x01<small>1</small></span><span class="nm">LOAD_FAST 1 (b)</span></div>
-                <div class="ins"><span class="b op">\x17<small>23</small></span><span class="b ag">\x00<small>0</small></span><span class="nm">BINARY_ADD</span></div>
-                <div class="ins"><span class="b op">S<small>83</small></span><span class="b ag">\x00<small>0</small></span><span class="nm">RETURN_VALUE</span></div>
+                <div class="ins"><span class="b op">\x80<small>128</small></span><span class="b ag">\x00<small>0</small></span><span class="nm">RESUME 0</span></div>
+                <div class="ins"><span class="b op">W<small>87</small></span><span class="b ag">\x01<small>1</small></span><span class="nm">LOAD_FAST_BORROW_ LOAD_FAST_BORROW 1 (a, b)</span></div>
+                <div class="ins"><span class="b op">,<small>44</small></span><span class="b ag">\x00<small>0</small></span><span class="nm">BINARY_OP 0 (+)</span></div>
+                <div class="ins cache"><span class="b ch">\x00 × 10<small>empty for now</small></span><span class="nm">cache, for BINARY_OP</span></div>
+                <div class="ins"><span class="b op">#<small>35</small></span><span class="b ag">\x00<small>0</small></span><span class="nm">RETURN_VALUE</span></div>
               </div>
-              <div class="bytes-key"><span><span class="sw" style="background:color-mix(in oklab, var(--tag) 35%, var(--slot));border:1px solid var(--ink)"></span>opcode byte</span><span><span class="sw" style="background:var(--slot);border:1px solid var(--ink)"></span>argument byte</span><span>8 bytes = 4 instructions</span></div>
+              <div class="bytes-key"><span><span class="sw" style="background:color-mix(in oklab, var(--tag) 35%, var(--slot));border:1px solid var(--ink)"></span>opcode byte</span><span><span class="sw" style="background:var(--slot);border:1px solid var(--ink)"></span>argument byte</span><span>18 bytes = 4 instructions + 10 bytes of cache</span></div>
             </div>
           </div>
         </div>
-        <div class="k-under"><span class="bx"><span class="i">1</span>'add_two_numbers'</span><small>the function's name</small></div>
-        <div class="k-under"><span class="row"><span class="bx"><span class="i">2</span>2</span><span class="bx"><span class="i">3</span>3</span></span><small>the arguments in add_two_numbers(2, 3)</small></div>
-        <div class="k-under"><span class="bx"><span class="i">4</span>None</span><small>what the module returns</small></div>
+        <div class="k-under"><span class="bx"><span class="i">1</span>None</span><small>what the module returns</small></div>
       </div>
+      <p class="cap">No <code>2</code> or <code>3</code> in the table: <code>LOAD_SMALL_INT</code> carries small ints inside the instruction. <code>dis</code> hides the cache; <a href="#new-h">the last section</a> shows what it's for.</p>
     </div>
     <div class="dg">
-      <div class="dg-h">When the <code>def</code> line runs <span><code>MAKE_FUNCTION</code> builds a function out of entries 0 and 1</span></div>
-      <div class="eq" aria-label="A function is a code object plus a name plus the module's globals">
+      <div class="dg-h">When the <code>def</code> line runs <span><code>MAKE_FUNCTION</code> builds a function out of entry 0</span></div>
+      <div class="eq" aria-label="A function is a code object plus a name, read from the code object, plus the module's globals">
         <span class="fnbox">function add_two_numbers</span><span class="big">=</span>
-        <span class="bx fn">__code__: entry 0</span><span class="big">+</span><span class="bx">__name__</span><span class="big">+</span><span class="bx">__globals__</span>
+        <span class="bx fn">__code__: entry 0</span><span class="big">+</span><span class="bx">__name__: from the code object</span><span class="big">+</span><span class="bx">__globals__</span>
       </div>
       <div class="row"><code style="font-size:0.82rem">add_two_numbers.__code__ is function_code</code><span class="arr">→</span><span class="ok">True</span><span class="cap">(same object; the address after <code>at</code> changes every run)</span></div>
     </div>
 
     <h3>How to read one line of <code>dis</code> output</h3>
     <div class="cells" id="if-cells"></div>
-    <p class="cap">The last line, taken apart. Hover over or tab to a piece.</p>
+    <p class="cap">The line with <code>L1:</code>, taken apart. Hover over or tab to a piece.</p>
     <div class="anatomy" id="anatomy">
       <div class="line" id="anatomy-line" aria-hidden="true"></div>
       <ol id="anatomy-keys"></ol>
+    </div>
+
+    <h3>Why are some names so long?</h3>
+    <div class="dg fuse">
+      <div class="dg-h"><code>LOAD_FAST_BORROW_LOAD_FAST_BORROW</code> <span>two instructions fused into one: one trip through the loop instead of two</span></div>
+      <div class="eq" aria-label="LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (a, b) does the work of LOAD_FAST_BORROW 0 (a) and then LOAD_FAST_BORROW 1 (b)">
+        <span class="bx hl">LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (a, b)</span><span class="big">=</span>
+        <span class="bx">LOAD_FAST_BORROW 0 (a)</span><span class="big">+</span><span class="bx">LOAD_FAST_BORROW 1 (b)</span>
+      </div>
+      <p class="cap">There's only one argument byte, so each half gets 4 bits:</p>
+      <div class="argbits" aria-label="Argument 1 is the bits 0000 and 0001, meaning slots 0 and 1. Argument 52 is the bits 0011 and 0100, meaning slots 3 and 4.">
+        <code>1</code><span class="nib hi">0000</span><span class="nib">0001</span><span class="arr">→</span><span class="to">slot 0 (<code>a</code>), slot 1 (<code>b</code>)</span>
+        <code>52</code><span class="nib hi">0011</span><span class="nib">0100</span><span class="arr">→</span><span class="to">slot 3 (<code>result</code>), slot 4 (<code>item</code>)</span>
+      </div>
+    </div>
+    <div class="dg fuse">
+      <div class="dg-h"><code>_BORROW</code> <span>every object counts the references to it; a borrow skips the count</span></div>
+      <div class="refcount" aria-label="LOAD_FAST: the object's reference count goes from 1 to 2 and back to 1.">
+        <code style="font-size:0.82rem;min-width:10.5em">LOAD_FAST</code><span class="n">1</span><span class="arr">→</span><span class="n ch">2</span><span class="arr">→</span><span class="n ch">1</span><span class="cap">add one when it's pushed, subtract one when it's popped</span>
+      </div>
+      <div class="refcount" aria-label="LOAD_FAST_BORROW: the object's reference count stays 1.">
+        <code style="font-size:0.82rem;min-width:10.5em">LOAD_FAST_BORROW</code><span class="n same">1</span><span class="cap">the count never moves: less work for the same value on the stack</span>
+      </div>
+      <p class="cap">The compiler borrows only when it can prove the variable's slot will keep the object alive for as long as the stack needs it. Otherwise it uses plain <code>LOAD_FAST</code>.</p>
     </div>
   </section>
 
@@ -722,7 +756,7 @@ while True:
         <details class="listing">
           <summary>The same bytecode as <code>dis.dis()</code> prints it</summary>
           <div class="code-panel">
-            <div class="code-head"><span>Bytecode, from <code>dis.dis()</code> in 3.10</span><span><code>--></code> just ran</span></div>
+            <div class="code-head"><span>Bytecode, from <code>dis.dis()</code></span><span>highlighted: just ran</span></div>
             <div class="code" id="bytecode"></div>
           </div>
         </details>
@@ -749,7 +783,7 @@ while True:
   </section>
 
   <section aria-labelledby="fast-h">
-    <h2 id="fast-h">Why is it called <code>LOAD_FAST</code>? Is there a <code>LOAD_SLOW</code>?</h2>
+    <h2 id="fast-h">Why does it say <code>FAST</code>? Is there a <code>LOAD_SLOW</code>?</h2>
     <div class="prose">
       <p>There's no instruction called <code>LOAD_SLOW</code>. But there is a slow way to load a variable, and it's what <code>FAST</code> is being compared to: <strong>looking the name up in a dictionary.</strong></p>
       <p>The same loop, inside a function and as a string (which <code>dis</code> compiles like the top level of a module). Every <span style="background:color-mix(in oklab, var(--tag) 40%, transparent);padding:0 3px;border-radius:3px">highlighted</span> instruction is different.</p>
@@ -776,11 +810,11 @@ while True:
         </div>
       </div>
     </div>
-    <p class="muted" style="max-width:72ch">The line numbers in the second listing start at 2 because the string starts with a line break, right after the opening <code>"""</code>.</p>
+    <p class="muted" style="max-width:72ch">The line numbers in the second listing start at 2 because the string starts with a line break, right after the opening <code>"""</code>. <code>RESUME</code> says line 0 because no line you wrote made it.</p>
     <div class="pair">
       <div class="dg">
         <div class="dg-h">Inside a function <span>the compiler saw every local before running, and numbered them</span></div>
-        <div class="lk-line"><code>LOAD_FAST 3</code><span class="arr">→</span>
+        <div class="lk-line"><code>LOAD_FAST_BORROW 3</code><span class="arr">→</span>
           <span class="slotrow"><span class="bx"><span class="i">0</span>start</span><span class="bx"><span class="i">1</span>end</span><span class="bx"><span class="i">2</span>increment</span><span class="bx hl"><span class="i">3</span>result</span><span class="bx"><span class="i">4</span>item</span></span></div>
         <div class="cost one">1 step: index into slot 3</div>
       </div>
@@ -788,7 +822,7 @@ while True:
         <div class="dg-h">At module level <span>any code can add a name any time, so look it up by name, every time</span></div>
         <div class="lk-line"><code>LOAD_NAME result</code><span class="arr">→</span><span class="pill loc">locals <span class="yes">✓</span></span></div>
         <div class="lk-line"><code>LOAD_NAME range</code><span class="arr">→</span><span class="pill loc">locals <span class="no">✗</span></span><span class="arr">→</span><span class="pill glob">globals <span class="no">✗</span></span><span class="arr">→</span><span class="pill blt">builtins <span class="yes">✓</span></span></div>
-        <div class="cost many">up to 3 dictionary lookups, each hashing the name</div>
+        <div class="cost many">up to 3 dictionary lookups</div>
         <p class="cap">At module level, locals and globals are the same dictionary, so <code>range</code> gets looked for in it twice.</p>
       </div>
     </div>
@@ -811,23 +845,24 @@ while True:
     </div>
 
     <h3>Reading the C</h3>
-    <p class="cap">Both instructions, quoted exactly from CPython 3.10.8's <code>Python/ceval.c</code>. Click a line number to see it on GitHub.</p>
-    <div class="row"><span class="pill loc">locals</span><span class="arr">→</span><span class="pill glob">globals</span><span class="arr">→</span><span class="pill blt">builtins</span><span class="cap">the three lookups in <code>LOAD_NAME</code></span></div>
+    <p class="cap">Both instructions, quoted exactly from CPython 3.14.3. <code>Python/bytecodes.c</code> is the file the main loop's cases are generated from. Click a line number to see it on GitHub.</p>
+    <div class="row"><span class="pill loc">locals</span><span class="arr">→</span><span class="pill glob">globals</span><span class="arr">→</span><span class="pill blt">builtins</span><span class="cap">the three lookups behind <code>LOAD_NAME</code></span></div>
     <div class="pair">
       <div class="code-panel">
-        <div class="code-head"><span><code>LOAD_FAST</code>: 12 lines</span><span><code>GETLOCAL(i)</code> is <code>fastlocals[i]</code></span></div>
+        <div class="code-head"><span><code>LOAD_FAST_BORROW</code>: 4 lines</span><span><code>GETLOCAL(i)</code> is <code>frame-&gt;localsplus[i]</code></span></div>
         <div class="code c-src" id="c-fast"></div>
       </div>
       <div class="code-panel">
-        <div class="code-head"><span><code>LOAD_NAME</code>: 63 lines</span><span>up to three dictionary lookups</span></div>
+        <div class="code-head"><span><code>LOAD_NAME</code>: 6 lines, plus a 32-line helper</span><span>up to three dictionary lookups</span></div>
         <div class="code c-src" id="c-name"></div>
       </div>
     </div>
     <div class="dg">
       <div class="dg-h">Every load, from least work to most</div>
       <div class="ladder">
+        <div class="rung"><code>LOAD_SMALL_INT</code><small>ints from 0 to 255</small><span class="row"><span class="cap">nothing to look up: the number is the argument</span></span></div>
         <div class="rung"><code>LOAD_CONST</code><small>constants</small><span class="row"><span class="sq">[i]</span><span class="cap">index into the constants table</span></span></div>
-        <div class="rung"><code>LOAD_FAST</code><small>locals in a function</small><span class="row"><span class="sq">[i]</span><span class="cap">index into the slots</span></span></div>
+        <div class="rung"><code>LOAD_FAST_BORROW</code><small>locals in a function</small><span class="row"><span class="sq">[i]</span><span class="cap">index into the slots</span></span></div>
         <div class="rung"><code>LOAD_DEREF</code><small>a closure's variables</small><span class="row"><span class="sq">[i]</span><span class="arr">→</span><span class="rnd">cell</span><span class="arr">→</span><span class="cap">value</span></span></div>
         <div class="rung"><code>LOAD_GLOBAL</code><small>non-locals in a function</small><span class="row"><span class="pill glob">globals</span><span class="arr">→</span><span class="pill blt">builtins</span></span></div>
         <div class="rung"><code>LOAD_NAME</code><small>module level</small><span class="row"><span class="pill loc">locals</span><span class="arr">→</span><span class="pill glob">globals</span><span class="arr">→</span><span class="pill blt">builtins</span></span></div>
@@ -836,7 +871,7 @@ while True:
     </div>
     <div class="callout">
       <h3>See the call stack for yourself</h3>
-      <p><code>traceback.print_stack()</code> prints every frame on the call stack, oldest first. Here's a function that calls it, saved as <code>stack_demo.py</code> and run with <code>python3.10 stack_demo.py</code>:</p>
+      <p><code>traceback.print_stack()</code> prints every frame on the call stack, oldest first. Here's a function that calls it, saved as <code>stack_demo.py</code> and run with <code>python3.14 stack_demo.py</code>:</p>
       <pre class="loop-sketch" id="stack-src" style="background:var(--surface);color:var(--ink)"></pre>
       <p>Output, next to the stack it describes (Python prints the file's full path; it's shortened here):</p>
       <div class="tb">
@@ -875,7 +910,7 @@ while True:
           <div class="code src" id="compy-src"></div>
         </div>
         <div class="code-panel">
-          <div class="code-head"><span>Output</span><span>address changes every run</span></div>
+          <div class="code-head"><span>Output</span><span>highlighted: runs once per item</span></div>
           <div class="code" id="compy-out"></div>
         </div>
       </div>
@@ -887,37 +922,38 @@ while True:
           <div class="colh">loopy <span>x.append(i)</span></div>
           <ol>
             <li>FOR_ITER</li><li>STORE_FAST i</li>
-            <li class="slow">LOAD_FAST x</li><li class="slow">LOAD_METHOD append</li><li class="slow">LOAD_FAST i</li><li class="slow">CALL_METHOD 1</li><li class="slow">POP_TOP</li>
-            <li>JUMP_ABSOLUTE</li>
+            <li class="slow">LOAD_FAST_BORROW x</li><li class="slow">LOAD_ATTR append</li><li class="slow">LOAD_FAST_BORROW i</li><li class="slow">CALL 1</li><li class="slow">POP_TOP</li>
+            <li>JUMP_BACKWARD</li>
           </ol>
           <div class="tot">8 × 10 items = 80</div>
         </div>
         <div>
           <div class="colh">compy <span>[i for i in …]</span></div>
           <ol>
-            <li>FOR_ITER</li><li>STORE_FAST i</li>
-            <li class="quick">LOAD_FAST i</li><li class="quick">LIST_APPEND 2</li>
-            <li>JUMP_ABSOLUTE</li>
+            <li>FOR_ITER</li>
+            <li class="quick">STORE_FAST_LOAD_FAST i, i</li><li class="quick">LIST_APPEND 2</li>
+            <li>JUMP_BACKWARD</li>
           </ol>
-          <div class="tot">5 × 10 items = 50</div>
+          <div class="tot">4 × 10 items = 40</div>
         </div>
       </div>
-      <div class="legend"><span><span class="sw" style="background:color-mix(in oklab, var(--clash) 30%, var(--surface));border:1.5px solid var(--clash)"></span>find append, call it, throw away its None</span><span><span class="sw" style="background:color-mix(in oklab, var(--hit) 30%, var(--surface));border:1.5px solid var(--hit)"></span>one instruction appends to the list further down the stack</span></div>
+      <div class="legend"><span><span class="sw" style="background:color-mix(in oklab, var(--clash) 30%, var(--surface));border:1.5px solid var(--clash)"></span>find append, call it, throw away its None</span><span><span class="sw" style="background:color-mix(in oklab, var(--hit) 30%, var(--surface));border:1.5px solid var(--hit)"></span>store i and load it back in one instruction, then append to the list further down the stack</span></div>
     </div>
     <div class="dg">
-      <div class="dg-h">The comprehension gets its own code object, and its own frame</div>
-      <div class="twoframes" aria-label="compy's frame calls a listcomp frame, passing a range iterator as the argument named .0">
-        <div class="pf top"><b>&lt;listcomp&gt;</b>
-          <div class="row"><h4 style="margin:0">Slots</h4><span class="bx"><span class="i">0</span>.0 = range iterator</span><span class="bx"><span class="i">1</span>i</span></div>
-          <div class="row"><h4 style="margin:0">Stack</h4><span class="bx">[0, 1, …]</span></div>
-        </div>
-        <div class="mid">↑ CALL_FUNCTION 1, passing the iterator</div>
-        <div class="pf"><b>compy</b>
-          <div class="row"><h4 style="margin:0">Stack</h4><span class="bx fn">&lt;listcomp&gt; function</span><span class="bx hl">range iterator</span></div>
+      <div class="dg-h">The comprehension runs inside <code>compy</code>'s own frame <span>no new function, no new frame</span></div>
+      <div class="twoframes" aria-label="compy's frame during the loop. Slots hold i and x. The value stack holds, from the bottom, the saved old value of i, the list being built, and the range iterator.">
+        <div class="pf top"><b>compy</b>
+          <div class="row"><h4 style="margin:0">Slots</h4><span class="bx"><span class="i">0</span>i</span><span class="bx"><span class="i">1</span>x</span></div>
+          <div class="row"><h4 style="margin:0">Stack</h4>
+            <div class="inline-stack">
+              <span class="col"><span class="bx hl">NULL</span><small>the old <code>i</code>, saved</small></span>
+              <span class="col"><span class="bx">[0, 1, …]</span><small>the list being built</small></span>
+              <span class="col"><span class="bx">range iterator</span><small>top of the stack</small></span>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="row"><span class="bx">.0</span><span class="cap">a name you can't type, so it never clashes with yours</span></div>
-      <div class="later-box">3.12+: no second frame. The comprehension runs inline. <a href="#new-h">See it in the last section ↓</a></div>
+      <p class="cap">Your comprehension's <code>i</code> shares a slot with any <code>i</code> the function already has. So <code>LOAD_FAST_AND_CLEAR</code> saves the old value on the stack first (<code>NULL</code> here, since <code>i</code> was empty), and <code>STORE_FAST 0 (i)</code> puts it back afterward. That's why <code>i</code> doesn't leak out of a comprehension.</p>
       <button class="btn go" type="button" data-walk="comp">Watch it run in the step-through →</button>
     </div>
   </section>
@@ -932,14 +968,14 @@ while True:
       <p>Typed into the <code>&gt;&gt;&gt;</code> REPL:</p>
     </div>
     <div class="code-panel" style="max-width:640px">
-      <div class="code-head"><span>The Python 3.10.8 REPL</span><span>different objects</span></div>
+      <div class="code-head"><span>The Python 3.14.3 REPL</span><span>different objects</span></div>
       <div class="code" id="is-repl"></div>
     </div>
     <div class="prose">
       <p>Disassemble the function:</p>
     </div>
-    <div class="code-panel" style="max-width:640px">
-      <div class="code-head"><span>Output of <code>dis.dis(is_in_a_function)</code></span><span>both say constant <strong>1</strong></span></div>
+    <div class="code-panel">
+      <div class="code-head"><span>Output of <code>dis.dis(is_in_a_function)</code></span><span>both say constant <strong>0</strong></span></div>
       <div class="code" id="is-dis"></div>
     </div>
     <div class="dg">
@@ -965,7 +1001,7 @@ while True:
         </tbody>
       </table>
     </div>
-    <p class="cap">All four checked in Python 3.10.8 and IPython 8.34. With <code>256</code>, every row says <code>True</code>: flip the switch above to see why.</p>
+    <p class="cap">All four checked in Python 3.14.3 and IPython 9.18. With <code>256</code>, every row says <code>True</code>: flip the switch above to see why.</p>
     <div class="isq">
       <div class="dg"><code class="big">a is b</code><span>same <strong>object</strong>?</span><span class="cap">when equal values share an object is up to Python</span></div>
       <div class="dg" style="border-color:var(--hit)"><code class="big">a == b</code><span>same <strong>value</strong>?</span><span class="ok" style="font-size:0.85rem">use this for values</span></div>
@@ -977,7 +1013,6 @@ while True:
     <p class="cap">Every instruction on this page, plus a few relatives.</p>
     <div class="primer-key">
       <span class="eff2" id="key-eff"></span><span>value stack before → after, top on the right, outlined</span>
-      <span>below the dashed line: what newer Pythons call it</span>
     </div>
     <div class="filter">
       <label for="op-filter" class="label">Find an instruction</label>
@@ -987,30 +1022,9 @@ while True:
   </section>
 
   <section aria-labelledby="new-h">
-    <h2 id="new-h">What newer Pythons show you</h2>
+    <h2 id="new-h">The interpreter rewrites the bytecode while it runs</h2>
     <div class="prose">
-      <p>Same frames, slots, and value stack, different instructions. 3.10 next to <strong>Python 3.14.3</strong>, with every new kind of instruction highlighted:</p>
-    </div>
-    <div class="seg" id="cmp" role="group" aria-label="Which function to compare"></div>
-    <div class="code-panel">
-      <div class="code-head"><span>Python source</span><span id="cmp-note"></span></div>
-      <div class="code src" id="cmp-src"></div>
-    </div>
-    <div class="pair">
-      <div class="code-panel">
-        <div class="code-head"><span>Python 3.10.8</span></div>
-        <div class="code" id="cmp-old"></div>
-      </div>
-      <div class="code-panel">
-        <div class="code-head"><span>Python 3.14.3</span><span id="cmp-count"></span></div>
-        <div class="code" id="cmp-new"></div>
-      </div>
-    </div>
-    <div class="diffs" id="diffs"></div>
-
-    <h3>The interpreter rewrites the bytecode while it runs</h3>
-    <div class="prose">
-      <p>How Python gets faster without changing your code: since 3.11, once an instruction has run a few times, the interpreter swaps it for a version specialized to what it saw.</p>
+      <p>How Python gets faster without changing your code: once an instruction has run a few times, the interpreter swaps it for a version specialized to what it saw. The cache bytes after an instruction are where it keeps notes for this.</p>
     </div>
     <div class="dg">
       <div class="spec" role="img" aria-label="BINARY_OP becomes BINARY_OP_ADD_INT after running a few times on two ints, and switches back when another type shows up.">
@@ -1020,19 +1034,19 @@ while True:
       </div>
     </div>
     <div class="prose">
-      <p>Watch it happen with <code>adaptive=True</code>, in 3.14, after <code>import dis</code>:</p>
+      <p>Watch it happen with <code>adaptive=True</code>, after <code>import dis</code>:</p>
     </div>
     <div class="code-panel">
-      <div class="code-head"><span>Python 3.14</span></div>
+      <div class="code-head"><span>Python 3.14.3</span></div>
       <div class="code src" id="ad-src"></div>
     </div>
     <div class="pair">
       <div class="code-panel">
-        <div class="code-head"><span>3.14, before any calls</span></div>
+        <div class="code-head"><span>Before any calls</span></div>
         <div class="code" id="ad-old"></div>
       </div>
       <div class="code-panel">
-        <div class="code-head"><span>3.14, after 100 calls, <code>adaptive=True</code></span></div>
+        <div class="code-head"><span>After 100 calls, <code>adaptive=True</code></span></div>
         <div class="code" id="ad-new"></div>
       </div>
     </div>
@@ -1044,7 +1058,7 @@ while True:
         <code>FOR_ITER</code><span class="arr">→</span><code class="sp">FOR_ITER_RANGE</code><small>only ever saw a range iterator, so it steps it directly</small>
         <code>BINARY_OP</code><span class="arr">→</span><code class="sp">BINARY_OP_ADD_INT</code><small>+= on two ints</small>
         <code>RESUME</code><span class="arr">→</span><code class="sp">RESUME_CHECK</code><small>a lighter version</small>
-        <code>JUMP_BACKWARD</code><span class="arr">→</span><code class="sp">JUMP_BACKWARD_NO_JIT</code><small>a lighter version; NO_JIT because 3.14's experimental JIT compiler is off</small>
+        <code>JUMP_BACKWARD</code><span class="arr">→</span><code class="sp">JUMP_BACKWARD_NO_JIT</code><small>a lighter version; NO_JIT because Python's experimental JIT compiler is off</small>
       </div>
     </div>
   </section>
@@ -1052,26 +1066,26 @@ while True:
   <section aria-labelledby="more-h">
     <h2 id="more-h">Go further</h2>
     <ul class="refs">
-      <li><a href="https://docs.python.org/3.10/library/dis.html">The <code>dis</code> docs for 3.10</a>, with every instruction on this page, and <a href="https://docs.python.org/3/library/dis.html">the current version</a>, with every instruction in the newest Python.</li>
-      <li><a href="https://github.com/python/cpython/blob/v3.10.8/Python/ceval.c#L1739">CPython 3.10.8's main loop</a>. Search the file for <code>case TARGET(</code> to find any instruction.</li>
-      <li><a href="https://peps.python.org/pep-0659/">PEP 659</a>: the specializing interpreter (3.11). <a href="https://peps.python.org/pep-0709/">PEP 709</a>: inlined comprehensions (3.12).</li>
-      <li>Try it on your own code: <code>import dis; dis.dis(your_function)</code>. In 3.13 and later, <code>dis.dis(f, show_offsets=True)</code> brings back the byte offsets.</li>
+      <li><a href="https://docs.python.org/3.14/library/dis.html">The <code>dis</code> docs for 3.14</a>, with every instruction on this page.</li>
+      <li><a href="https://github.com/python/cpython/blob/v3.14.3/Python/bytecodes.c">CPython 3.14.3's instructions</a>. Search the file for <code>inst(</code> to find any instruction.</li>
+      <li><a href="https://peps.python.org/pep-0659/">PEP 659</a>: the specializing interpreter. <a href="https://peps.python.org/pep-0709/">PEP 709</a>: inlined comprehensions.</li>
+      <li>Try it on your own code: <code>import dis; dis.dis(your_function)</code>. <code>dis.dis(f, show_offsets=True, show_caches=True)</code> shows every byte offset and cache slot.</li>
     </ul>
   </section>
 </main>
 
 <script>
-const D310 = {"version":"3.10.8","text":{"add":"  2           0 LOAD_FAST                0 (a)\n              2 LOAD_FAST                1 (b)\n              4 BINARY_ADD\n              6 RETURN_VALUE\n","if":"  2           0 LOAD_FAST                0 (x)\n              2 LOAD_CONST               1 (5)\n              4 COMPARE_OP               2 (==)\n              6 POP_JUMP_IF_FALSE        6 (to 12)\n\n  3           8 LOAD_CONST               2 (True)\n             10 RETURN_VALUE\n\n  5     >>   12 LOAD_CONST               3 (False)\n             14 RETURN_VALUE\n","loop":"  2           0 LOAD_CONST               1 (0)\n              2 STORE_FAST               3 (result)\n\n  3           4 LOAD_GLOBAL              0 (range)\n              6 LOAD_FAST                0 (start)\n              8 LOAD_FAST                1 (end)\n             10 LOAD_FAST                2 (increment)\n             12 CALL_FUNCTION            3\n             14 GET_ITER\n        >>   16 FOR_ITER                 6 (to 30)\n             18 STORE_FAST               4 (item)\n\n  4          20 LOAD_FAST                3 (result)\n             22 LOAD_FAST                4 (item)\n             24 INPLACE_ADD\n             26 STORE_FAST               3 (result)\n             28 JUMP_ABSOLUTE            8 (to 16)\n\n  5     >>   30 LOAD_FAST                3 (result)\n             32 RETURN_VALUE\n","comp":"  2           0 LOAD_CONST               1 (<code object <listcomp>>)\n              2 LOAD_CONST               2 ('compy.<locals>.<listcomp>')\n              4 MAKE_FUNCTION            0\n              6 LOAD_GLOBAL              0 (range)\n              8 LOAD_CONST               3 (0)\n             10 LOAD_CONST               4 (3)\n             12 CALL_FUNCTION            2\n             14 GET_ITER\n             16 CALL_FUNCTION            1\n             18 STORE_FAST               0 (x)\n\n  3          20 LOAD_FAST                0 (x)\n             22 RETURN_VALUE\n\nDisassembly of <code object <listcomp>>:\n  2           0 BUILD_LIST               0\n              2 LOAD_FAST                0 (.0)\n        >>    4 FOR_ITER                 4 (to 14)\n              6 STORE_FAST               1 (i)\n              8 LOAD_FAST                1 (i)\n             10 LIST_APPEND              2\n             12 JUMP_ABSOLUTE            2 (to 4)\n        >>   14 RETURN_VALUE\n","is":"  2           0 LOAD_CONST               1 (257)\n              2 STORE_FAST               0 (two_hundred_fifty_seven)\n\n  3           4 LOAD_CONST               1 (257)\n              6 STORE_FAST               1 (two_hundred_fifty_seven_again)\n\n  4           8 LOAD_FAST                0 (two_hundred_fifty_seven)\n             10 LOAD_FAST                1 (two_hundred_fifty_seven_again)\n             12 IS_OP                    0\n             14 RETURN_VALUE\n"},"walk":{"add":{"source":"def add_two_numbers(a, b):\n    return a + b\n\ntotal = add_two_numbers(2, 3)\n","module":{"name":"<module>","varnames":[],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":0,"argrepr":"<code object add_two_numbers>","line":1,"target":false,"argval":null,"code":"add_two_numbers"},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"'add_two_numbers'","line":null,"target":false,"argval":"add_two_numbers","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"add_two_numbers","line":null,"target":false,"argval":"add_two_numbers","code":null},{"offset":8,"op":"LOAD_NAME","arg":0,"argrepr":"add_two_numbers","line":4,"target":false,"argval":"add_two_numbers","code":null},{"offset":10,"op":"LOAD_CONST","arg":2,"argrepr":"2","line":null,"target":false,"argval":2,"code":null},{"offset":12,"op":"LOAD_CONST","arg":3,"argrepr":"3","line":null,"target":false,"argval":3,"code":null},{"offset":14,"op":"CALL_FUNCTION","arg":2,"argrepr":"","line":null,"target":false,"argval":2,"code":null},{"offset":16,"op":"STORE_NAME","arg":1,"argrepr":"total","line":null,"target":false,"argval":"total","code":null},{"offset":18,"op":"LOAD_CONST","arg":4,"argrepr":"None","line":null,"target":false,"argval":null,"code":null},{"offset":20,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"add_two_numbers","varnames":["a","b"],"instrs":[{"offset":0,"op":"LOAD_FAST","arg":0,"argrepr":"a","line":2,"target":false,"argval":"a","code":null},{"offset":2,"op":"LOAD_FAST","arg":1,"argrepr":"b","line":null,"target":false,"argval":"b","code":null},{"offset":4,"op":"BINARY_ADD","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null},{"offset":6,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[]}]}},"if":{"source":"def equals_five(x):\n    if x == 5:\n        return True\n    else:\n        return False\n","module":{"name":"<module>","varnames":[],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":0,"argrepr":"<code object equals_five>","line":1,"target":false,"argval":null,"code":"equals_five"},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"'equals_five'","line":null,"target":false,"argval":"equals_five","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"equals_five","line":null,"target":false,"argval":"equals_five","code":null},{"offset":8,"op":"LOAD_CONST","arg":2,"argrepr":"None","line":null,"target":false,"argval":null,"code":null},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"equals_five","varnames":["x"],"instrs":[{"offset":0,"op":"LOAD_FAST","arg":0,"argrepr":"x","line":2,"target":false,"argval":"x","code":null},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"5","line":null,"target":false,"argval":5,"code":null},{"offset":4,"op":"COMPARE_OP","arg":2,"argrepr":"==","line":null,"target":false,"argval":"==","code":null},{"offset":6,"op":"POP_JUMP_IF_FALSE","arg":6,"argrepr":"to 12","line":null,"target":false,"argval":12,"code":null},{"offset":8,"op":"LOAD_CONST","arg":2,"argrepr":"True","line":3,"target":false,"argval":true,"code":null},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null},{"offset":12,"op":"LOAD_CONST","arg":3,"argrepr":"False","line":5,"target":true,"argval":false,"code":null},{"offset":14,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[]}]}},"loop":{"source":"def looping_sum(start, end, increment):\n    result = 0\n    for item in range(start, end, increment):\n        result += item\n    return result\n","module":{"name":"<module>","varnames":[],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":0,"argrepr":"<code object looping_sum>","line":1,"target":false,"argval":null,"code":"looping_sum"},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"'looping_sum'","line":null,"target":false,"argval":"looping_sum","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"looping_sum","line":null,"target":false,"argval":"looping_sum","code":null},{"offset":8,"op":"LOAD_CONST","arg":2,"argrepr":"None","line":null,"target":false,"argval":null,"code":null},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"looping_sum","varnames":["start","end","increment","result","item"],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":1,"argrepr":"0","line":2,"target":false,"argval":0,"code":null},{"offset":2,"op":"STORE_FAST","arg":3,"argrepr":"result","line":null,"target":false,"argval":"result","code":null},{"offset":4,"op":"LOAD_GLOBAL","arg":0,"argrepr":"range","line":3,"target":false,"argval":"range","code":null},{"offset":6,"op":"LOAD_FAST","arg":0,"argrepr":"start","line":null,"target":false,"argval":"start","code":null},{"offset":8,"op":"LOAD_FAST","arg":1,"argrepr":"end","line":null,"target":false,"argval":"end","code":null},{"offset":10,"op":"LOAD_FAST","arg":2,"argrepr":"increment","line":null,"target":false,"argval":"increment","code":null},{"offset":12,"op":"CALL_FUNCTION","arg":3,"argrepr":"","line":null,"target":false,"argval":3,"code":null},{"offset":14,"op":"GET_ITER","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null},{"offset":16,"op":"FOR_ITER","arg":6,"argrepr":"to 30","line":null,"target":true,"argval":30,"code":null},{"offset":18,"op":"STORE_FAST","arg":4,"argrepr":"item","line":null,"target":false,"argval":"item","code":null},{"offset":20,"op":"LOAD_FAST","arg":3,"argrepr":"result","line":4,"target":false,"argval":"result","code":null},{"offset":22,"op":"LOAD_FAST","arg":4,"argrepr":"item","line":null,"target":false,"argval":"item","code":null},{"offset":24,"op":"INPLACE_ADD","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null},{"offset":26,"op":"STORE_FAST","arg":3,"argrepr":"result","line":null,"target":false,"argval":"result","code":null},{"offset":28,"op":"JUMP_ABSOLUTE","arg":8,"argrepr":"to 16","line":null,"target":false,"argval":16,"code":null},{"offset":30,"op":"LOAD_FAST","arg":3,"argrepr":"result","line":5,"target":true,"argval":"result","code":null},{"offset":32,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[]}]}},"comp":{"source":"def compy():\n    x = [i for i in range(0, 3)]\n    return x\n","module":{"name":"<module>","varnames":[],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":0,"argrepr":"<code object compy>","line":1,"target":false,"argval":null,"code":"compy"},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"'compy'","line":null,"target":false,"argval":"compy","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"compy","line":null,"target":false,"argval":"compy","code":null},{"offset":8,"op":"LOAD_CONST","arg":2,"argrepr":"None","line":null,"target":false,"argval":null,"code":null},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"compy","varnames":["x"],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":1,"argrepr":"<code object <listcomp>>","line":2,"target":false,"argval":null,"code":"<listcomp>"},{"offset":2,"op":"LOAD_CONST","arg":2,"argrepr":"'compy.<locals>.<listcomp>'","line":null,"target":false,"argval":"compy.<locals>.<listcomp>","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"LOAD_GLOBAL","arg":0,"argrepr":"range","line":null,"target":false,"argval":"range","code":null},{"offset":8,"op":"LOAD_CONST","arg":3,"argrepr":"0","line":null,"target":false,"argval":0,"code":null},{"offset":10,"op":"LOAD_CONST","arg":4,"argrepr":"3","line":null,"target":false,"argval":3,"code":null},{"offset":12,"op":"CALL_FUNCTION","arg":2,"argrepr":"","line":null,"target":false,"argval":2,"code":null},{"offset":14,"op":"GET_ITER","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null},{"offset":16,"op":"CALL_FUNCTION","arg":1,"argrepr":"","line":null,"target":false,"argval":1,"code":null},{"offset":18,"op":"STORE_FAST","arg":0,"argrepr":"x","line":null,"target":false,"argval":"x","code":null},{"offset":20,"op":"LOAD_FAST","arg":0,"argrepr":"x","line":3,"target":false,"argval":"x","code":null},{"offset":22,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"<listcomp>","varnames":[".0","i"],"instrs":[{"offset":0,"op":"BUILD_LIST","arg":0,"argrepr":"","line":2,"target":false,"argval":0,"code":null},{"offset":2,"op":"LOAD_FAST","arg":0,"argrepr":".0","line":null,"target":false,"argval":".0","code":null},{"offset":4,"op":"FOR_ITER","arg":4,"argrepr":"to 14","line":null,"target":true,"argval":14,"code":null},{"offset":6,"op":"STORE_FAST","arg":1,"argrepr":"i","line":null,"target":false,"argval":"i","code":null},{"offset":8,"op":"LOAD_FAST","arg":1,"argrepr":"i","line":null,"target":false,"argval":"i","code":null},{"offset":10,"op":"LIST_APPEND","arg":2,"argrepr":"","line":null,"target":false,"argval":2,"code":null},{"offset":12,"op":"JUMP_ABSOLUTE","arg":2,"argrepr":"to 4","line":null,"target":false,"argval":4,"code":null},{"offset":14,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":true,"argval":null,"code":null}],"children":[]}]}]}},"fold":{"source":"def add_ones():\n    return 1 + 1\n","module":{"name":"<module>","varnames":[],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":0,"argrepr":"<code object add_ones>","line":1,"target":false,"argval":null,"code":"add_ones"},{"offset":2,"op":"LOAD_CONST","arg":1,"argrepr":"'add_ones'","line":null,"target":false,"argval":"add_ones","code":null},{"offset":4,"op":"MAKE_FUNCTION","arg":0,"argrepr":"","line":null,"target":false,"argval":0,"code":null},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"add_ones","line":null,"target":false,"argval":"add_ones","code":null},{"offset":8,"op":"LOAD_CONST","arg":2,"argrepr":"None","line":null,"target":false,"argval":null,"code":null},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[{"name":"add_ones","varnames":[],"instrs":[{"offset":0,"op":"LOAD_CONST","arg":1,"argrepr":"2","line":2,"target":false,"argval":2,"code":null},{"offset":2,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"target":false,"argval":null,"code":null}],"children":[]}]}}}};
-const D314 = {"version":"3.14.3","text":{"add":"  1           RESUME                   0\n\n  2           LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (a, b)\n              BINARY_OP                0 (+)\n              RETURN_VALUE\n","if":"  1           RESUME                   0\n\n  2           LOAD_FAST_BORROW         0 (x)\n              LOAD_SMALL_INT           5\n              COMPARE_OP              88 (bool(==))\n              POP_JUMP_IF_FALSE        3 (to L1)\n              NOT_TAKEN\n\n  3           LOAD_CONST               1 (True)\n              RETURN_VALUE\n\n  5   L1:     LOAD_CONST               2 (False)\n              RETURN_VALUE\n","loop":"  1           RESUME                   0\n\n  2           LOAD_SMALL_INT           0\n              STORE_FAST               3 (result)\n\n  3           LOAD_GLOBAL              1 (range + NULL)\n              LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (start, end)\n              LOAD_FAST_BORROW         2 (increment)\n              CALL                     3\n              GET_ITER\n      L1:     FOR_ITER                11 (to L2)\n              STORE_FAST               4 (item)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 52 (result, item)\n              BINARY_OP               13 (+=)\n              STORE_FAST               3 (result)\n              JUMP_BACKWARD           13 (to L1)\n\n  3   L2:     END_FOR\n              POP_ITER\n\n  5           LOAD_FAST_BORROW         3 (result)\n              RETURN_VALUE\n","comp":"   1           RESUME                   0\n\n   2           LOAD_GLOBAL              1 (range + NULL)\n               LOAD_SMALL_INT           0\n               LOAD_SMALL_INT           3\n               CALL                     2\n               GET_ITER\n               LOAD_FAST_AND_CLEAR      0 (i)\n               SWAP                     2\n       L1:     BUILD_LIST               0\n               SWAP                     2\n       L2:     FOR_ITER                 4 (to L3)\n               STORE_FAST_LOAD_FAST     0 (i, i)\n               LIST_APPEND              2\n               JUMP_BACKWARD            6 (to L2)\n       L3:     END_FOR\n               POP_ITER\n       L4:     STORE_FAST               1 (x)\n               STORE_FAST               0 (i)\n\n   3           LOAD_FAST_BORROW         1 (x)\n               RETURN_VALUE\n\n  --   L5:     SWAP                     2\n               POP_TOP\n\n   2           SWAP                     2\n               STORE_FAST               0 (i)\n               RERAISE                  0\nExceptionTable:\n  L1 to L4 -> L5 [2]\n","is":"  1           RESUME                   0\n\n  2           LOAD_CONST               0 (257)\n              STORE_FAST               0 (two_hundred_fifty_seven)\n\n  3           LOAD_CONST               0 (257)\n              STORE_FAST               1 (two_hundred_fifty_seven_again)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (two_hundred_fifty_seven, two_hundred_fifty_seven_again)\n              IS_OP                    0 (is)\n              RETURN_VALUE\n","addAdaptive":"  1           RESUME_CHECK             0\n\n  2           LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (a, b)\n              BINARY_OP_ADD_INT        0 (+)\n              RETURN_VALUE\n","loopAdaptive":"  1           RESUME_CHECK             0\n\n  2           LOAD_SMALL_INT           0\n              STORE_FAST               3 (result)\n\n  3           LOAD_GLOBAL_BUILTIN      1 (range + NULL)\n              LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (start, end)\n              LOAD_FAST_BORROW         2 (increment)\n              CALL_BUILTIN_CLASS       3\n              GET_ITER\n      L1:     FOR_ITER_RANGE          11 (to L2)\n              STORE_FAST               4 (item)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 52 (result, item)\n              BINARY_OP_ADD_INT       13 (+=)\n              STORE_FAST               3 (result)\n              JUMP_BACKWARD_NO_JIT    13 (to L1)\n\n  3   L2:     END_FOR\n              POP_ITER\n\n  5           LOAD_FAST_BORROW         3 (result)\n              RETURN_VALUE\n"}};
-const CSRC = {"loadFast":[{"n":1858,"t":"        case TARGET(LOAD_FAST): {"},{"n":1859,"t":"            PyObject *value = GETLOCAL(oparg);"},{"n":1860,"t":"            if (value == NULL) {"},{"n":1861,"t":"                format_exc_check_arg(tstate, PyExc_UnboundLocalError,"},{"n":1862,"t":"                                     UNBOUNDLOCAL_ERROR_MSG,"},{"n":1863,"t":"                                     PyTuple_GetItem(co->co_varnames, oparg));"},{"n":1864,"t":"                goto error;"},{"n":1865,"t":"            }"},{"n":1866,"t":"            Py_INCREF(value);"},{"n":1867,"t":"            PUSH(value);"},{"n":1868,"t":"            DISPATCH();"},{"n":1869,"t":"        }"}],"loadName":[{"n":2894,"t":"        case TARGET(LOAD_NAME): {"},{"n":2895,"t":"            PyObject *name = GETITEM(names, oparg);"},{"n":2896,"t":"            PyObject *locals = f->f_locals;"},{"n":2897,"t":"            PyObject *v;"},{"n":2898,"t":"            if (locals == NULL) {"},{"n":2899,"t":"                _PyErr_Format(tstate, PyExc_SystemError,"},{"n":2900,"t":"                              \"no locals when loading %R\", name);"},{"n":2901,"t":"                goto error;"},{"n":2902,"t":"            }"},{"n":2903,"t":"            if (PyDict_CheckExact(locals)) {"},{"n":2904,"t":"                v = PyDict_GetItemWithError(locals, name);"},{"n":2905,"t":"                if (v != NULL) {"},{"n":2906,"t":"                    Py_INCREF(v);"},{"n":2907,"t":"                }"},{"n":2908,"t":"                else if (_PyErr_Occurred(tstate)) {"},{"n":2909,"t":"                    goto error;"},{"n":2910,"t":"                }"},{"n":2911,"t":"            }"},{"n":2912,"t":"            else {"},{"n":2913,"t":"                v = PyObject_GetItem(locals, name);"},{"n":2914,"t":"                if (v == NULL) {"},{"n":2915,"t":"                    if (!_PyErr_ExceptionMatches(tstate, PyExc_KeyError))"},{"n":2916,"t":"                        goto error;"},{"n":2917,"t":"                    _PyErr_Clear(tstate);"},{"n":2918,"t":"                }"},{"n":2919,"t":"            }"},{"n":2920,"t":"            if (v == NULL) {"},{"n":2921,"t":"                v = PyDict_GetItemWithError(f->f_globals, name);"},{"n":2922,"t":"                if (v != NULL) {"},{"n":2923,"t":"                    Py_INCREF(v);"},{"n":2924,"t":"                }"},{"n":2925,"t":"                else if (_PyErr_Occurred(tstate)) {"},{"n":2926,"t":"                    goto error;"},{"n":2927,"t":"                }"},{"n":2928,"t":"                else {"},{"n":2929,"t":"                    if (PyDict_CheckExact(f->f_builtins)) {"},{"n":2930,"t":"                        v = PyDict_GetItemWithError(f->f_builtins, name);"},{"n":2931,"t":"                        if (v == NULL) {"},{"n":2932,"t":"                            if (!_PyErr_Occurred(tstate)) {"},{"n":2933,"t":"                                format_exc_check_arg("},{"n":2934,"t":"                                        tstate, PyExc_NameError,"},{"n":2935,"t":"                                        NAME_ERROR_MSG, name);"},{"n":2936,"t":"                            }"},{"n":2937,"t":"                            goto error;"},{"n":2938,"t":"                        }"},{"n":2939,"t":"                        Py_INCREF(v);"},{"n":2940,"t":"                    }"},{"n":2941,"t":"                    else {"},{"n":2942,"t":"                        v = PyObject_GetItem(f->f_builtins, name);"},{"n":2943,"t":"                        if (v == NULL) {"},{"n":2944,"t":"                            if (_PyErr_ExceptionMatches(tstate, PyExc_KeyError)) {"},{"n":2945,"t":"                                format_exc_check_arg("},{"n":2946,"t":"                                            tstate, PyExc_NameError,"},{"n":2947,"t":"                                            NAME_ERROR_MSG, name);"},{"n":2948,"t":"                            }"},{"n":2949,"t":"                            goto error;"},{"n":2950,"t":"                        }"},{"n":2951,"t":"                    }"},{"n":2952,"t":"                }"},{"n":2953,"t":"            }"},{"n":2954,"t":"            PUSH(v);"},{"n":2955,"t":"            DISPATCH();"},{"n":2956,"t":"        }"}]};
-const STACK_DEMO = {"source": "import traceback\n\ndef add_three_numbers(a, b, c):\n    traceback.print_stack(limit=3)  # just the 3 newest frames\n    return a + b + c\n\ndef caller():\n    return add_three_numbers(1, 2, 3)\n\ncaller()", "output": "  File \"stack_demo.py\", line 10, in <module>\n    caller()\n  File \"stack_demo.py\", line 8, in caller\n    return add_three_numbers(1, 2, 3)\n  File \"stack_demo.py\", line 4, in add_three_numbers\n    traceback.print_stack(limit=3)  # just the 3 newest frames\n"};
-// Every example's code, with what it prints in the Python 3.10.8 REPL.
-const EX = {"if": {"src": "def equals_five(x):\n    if x == 5:\n        return True\n    else:\n        return False\n\ndis.dis(equals_five)", "out": "  2           0 LOAD_FAST                0 (x)\n              2 LOAD_CONST               1 (5)\n              4 COMPARE_OP               2 (==)\n              6 POP_JUMP_IF_FALSE        6 (to 12)\n\n  3           8 LOAD_CONST               2 (True)\n             10 RETURN_VALUE\n\n  5     >>   12 LOAD_CONST               3 (False)\n             14 RETURN_VALUE\n"}, "add3": {"src": "def add_three_numbers(a, b, c):\n    traceback.print_stack(limit=3)  # just the 3 newest frames\n    return a + b + c\n\ndis.dis(add_three_numbers)", "out": "  2           0 LOAD_GLOBAL              0 (traceback)\n              2 LOAD_ATTR                1 (print_stack)\n              4 LOAD_CONST               1 (3)\n              6 LOAD_CONST               2 (('limit',))\n              8 CALL_FUNCTION_KW         1\n             10 POP_TOP\n\n  3          12 LOAD_FAST                0 (a)\n             14 LOAD_FAST                1 (b)\n             16 BINARY_ADD\n             18 LOAD_FAST                2 (c)\n             20 BINARY_ADD\n             22 RETURN_VALUE\n"}, "loopFn": {"src": "def looping_sum(start, end, increment):\n    result = 0\n    for item in range(start, end, increment):\n        result += item\n    return result\n\ndis.dis(looping_sum)", "out": "  2           0 LOAD_CONST               1 (0)\n              2 STORE_FAST               3 (result)\n\n  3           4 LOAD_GLOBAL              0 (range)\n              6 LOAD_FAST                0 (start)\n              8 LOAD_FAST                1 (end)\n             10 LOAD_FAST                2 (increment)\n             12 CALL_FUNCTION            3\n             14 GET_ITER\n        >>   16 FOR_ITER                 6 (to 30)\n             18 STORE_FAST               4 (item)\n\n  4          20 LOAD_FAST                3 (result)\n             22 LOAD_FAST                4 (item)\n             24 INPLACE_ADD\n             26 STORE_FAST               3 (result)\n             28 JUMP_ABSOLUTE            8 (to 16)\n\n  5     >>   30 LOAD_FAST                3 (result)\n             32 RETURN_VALUE\n"}, "loopMod": {"src": "dis.dis(\n\"\"\"\nresult = 0\nfor item in range(start, end, increment):\n    result += item\n\"\"\"\n)", "out": "  2           0 LOAD_CONST               0 (0)\n              2 STORE_NAME               0 (result)\n\n  3           4 LOAD_NAME                1 (range)\n              6 LOAD_NAME                2 (start)\n              8 LOAD_NAME                3 (end)\n             10 LOAD_NAME                4 (increment)\n             12 CALL_FUNCTION            3\n             14 GET_ITER\n        >>   16 FOR_ITER                 6 (to 30)\n             18 STORE_NAME               5 (item)\n\n  4          20 LOAD_NAME                0 (result)\n             22 LOAD_NAME                5 (item)\n             24 INPLACE_ADD\n             26 STORE_NAME               0 (result)\n             28 JUMP_ABSOLUTE            8 (to 16)\n\n  3     >>   30 LOAD_CONST               1 (None)\n             32 RETURN_VALUE\n"}, "timeFn": {"src": "import time\n\nstart = time.perf_counter()\nlooping_sum(1, 10000000, 1)\nend = time.perf_counter()\n\nprint(end - start)", "out": ""}, "timeMod": {"src": "import time\n\nstart = time.perf_counter()\nresult = 0\nfor item in range(1, 10000000, 1):\n    result += item\nprint(result)\nend = time.perf_counter()\n\nprint(end - start)", "out": ""}, "loopy": {"src": "def loopy():\n    x = []\n    for i in range(0, 10):\n        x.append(i)\n    return x\n\ndis.dis(loopy)", "out": "  2           0 BUILD_LIST               0\n              2 STORE_FAST               0 (x)\n\n  3           4 LOAD_GLOBAL              0 (range)\n              6 LOAD_CONST               1 (0)\n              8 LOAD_CONST               2 (10)\n             10 CALL_FUNCTION            2\n             12 GET_ITER\n        >>   14 FOR_ITER                 7 (to 30)\n             16 STORE_FAST               1 (i)\n\n  4          18 LOAD_FAST                0 (x)\n             20 LOAD_METHOD              1 (append)\n             22 LOAD_FAST                1 (i)\n             24 CALL_METHOD              1\n             26 POP_TOP\n             28 JUMP_ABSOLUTE            7 (to 14)\n\n  5     >>   30 LOAD_FAST                0 (x)\n             32 RETURN_VALUE\n"}, "compy": {"src": "def compy():\n    x = [i for i in range(0, 10)]\n    return x\n\ndis.dis(compy)", "out": "  2           0 LOAD_CONST               1 (<code object <listcomp> at 0x10456e8c0, file \"<stdin>\", line 2>)\n              2 LOAD_CONST               2 ('compy.<locals>.<listcomp>')\n              4 MAKE_FUNCTION            0\n              6 LOAD_GLOBAL              0 (range)\n              8 LOAD_CONST               3 (0)\n             10 LOAD_CONST               4 (10)\n             12 CALL_FUNCTION            2\n             14 GET_ITER\n             16 CALL_FUNCTION            1\n             18 STORE_FAST               0 (x)\n\n  3          20 LOAD_FAST                0 (x)\n             22 RETURN_VALUE\n\nDisassembly of <code object <listcomp> at 0x10456e8c0, file \"<stdin>\", line 2>:\n  2           0 BUILD_LIST               0\n              2 LOAD_FAST                0 (.0)\n        >>    4 FOR_ITER                 4 (to 14)\n              6 STORE_FAST               1 (i)\n              8 LOAD_FAST                1 (i)\n             10 LIST_APPEND              2\n             12 JUMP_ABSOLUTE            2 (to 4)\n        >>   14 RETURN_VALUE\n"}, "isDef": {"src": "def is_in_a_function():\n    two_hundred_fifty_seven = 257\n    two_hundred_fifty_seven_again = 257\n    return two_hundred_fifty_seven is two_hundred_fifty_seven_again", "out": ""}, "isCall": {"src": "is_in_a_function()", "out": "True\n"}, "isDis": {"src": "dis.dis(is_in_a_function)", "out": "  2           0 LOAD_CONST               1 (257)\n              2 STORE_FAST               0 (two_hundred_fifty_seven)\n\n  3           4 LOAD_CONST               1 (257)\n              6 STORE_FAST               1 (two_hundred_fifty_seven_again)\n\n  4           8 LOAD_FAST                0 (two_hundred_fifty_seven)\n             10 LOAD_FAST                1 (two_hundred_fifty_seven_again)\n             12 IS_OP                    0\n             14 RETURN_VALUE\n"}, "isStr": {"src": "dis.dis('''\ntwo_hundred_fifty_seven = 257\ntwo_hundred_fifty_seven_again = 257\n\ntwo_hundred_fifty_seven is two_hundred_fifty_seven_again\n''')", "out": "  2           0 LOAD_CONST               0 (257)\n              2 STORE_NAME               0 (two_hundred_fifty_seven)\n\n  3           4 LOAD_CONST               0 (257)\n              6 STORE_NAME               1 (two_hundred_fifty_seven_again)\n\n  5           8 LOAD_NAME                0 (two_hundred_fifty_seven)\n             10 LOAD_NAME                1 (two_hundred_fifty_seven_again)\n             12 IS_OP                    0\n             14 POP_TOP\n             16 LOAD_CONST               1 (None)\n             18 RETURN_VALUE\n"}};
-// A code object up close, run in Python 3.10.8.
-const CODEOBJ = {"source": "source = \"\"\"\ndef add_two_numbers(a, b):\n    return a + b\n\ntotal = add_two_numbers(2, 3)\n\"\"\"\nmodule_code = compile(source, \"<module>\", \"exec\")\nprint(module_code.co_consts)\n\nfunction_code = module_code.co_consts[0]\nprint(function_code.co_name)\nprint(function_code.co_varnames)\nprint(function_code.co_code)\n\nexec(module_code)\nprint(add_two_numbers.__code__ is function_code)\n", "output": "(<code object add_two_numbers at 0x104cf5210, file \"<module>\", line 2>, 'add_two_numbers', 2, 3, None)\nadd_two_numbers\n('a', 'b')\nb'|\\x00|\\x01\\x17\\x00S\\x00'\nTrue\n"};
+const D314 = {"version":"3.14.3","text":{"is":"  1           RESUME                   0\n\n  2           LOAD_CONST               0 (257)\n              STORE_FAST               0 (two_hundred_fifty_seven)\n\n  3           LOAD_CONST               0 (257)\n              STORE_FAST               1 (two_hundred_fifty_seven_again)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (two_hundred_fifty_seven, two_hundred_fifty_seven_again)\n              IS_OP                    0 (is)\n              RETURN_VALUE\n","loop":"  1           RESUME                   0\n\n  2           LOAD_SMALL_INT           0\n              STORE_FAST               3 (result)\n\n  3           LOAD_GLOBAL              1 (range + NULL)\n              LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (start, end)\n              LOAD_FAST_BORROW         2 (increment)\n              CALL                     3\n              GET_ITER\n      L1:     FOR_ITER                11 (to L2)\n              STORE_FAST               4 (item)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 52 (result, item)\n              BINARY_OP               13 (+=)\n              STORE_FAST               3 (result)\n              JUMP_BACKWARD           13 (to L1)\n\n  3   L2:     END_FOR\n              POP_ITER\n\n  5           LOAD_FAST_BORROW         3 (result)\n              RETURN_VALUE\n","loopAdaptive":"  1           RESUME_CHECK             0\n\n  2           LOAD_SMALL_INT           0\n              STORE_FAST               3 (result)\n\n  3           LOAD_GLOBAL_BUILTIN      1 (range + NULL)\n              LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (start, end)\n              LOAD_FAST_BORROW         2 (increment)\n              CALL_BUILTIN_CLASS       3\n              GET_ITER\n      L1:     FOR_ITER_RANGE          11 (to L2)\n              STORE_FAST               4 (item)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 52 (result, item)\n              BINARY_OP_ADD_INT       13 (+=)\n              STORE_FAST               3 (result)\n              JUMP_BACKWARD_NO_JIT    13 (to L1)\n\n  3   L2:     END_FOR\n              POP_ITER\n\n  5           LOAD_FAST_BORROW         3 (result)\n              RETURN_VALUE\n"},"walk":{"add":{"source":"def add_two_numbers(a, b):\n    return a + b\n\ntotal = add_two_numbers(2, 3)\n","module":{"name":"<module>","varnames":[],"consts":["<code add_two_numbers>","None"],"stacksize":4,"instrs":[{"offset":0,"op":"RESUME","arg":0,"argrepr":"","line":0,"label":null,"argval":0,"code":null,"text":"  0           RESUME                   0"},{"offset":2,"op":"LOAD_CONST","arg":0,"argrepr":"<code object add_two_numbers>","line":1,"label":null,"argval":null,"code":"add_two_numbers","text":"  1           LOAD_CONST               0 (<code object add_two_numbers>)"},{"offset":4,"op":"MAKE_FUNCTION","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              MAKE_FUNCTION"},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"add_two_numbers","line":null,"label":null,"argval":"add_two_numbers","code":null,"text":"              STORE_NAME               0 (add_two_numbers)"},{"offset":8,"op":"LOAD_NAME","arg":0,"argrepr":"add_two_numbers","line":4,"label":null,"argval":"add_two_numbers","code":null,"text":"  4           LOAD_NAME                0 (add_two_numbers)"},{"offset":10,"op":"PUSH_NULL","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              PUSH_NULL"},{"offset":12,"op":"LOAD_SMALL_INT","arg":2,"argrepr":"","line":null,"label":null,"argval":2,"code":null,"text":"              LOAD_SMALL_INT           2"},{"offset":14,"op":"LOAD_SMALL_INT","arg":3,"argrepr":"","line":null,"label":null,"argval":3,"code":null,"text":"              LOAD_SMALL_INT           3"},{"offset":16,"op":"CALL","arg":2,"argrepr":"","line":null,"label":null,"argval":2,"code":null,"text":"              CALL                     2"},{"offset":24,"op":"STORE_NAME","arg":1,"argrepr":"total","line":null,"label":null,"argval":"total","code":null,"text":"              STORE_NAME               1 (total)"},{"offset":26,"op":"LOAD_CONST","arg":1,"argrepr":"None","line":null,"label":null,"argval":null,"code":null,"text":"              LOAD_CONST               1 (None)"},{"offset":28,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              RETURN_VALUE"}],"tail":[],"children":[{"name":"add_two_numbers","varnames":["a","b"],"consts":["None"],"stacksize":2,"instrs":[{"offset":0,"op":"RESUME","arg":0,"argrepr":"","line":1,"label":null,"argval":0,"code":null,"text":"  1           RESUME                   0"},{"offset":2,"op":"LOAD_FAST_BORROW_LOAD_FAST_BORROW","arg":1,"argrepr":"a, b","line":2,"label":null,"argval":["a","b"],"code":null,"text":"  2           LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (a, b)"},{"offset":4,"op":"BINARY_OP","arg":0,"argrepr":"+","line":null,"label":null,"argval":0,"code":null,"text":"              BINARY_OP                0 (+)"},{"offset":16,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              RETURN_VALUE"}],"tail":[],"children":[]}]}},"if":{"source":"def equals_five(x):\n    if x == 5:\n        return True\n    else:\n        return False\n","module":{"name":"<module>","varnames":[],"consts":["<code equals_five>","None"],"stacksize":1,"instrs":[{"offset":0,"op":"RESUME","arg":0,"argrepr":"","line":0,"label":null,"argval":0,"code":null,"text":"  0           RESUME                   0"},{"offset":2,"op":"LOAD_CONST","arg":0,"argrepr":"<code object equals_five>","line":1,"label":null,"argval":null,"code":"equals_five","text":"  1           LOAD_CONST               0 (<code object equals_five>)"},{"offset":4,"op":"MAKE_FUNCTION","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              MAKE_FUNCTION"},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"equals_five","line":null,"label":null,"argval":"equals_five","code":null,"text":"              STORE_NAME               0 (equals_five)"},{"offset":8,"op":"LOAD_CONST","arg":1,"argrepr":"None","line":null,"label":null,"argval":null,"code":null,"text":"              LOAD_CONST               1 (None)"},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              RETURN_VALUE"}],"tail":[],"children":[{"name":"equals_five","varnames":["x"],"consts":["5","True","False"],"stacksize":2,"instrs":[{"offset":0,"op":"RESUME","arg":0,"argrepr":"","line":1,"label":null,"argval":0,"code":null,"text":"  1           RESUME                   0"},{"offset":2,"op":"LOAD_FAST_BORROW","arg":0,"argrepr":"x","line":2,"label":null,"argval":"x","code":null,"text":"  2           LOAD_FAST_BORROW         0 (x)"},{"offset":4,"op":"LOAD_SMALL_INT","arg":5,"argrepr":"","line":null,"label":null,"argval":5,"code":null,"text":"              LOAD_SMALL_INT           5"},{"offset":6,"op":"COMPARE_OP","arg":88,"argrepr":"bool(==)","line":null,"label":null,"argval":"==","code":null,"text":"              COMPARE_OP              88 (bool(==))"},{"offset":10,"op":"POP_JUMP_IF_FALSE","arg":3,"argrepr":"to L1","line":null,"label":null,"argval":20,"code":null,"text":"              POP_JUMP_IF_FALSE        3 (to L1)"},{"offset":14,"op":"NOT_TAKEN","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              NOT_TAKEN"},{"offset":16,"op":"LOAD_CONST","arg":1,"argrepr":"True","line":3,"label":null,"argval":true,"code":null,"text":"  3           LOAD_CONST               1 (True)"},{"offset":18,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              RETURN_VALUE"},{"offset":20,"op":"LOAD_CONST","arg":2,"argrepr":"False","line":5,"label":"L1","argval":false,"code":null,"text":"  5   L1:     LOAD_CONST               2 (False)"},{"offset":22,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              RETURN_VALUE"}],"tail":[],"children":[]}]}},"loop":{"source":"def looping_sum(start, end, increment):\n    result = 0\n    for item in range(start, end, increment):\n        result += item\n    return result\n","module":{"name":"<module>","varnames":[],"consts":["<code looping_sum>","None"],"stacksize":1,"instrs":[{"offset":0,"op":"RESUME","arg":0,"argrepr":"","line":0,"label":null,"argval":0,"code":null,"text":"  0           RESUME                   0"},{"offset":2,"op":"LOAD_CONST","arg":0,"argrepr":"<code object looping_sum>","line":1,"label":null,"argval":null,"code":"looping_sum","text":"  1           LOAD_CONST               0 (<code object looping_sum>)"},{"offset":4,"op":"MAKE_FUNCTION","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              MAKE_FUNCTION"},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"looping_sum","line":null,"label":null,"argval":"looping_sum","code":null,"text":"              STORE_NAME               0 (looping_sum)"},{"offset":8,"op":"LOAD_CONST","arg":1,"argrepr":"None","line":null,"label":null,"argval":null,"code":null,"text":"              LOAD_CONST               1 (None)"},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              RETURN_VALUE"}],"tail":[],"children":[{"name":"looping_sum","varnames":["start","end","increment","result","item"],"consts":["0"],"stacksize":5,"instrs":[{"offset":0,"op":"RESUME","arg":0,"argrepr":"","line":1,"label":null,"argval":0,"code":null,"text":"  1           RESUME                   0"},{"offset":2,"op":"LOAD_SMALL_INT","arg":0,"argrepr":"","line":2,"label":null,"argval":0,"code":null,"text":"  2           LOAD_SMALL_INT           0"},{"offset":4,"op":"STORE_FAST","arg":3,"argrepr":"result","line":null,"label":null,"argval":"result","code":null,"text":"              STORE_FAST               3 (result)"},{"offset":6,"op":"LOAD_GLOBAL","arg":1,"argrepr":"range + NULL","line":3,"label":null,"argval":"range","code":null,"text":"  3           LOAD_GLOBAL              1 (range + NULL)"},{"offset":16,"op":"LOAD_FAST_BORROW_LOAD_FAST_BORROW","arg":1,"argrepr":"start, end","line":null,"label":null,"argval":["start","end"],"code":null,"text":"              LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (start, end)"},{"offset":18,"op":"LOAD_FAST_BORROW","arg":2,"argrepr":"increment","line":null,"label":null,"argval":"increment","code":null,"text":"              LOAD_FAST_BORROW         2 (increment)"},{"offset":20,"op":"CALL","arg":3,"argrepr":"","line":null,"label":null,"argval":3,"code":null,"text":"              CALL                     3"},{"offset":28,"op":"GET_ITER","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              GET_ITER"},{"offset":30,"op":"FOR_ITER","arg":11,"argrepr":"to L2","line":null,"label":"L1","argval":56,"code":null,"text":"      L1:     FOR_ITER                11 (to L2)"},{"offset":34,"op":"STORE_FAST","arg":4,"argrepr":"item","line":null,"label":null,"argval":"item","code":null,"text":"              STORE_FAST               4 (item)"},{"offset":36,"op":"LOAD_FAST_BORROW_LOAD_FAST_BORROW","arg":52,"argrepr":"result, item","line":4,"label":null,"argval":["result","item"],"code":null,"text":"  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 52 (result, item)"},{"offset":38,"op":"BINARY_OP","arg":13,"argrepr":"+=","line":null,"label":null,"argval":13,"code":null,"text":"              BINARY_OP               13 (+=)"},{"offset":50,"op":"STORE_FAST","arg":3,"argrepr":"result","line":null,"label":null,"argval":"result","code":null,"text":"              STORE_FAST               3 (result)"},{"offset":52,"op":"JUMP_BACKWARD","arg":13,"argrepr":"to L1","line":null,"label":null,"argval":30,"code":null,"text":"              JUMP_BACKWARD           13 (to L1)"},{"offset":56,"op":"END_FOR","arg":null,"argrepr":"","line":3,"label":"L2","argval":null,"code":null,"text":"  3   L2:     END_FOR"},{"offset":58,"op":"POP_ITER","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              POP_ITER"},{"offset":60,"op":"LOAD_FAST_BORROW","arg":3,"argrepr":"result","line":5,"label":null,"argval":"result","code":null,"text":"  5           LOAD_FAST_BORROW         3 (result)"},{"offset":62,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              RETURN_VALUE"}],"tail":[],"children":[]}]}},"comp":{"source":"def compy():\n    x = [i for i in range(0, 3)]\n    return x\n","module":{"name":"<module>","varnames":[],"consts":["<code compy>","None"],"stacksize":1,"instrs":[{"offset":0,"op":"RESUME","arg":0,"argrepr":"","line":0,"label":null,"argval":0,"code":null,"text":"  0           RESUME                   0"},{"offset":2,"op":"LOAD_CONST","arg":0,"argrepr":"<code object compy>","line":1,"label":null,"argval":null,"code":"compy","text":"  1           LOAD_CONST               0 (<code object compy>)"},{"offset":4,"op":"MAKE_FUNCTION","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              MAKE_FUNCTION"},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"compy","line":null,"label":null,"argval":"compy","code":null,"text":"              STORE_NAME               0 (compy)"},{"offset":8,"op":"LOAD_CONST","arg":1,"argrepr":"None","line":null,"label":null,"argval":null,"code":null,"text":"              LOAD_CONST               1 (None)"},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              RETURN_VALUE"}],"tail":[],"children":[{"name":"compy","varnames":["i","x"],"consts":["0"],"stacksize":4,"instrs":[{"offset":0,"op":"RESUME","arg":0,"argrepr":"","line":1,"label":null,"argval":0,"code":null,"text":"   1           RESUME                   0"},{"offset":2,"op":"LOAD_GLOBAL","arg":1,"argrepr":"range + NULL","line":2,"label":null,"argval":"range","code":null,"text":"   2           LOAD_GLOBAL              1 (range + NULL)"},{"offset":12,"op":"LOAD_SMALL_INT","arg":0,"argrepr":"","line":null,"label":null,"argval":0,"code":null,"text":"               LOAD_SMALL_INT           0"},{"offset":14,"op":"LOAD_SMALL_INT","arg":3,"argrepr":"","line":null,"label":null,"argval":3,"code":null,"text":"               LOAD_SMALL_INT           3"},{"offset":16,"op":"CALL","arg":2,"argrepr":"","line":null,"label":null,"argval":2,"code":null,"text":"               CALL                     2"},{"offset":24,"op":"GET_ITER","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"               GET_ITER"},{"offset":26,"op":"LOAD_FAST_AND_CLEAR","arg":0,"argrepr":"i","line":null,"label":null,"argval":"i","code":null,"text":"               LOAD_FAST_AND_CLEAR      0 (i)"},{"offset":28,"op":"SWAP","arg":2,"argrepr":"","line":null,"label":null,"argval":2,"code":null,"text":"               SWAP                     2"},{"offset":30,"op":"BUILD_LIST","arg":0,"argrepr":"","line":null,"label":"L1","argval":0,"code":null,"text":"       L1:     BUILD_LIST               0"},{"offset":32,"op":"SWAP","arg":2,"argrepr":"","line":null,"label":null,"argval":2,"code":null,"text":"               SWAP                     2"},{"offset":34,"op":"FOR_ITER","arg":4,"argrepr":"to L3","line":null,"label":"L2","argval":46,"code":null,"text":"       L2:     FOR_ITER                 4 (to L3)"},{"offset":38,"op":"STORE_FAST_LOAD_FAST","arg":0,"argrepr":"i, i","line":null,"label":null,"argval":["i","i"],"code":null,"text":"               STORE_FAST_LOAD_FAST     0 (i, i)"},{"offset":40,"op":"LIST_APPEND","arg":2,"argrepr":"","line":null,"label":null,"argval":2,"code":null,"text":"               LIST_APPEND              2"},{"offset":42,"op":"JUMP_BACKWARD","arg":6,"argrepr":"to L2","line":null,"label":null,"argval":34,"code":null,"text":"               JUMP_BACKWARD            6 (to L2)"},{"offset":46,"op":"END_FOR","arg":null,"argrepr":"","line":null,"label":"L3","argval":null,"code":null,"text":"       L3:     END_FOR"},{"offset":48,"op":"POP_ITER","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"               POP_ITER"},{"offset":50,"op":"STORE_FAST","arg":1,"argrepr":"x","line":null,"label":"L4","argval":"x","code":null,"text":"       L4:     STORE_FAST               1 (x)"},{"offset":52,"op":"STORE_FAST","arg":0,"argrepr":"i","line":null,"label":null,"argval":"i","code":null,"text":"               STORE_FAST               0 (i)"},{"offset":54,"op":"LOAD_FAST_BORROW","arg":1,"argrepr":"x","line":3,"label":null,"argval":"x","code":null,"text":"   3           LOAD_FAST_BORROW         1 (x)"},{"offset":56,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"               RETURN_VALUE"},{"offset":58,"op":"SWAP","arg":2,"argrepr":"","line":null,"label":"L5","argval":2,"code":null,"text":"  --   L5:     SWAP                     2"},{"offset":60,"op":"POP_TOP","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"               POP_TOP"},{"offset":62,"op":"SWAP","arg":2,"argrepr":"","line":2,"label":null,"argval":2,"code":null,"text":"   2           SWAP                     2"},{"offset":64,"op":"STORE_FAST","arg":0,"argrepr":"i","line":null,"label":null,"argval":"i","code":null,"text":"               STORE_FAST               0 (i)"},{"offset":66,"op":"RERAISE","arg":0,"argrepr":"","line":null,"label":null,"argval":0,"code":null,"text":"               RERAISE                  0"}],"tail":["ExceptionTable:","  L1 to L4 -> L5 [2]"],"children":[]}]}},"fold":{"source":"def add_ones():\n    return 1 + 1\n","module":{"name":"<module>","varnames":[],"consts":["<code add_ones>","None"],"stacksize":1,"instrs":[{"offset":0,"op":"RESUME","arg":0,"argrepr":"","line":0,"label":null,"argval":0,"code":null,"text":"  0           RESUME                   0"},{"offset":2,"op":"LOAD_CONST","arg":0,"argrepr":"<code object add_ones>","line":1,"label":null,"argval":null,"code":"add_ones","text":"  1           LOAD_CONST               0 (<code object add_ones>)"},{"offset":4,"op":"MAKE_FUNCTION","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              MAKE_FUNCTION"},{"offset":6,"op":"STORE_NAME","arg":0,"argrepr":"add_ones","line":null,"label":null,"argval":"add_ones","code":null,"text":"              STORE_NAME               0 (add_ones)"},{"offset":8,"op":"LOAD_CONST","arg":1,"argrepr":"None","line":null,"label":null,"argval":null,"code":null,"text":"              LOAD_CONST               1 (None)"},{"offset":10,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              RETURN_VALUE"}],"tail":[],"children":[{"name":"add_ones","varnames":[],"consts":["1"],"stacksize":1,"instrs":[{"offset":0,"op":"RESUME","arg":0,"argrepr":"","line":1,"label":null,"argval":0,"code":null,"text":"  1           RESUME                   0"},{"offset":2,"op":"LOAD_SMALL_INT","arg":2,"argrepr":"","line":2,"label":null,"argval":2,"code":null,"text":"  2           LOAD_SMALL_INT           2"},{"offset":4,"op":"RETURN_VALUE","arg":null,"argrepr":"","line":null,"label":null,"argval":null,"code":null,"text":"              RETURN_VALUE"}],"tail":[],"children":[]}]}}}};
+
+const CSRC = {"loadFast":[{"f":"bytecodes.c","n":282,"t":"        replicate(8) pure inst (LOAD_FAST_BORROW, (-- value)) {","z":""},{"f":"bytecodes.c","n":283,"t":"            assert(!PyStackRef_IsNull(GETLOCAL(oparg)));","z":""},{"f":"bytecodes.c","n":284,"t":"            value = PyStackRef_Borrow(GETLOCAL(oparg));","z":""},{"f":"bytecodes.c","n":285,"t":"        }","z":""}],"loadName":[{"f":"bytecodes.c","n":1741,"t":"        inst(LOAD_NAME, (-- v)) {","z":""},{"f":"bytecodes.c","n":1742,"t":"            PyObject *name = GETITEM(FRAME_CO_NAMES, oparg);","z":""},{"f":"bytecodes.c","n":1743,"t":"            PyObject *v_o = _PyEval_LoadName(tstate, frame, name);","z":""},{"f":"bytecodes.c","n":1744,"t":"            ERROR_IF(v_o == NULL);","z":""},{"f":"bytecodes.c","n":1745,"t":"            v = PyStackRef_FromPyObjectSteal(v_o);","z":""},{"f":"bytecodes.c","n":1746,"t":"        }","z":""},{"gap":true},{"f":"ceval.c","n":3613,"t":"PyObject *","z":""},{"f":"ceval.c","n":3614,"t":"_PyEval_LoadName(PyThreadState *tstate, _PyInterpreterFrame *frame, PyObject *name)","z":""},{"f":"ceval.c","n":3615,"t":"{","z":""},{"f":"ceval.c","n":3616,"t":"","z":""},{"f":"ceval.c","n":3617,"t":"    PyObject *value;","z":""},{"f":"ceval.c","n":3618,"t":"    if (frame->f_locals == NULL) {","z":""},{"f":"ceval.c","n":3619,"t":"        _PyErr_SetString(tstate, PyExc_SystemError,","z":""},{"f":"ceval.c","n":3620,"t":"                            \"no locals found\");","z":""},{"f":"ceval.c","n":3621,"t":"        return NULL;","z":""},{"f":"ceval.c","n":3622,"t":"    }","z":""},{"f":"ceval.c","n":3623,"t":"    if (PyMapping_GetOptionalItem(frame->f_locals, name, &value) < 0) {","z":"loc"},{"f":"ceval.c","n":3624,"t":"        return NULL;","z":"loc"},{"f":"ceval.c","n":3625,"t":"    }","z":"loc"},{"f":"ceval.c","n":3626,"t":"    if (value != NULL) {","z":"loc"},{"f":"ceval.c","n":3627,"t":"        return value;","z":"loc"},{"f":"ceval.c","n":3628,"t":"    }","z":"loc"},{"f":"ceval.c","n":3629,"t":"    if (PyDict_GetItemRef(frame->f_globals, name, &value) < 0) {","z":"glob"},{"f":"ceval.c","n":3630,"t":"        return NULL;","z":"glob"},{"f":"ceval.c","n":3631,"t":"    }","z":"glob"},{"f":"ceval.c","n":3632,"t":"    if (value != NULL) {","z":"glob"},{"f":"ceval.c","n":3633,"t":"        return value;","z":"glob"},{"f":"ceval.c","n":3634,"t":"    }","z":"glob"},{"f":"ceval.c","n":3635,"t":"    if (PyMapping_GetOptionalItem(frame->f_builtins, name, &value) < 0) {","z":"blt"},{"f":"ceval.c","n":3636,"t":"        return NULL;","z":"blt"},{"f":"ceval.c","n":3637,"t":"    }","z":"blt"},{"f":"ceval.c","n":3638,"t":"    if (value == NULL) {","z":"blt"},{"f":"ceval.c","n":3639,"t":"        _PyEval_FormatExcCheckArg(","z":"blt"},{"f":"ceval.c","n":3640,"t":"                    tstate, PyExc_NameError,","z":"blt"},{"f":"ceval.c","n":3641,"t":"                    NAME_ERROR_MSG, name);","z":"blt"},{"f":"ceval.c","n":3642,"t":"    }","z":"blt"},{"f":"ceval.c","n":3643,"t":"    return value;","z":"blt"},{"f":"ceval.c","n":3644,"t":"}","z":""}]};
+const STACK_DEMO = {"source":"import traceback\n\ndef add_three_numbers(a, b, c):\n    traceback.print_stack(limit=3)  # just the 3 newest frames\n    return a + b + c\n\ndef caller():\n    return add_three_numbers(1, 2, 3)\n\ncaller()","output":"  File \"stack_demo.py\", line 10, in <module>\n    caller()\n  File \"stack_demo.py\", line 8, in caller\n    return add_three_numbers(1, 2, 3)\n  File \"stack_demo.py\", line 4, in add_three_numbers\n    traceback.print_stack(limit=3)  # just the 3 newest frames\n"};
+// Every example's code, with what it prints in the Python 3.14.3 REPL.
+const EX = {"if":{"src":"def equals_five(x):\n    if x == 5:\n        return True\n    else:\n        return False\n\ndis.dis(equals_five)","out":"  1           RESUME                   0\n\n  2           LOAD_FAST_BORROW         0 (x)\n              LOAD_SMALL_INT           5\n              COMPARE_OP              88 (bool(==))\n              POP_JUMP_IF_FALSE        3 (to L1)\n              NOT_TAKEN\n\n  3           LOAD_CONST               1 (True)\n              RETURN_VALUE\n\n  5   L1:     LOAD_CONST               2 (False)\n              RETURN_VALUE\n"},"add3":{"src":"def add_three_numbers(a, b, c):\n    traceback.print_stack(limit=3)  # just the 3 newest frames\n    return a + b + c\n\ndis.dis(add_three_numbers)","out":"  1           RESUME                   0\n\n  2           LOAD_GLOBAL              0 (traceback)\n              LOAD_ATTR                3 (print_stack + NULL|self)\n              LOAD_SMALL_INT           3\n              LOAD_CONST               1 (('limit',))\n              CALL_KW                  1\n              POP_TOP\n\n  3           LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (a, b)\n              BINARY_OP                0 (+)\n              LOAD_FAST_BORROW         2 (c)\n              BINARY_OP                0 (+)\n              RETURN_VALUE\n"},"loopFn":{"src":"def looping_sum(start, end, increment):\n    result = 0\n    for item in range(start, end, increment):\n        result += item\n    return result\n\ndis.dis(looping_sum)","out":"  1           RESUME                   0\n\n  2           LOAD_SMALL_INT           0\n              STORE_FAST               3 (result)\n\n  3           LOAD_GLOBAL              1 (range + NULL)\n              LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (start, end)\n              LOAD_FAST_BORROW         2 (increment)\n              CALL                     3\n              GET_ITER\n      L1:     FOR_ITER                11 (to L2)\n              STORE_FAST               4 (item)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 52 (result, item)\n              BINARY_OP               13 (+=)\n              STORE_FAST               3 (result)\n              JUMP_BACKWARD           13 (to L1)\n\n  3   L2:     END_FOR\n              POP_ITER\n\n  5           LOAD_FAST_BORROW         3 (result)\n              RETURN_VALUE\n"},"loopMod":{"src":"dis.dis(\n\"\"\"\nresult = 0\nfor item in range(start, end, increment):\n    result += item\n\"\"\"\n)","out":"  0           RESUME                   0\n\n  2           LOAD_SMALL_INT           0\n              STORE_NAME               0 (result)\n\n  3           LOAD_NAME                1 (range)\n              PUSH_NULL\n              LOAD_NAME                2 (start)\n              LOAD_NAME                3 (end)\n              LOAD_NAME                4 (increment)\n              CALL                     3\n              GET_ITER\n      L1:     FOR_ITER                12 (to L2)\n              STORE_NAME               5 (item)\n\n  4           LOAD_NAME                0 (result)\n              LOAD_NAME                5 (item)\n              BINARY_OP               13 (+=)\n              STORE_NAME               0 (result)\n              JUMP_BACKWARD           14 (to L1)\n\n  3   L2:     END_FOR\n              POP_ITER\n              LOAD_CONST               1 (None)\n              RETURN_VALUE\n"},"timeFn":{"src":"import time\n\nstart = time.perf_counter()\nlooping_sum(1, 10000000, 1)\nend = time.perf_counter()\n\nprint(end - start)","out":""},"timeMod":{"src":"import time\n\nstart = time.perf_counter()\nresult = 0\nfor item in range(1, 10000000, 1):\n    result += item\nprint(result)\nend = time.perf_counter()\n\nprint(end - start)","out":""},"loopy":{"src":"def loopy():\n    x = []\n    for i in range(0, 10):\n        x.append(i)\n    return x\n\ndis.dis(loopy)","out":"  1           RESUME                   0\n\n  2           BUILD_LIST               0\n              STORE_FAST               0 (x)\n\n  3           LOAD_GLOBAL              1 (range + NULL)\n              LOAD_SMALL_INT           0\n              LOAD_SMALL_INT          10\n              CALL                     2\n              GET_ITER\n      L1:     FOR_ITER                20 (to L2)\n              STORE_FAST               1 (i)\n\n  4           LOAD_FAST_BORROW         0 (x)\n              LOAD_ATTR                3 (append + NULL|self)\n              LOAD_FAST_BORROW         1 (i)\n              CALL                     1\n              POP_TOP\n              JUMP_BACKWARD           22 (to L1)\n\n  3   L2:     END_FOR\n              POP_ITER\n\n  5           LOAD_FAST_BORROW         0 (x)\n              RETURN_VALUE\n"},"compy":{"src":"def compy():\n    x = [i for i in range(0, 10)]\n    return x\n\ndis.dis(compy)","out":"   1           RESUME                   0\n\n   2           LOAD_GLOBAL              1 (range + NULL)\n               LOAD_SMALL_INT           0\n               LOAD_SMALL_INT          10\n               CALL                     2\n               GET_ITER\n               LOAD_FAST_AND_CLEAR      0 (i)\n               SWAP                     2\n       L1:     BUILD_LIST               0\n               SWAP                     2\n       L2:     FOR_ITER                 4 (to L3)\n               STORE_FAST_LOAD_FAST     0 (i, i)\n               LIST_APPEND              2\n               JUMP_BACKWARD            6 (to L2)\n       L3:     END_FOR\n               POP_ITER\n       L4:     STORE_FAST               1 (x)\n               STORE_FAST               0 (i)\n\n   3           LOAD_FAST_BORROW         1 (x)\n               RETURN_VALUE\n\n  --   L5:     SWAP                     2\n               POP_TOP\n\n   2           SWAP                     2\n               STORE_FAST               0 (i)\n               RERAISE                  0\nExceptionTable:\n  L1 to L4 -> L5 [2]\n"},"isDef":{"src":"def is_in_a_function():\n    two_hundred_fifty_seven = 257\n    two_hundred_fifty_seven_again = 257\n    return two_hundred_fifty_seven is two_hundred_fifty_seven_again","out":""},"isCall":{"src":"is_in_a_function()","out":"True\n"},"isDis":{"src":"dis.dis(is_in_a_function)","out":"  1           RESUME                   0\n\n  2           LOAD_CONST               0 (257)\n              STORE_FAST               0 (two_hundred_fifty_seven)\n\n  3           LOAD_CONST               0 (257)\n              STORE_FAST               1 (two_hundred_fifty_seven_again)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (two_hundred_fifty_seven, two_hundred_fifty_seven_again)\n              IS_OP                    0 (is)\n              RETURN_VALUE\n"},"isStr":{"src":"dis.dis('''\ntwo_hundred_fifty_seven = 257\ntwo_hundred_fifty_seven_again = 257\n\ntwo_hundred_fifty_seven is two_hundred_fifty_seven_again\n''')","out":"  0           RESUME                   0\n\n  2           LOAD_CONST               0 (257)\n              STORE_NAME               0 (two_hundred_fifty_seven)\n\n  3           LOAD_CONST               0 (257)\n              STORE_NAME               1 (two_hundred_fifty_seven_again)\n\n  5           LOAD_NAME                0 (two_hundred_fifty_seven)\n              LOAD_NAME                1 (two_hundred_fifty_seven_again)\n              IS_OP                    0 (is)\n              POP_TOP\n              LOAD_CONST               1 (None)\n              RETURN_VALUE\n"}};
+// A code object up close, run in Python 3.14.3.
+const CODEOBJ = {"source":"source = \"\"\"\ndef add_two_numbers(a, b):\n    return a + b\n\ntotal = add_two_numbers(2, 3)\n\"\"\"\nmodule_code = compile(source, \"<module>\", \"exec\")\nprint(module_code.co_consts)\n\nfunction_code = module_code.co_consts[0]\nprint(function_code.co_name)\nprint(function_code.co_varnames)\nprint(function_code.co_code)\n\nexec(module_code)\nprint(add_two_numbers.__code__ is function_code)\n","output":"(<code object add_two_numbers at 0x1062d0120, file \"<module>\", line 2>, None)\nadd_two_numbers\n('a', 'b')\nb'\\x80\\x00W\\x01,\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00#\\x00'\nTrue\n"};
 </script>
 <script>
-// A tiny Python 3.10 bytecode interpreter: just enough opcodes to run the
+// A tiny Python 3.14 bytecode interpreter: just enough opcodes to run the
 // walkthrough programs, recording a snapshot of every frame after each instruction.
 function buildSteps(WALK, key, opts) {
   "use strict";
@@ -1093,6 +1107,7 @@ function buildSteps(WALK, key, opts) {
       case "int": return String(v.v);
       case "bool": return v.v ? "True" : "False";
       case "none": return "None";
+      case "null": return "NULL";
       case "str": return `'${v.v}'`;
       case "code": return `<code ${v.name}>`;
       case "func": return `<function ${v.name}>`;
@@ -1113,6 +1128,7 @@ function buildSteps(WALK, key, opts) {
     return { t: "str", v: a };
   };
   const BUILTINS = { range: { t: "class", name: "range" } };
+  const NULL = { t: "null" };
   const c = (s) => `<code>${String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")}</code>`;
 
   // ---------- frames ----------
@@ -1121,13 +1137,14 @@ function buildSteps(WALK, key, opts) {
     return { co, ip: 0, fast, stack: [], isModule, names: isModule ? new Map() : null };
   };
   const ipOf = (co, offset) => co.instrs.findIndex((x) => x.offset === offset);
+  const where = (offset) => c(frames[frames.length - 1].co.instrs[ipOf(frames[frames.length - 1].co, offset)].label);
 
   const root = prog.module;
   let frames;
   let start;
   if (key === "add") {
     frames = [newFrame(root, [], true)];
-    start = "The module's own code is about to run, starting at offset 0. Nothing has happened yet: not even the <code>def</code>.";
+    start = "The module's own code is about to run, starting at its first instruction. Nothing has happened yet: not even the <code>def</code>.";
   } else {
     const fnName = root.children[0].name;
     const fn = findCode(root, fnName);
@@ -1146,6 +1163,7 @@ function buildSteps(WALK, key, opts) {
       name: f.co.name,
       isModule: f.isModule,
       next: f.ip < f.co.instrs.length ? f.co.instrs[f.ip].offset : null,
+      nextOp: f.ip < f.co.instrs.length ? f.co.instrs[f.ip].op : null,
       slots: f.co.varnames.map((n, i) => ({ name: n, value: show(f.fast[i]) })),
       names: f.names ? [...f.names].map(([k, v]) => ({ name: k, value: show(v) })) : null,
       stack: f.stack.map(show),
@@ -1165,32 +1183,78 @@ function buildSteps(WALK, key, opts) {
     let result;
 
     switch (ins.op) {
-      case "LOAD_CONST": {
-        const v = fromConst(ins, f.co);
-        const afterCode = f.stack.length && f.stack[f.stack.length - 1].t === "code";
-        f.stack.push(v);
-        note = key === "fold"
-          ? `Push constant ${ins.arg}, ${c(show(v))}. Look for the addition: there isn't one. No ${c("BINARY_ADD")}, and no 1 anywhere in the constants. The compiler saw ${c("1 + 1")}, did the math itself before anything ran, and stored only the answer. That's <strong>constant folding</strong>. (Constant 0, ${c("None")}, is always the docstring's spot; ${c("add_ones")} has none.)`
-          : v.t === "code"
-          ? `Push constant ${ins.arg}, which is a whole <a href="#codeobj-h">code object</a>: the body of ${c(v.name)}, compiled to bytecode before any of this ran. ${c("LOAD_CONST")} doesn't care what kind of value an entry in the table is.`
-          : afterCode
-            ? `Push constant ${ins.arg}, the string ${c(show(v))}. This is the same instruction as the last step, reading the next entry in the same table. ${c("MAKE_FUNCTION")} needs both: the code object, and the name to give the function.`
-            : `Push constant ${ins.arg}, ${c(show(v))}, from this code object's table of constants.`;
+      case "RESUME": {
+        note = `Every code object starts here. It does nothing to the stack: it's where the interpreter checks for things like tracing and interrupts as a frame starts.`;
         break;
       }
-      case "LOAD_FAST": {
+      case "NOT_TAKEN": {
+        note = `This does nothing. It marks the path where the jump wasn't taken, so tools like coverage can see which way the branch went.`;
+        break;
+      }
+      case "LOAD_SMALL_INT": {
+        const v = { t: "int", v: ins.arg };
+        f.stack.push(v);
+        note = key === "fold"
+          ? `Push ${c(show(v))}, which is right there in the instruction. Look for the addition: there isn't one. No ${c("BINARY_OP")} anywhere. The compiler saw ${c("1 + 1")}, did the math itself before anything ran, and kept only the answer. That's <strong>constant folding</strong>. (The ${c("1")} in the constants table is a leftover from before the folding. Nothing reads it.)`
+          : `Push ${c(show(v))}. For ints from 0 to 255 the number is the instruction's argument, so there's no trip to the constants table. (If the number is in the table anyway, it's a leftover nothing reads.)`;
+        break;
+      }
+      case "LOAD_CONST": {
+        const v = fromConst(ins, f.co);
+        f.stack.push(v);
+        note = v.t === "code"
+          ? `Push constant ${ins.arg}, which is a whole <a href="#codeobj-h">code object</a>: the body of ${c(v.name)}, compiled to bytecode before any of this ran. ${c("LOAD_CONST")} doesn't care what kind of value an entry in the table is.`
+          : `Push constant ${ins.arg}, ${c(show(v))}, from this code object's table of constants.`;
+        break;
+      }
+      case "LOAD_FAST_BORROW": {
         const n = f.co.varnames[ins.arg];
         const v = f.fast[ins.arg];
         f.stack.push(v);
         note = `Copy slot ${ins.arg} (${c(n)}), which holds ${c(show(v))}, onto the stack. No looking anything up by name: the compiler already turned ${c(n)} into slot number ${ins.arg}.`;
-        if (n === ".0") note += ` (${c(".0")} is the comprehension's hidden argument, the iterator it loops over. It's a name you can't type, so it can't clash with yours.)`;
+        break;
+      }
+      case "LOAD_FAST_BORROW_LOAD_FAST_BORROW": {
+        const [a, b] = [ins.arg >> 4, ins.arg & 15];
+        f.stack.push(f.fast[a], f.fast[b]);
+        note = `Two loads in one instruction. The argument, ${ins.arg}, packs both slot numbers: slot ${a} (${c(f.co.varnames[a])}), then slot ${b} (${c(f.co.varnames[b])}). Copy ${c(show(f.fast[a]))} and ${c(show(f.fast[b]))} onto the stack.`;
+        break;
+      }
+      case "STORE_FAST_LOAD_FAST": {
+        const [a, b] = [ins.arg >> 4, ins.arg & 15];
+        const v = f.stack.pop();
+        f.fast[a] = v;
+        f.stack.push(f.fast[b]);
+        note = `A store and a load in one instruction. Pop ${c(show(v))} into slot ${a} (${c(f.co.varnames[a])}), then copy slot ${b} (${c(f.co.varnames[b])}) back onto the stack.`;
+        break;
+      }
+      case "LOAD_FAST_AND_CLEAR": {
+        const n = f.co.varnames[ins.arg];
+        const v = f.fast[ins.arg] || NULL;
+        f.fast[ins.arg] = undefined;
+        f.stack.push(v);
+        note = `Move whatever is in slot ${ins.arg} (${c(n)}) onto the stack, and empty the slot. The comprehension is about to use ${c(n)}, so this saves the old value for later. Nothing was there, so it saves ${c("NULL")}: an empty marker, not a Python value.`;
+        break;
+      }
+      case "SWAP": {
+        const top = f.stack.length - 1;
+        const other = f.stack.length - ins.arg;
+        [f.stack[top], f.stack[other]] = [f.stack[other], f.stack[top]];
+        note = `Swap the top of the stack with the value ${ins.arg - 1} below it. Nothing is created or lost; this just puts things in the order the next instructions need.`;
+        break;
+      }
+      case "PUSH_NULL": {
+        f.stack.push(NULL);
+        note = `Push ${c("NULL")}, an empty marker. ${c("CALL")} expects two things under the arguments: the function, then either a ${c("self")} or a ${c("NULL")}. This call has no ${c("self")}.`;
         break;
       }
       case "STORE_FAST": {
         const n = f.co.varnames[ins.arg];
         const v = f.stack.pop();
-        f.fast[ins.arg] = v;
-        note = `Pop ${c(show(v))} off the stack and put it in slot ${ins.arg} (${c(n)}).`;
+        f.fast[ins.arg] = v.t === "null" ? undefined : v;
+        note = v.t === "null"
+          ? `Pop the saved ${c("NULL")} and put it back: slot ${ins.arg} (${c(n)}) is empty again, just as it was before the comprehension.`
+          : `Pop ${c(show(v))} off the stack and put it in slot ${ins.arg} (${c(n)}).`;
         break;
       }
       case "LOAD_NAME": {
@@ -1207,45 +1271,42 @@ function buildSteps(WALK, key, opts) {
       }
       case "LOAD_GLOBAL": {
         const v = BUILTINS[ins.argval];
-        f.stack.push(v);
-        note = `${c(ins.argval)} isn't one of this function's slots, so look it up by name: first in the module's globals (not there), then in the builtins (found). Push the ${c(ins.argval)} class.`;
+        f.stack.push(v, NULL);
+        note = `${c(ins.argval)} isn't one of this function's slots, so look it up by name: first in the module's globals (not there), then in the builtins (found). Push the ${c(ins.argval)} class, and a ${c("NULL")} after it, because ${c("CALL")} expects a ${c("self")} or a ${c("NULL")} there.`;
         break;
       }
       case "MAKE_FUNCTION": {
-        const qual = f.stack.pop();
         const code = f.stack.pop();
         f.stack.push({ t: "func", name: code.name, co: code.co });
-        note = code.name === "<listcomp>"
-          ? `Pop the name ${c(show(qual))} and the code object and wrap them into a function object; push it. In Python 3.10, a list comprehension is a small function of its own.`
-          : `Pop the name and the code object and wrap them into a function object; push it. That's what ${c("def")} does, and it happens when this line runs, not before.`;
+        note = `Pop the code object and wrap it into a function object; push it. That's what ${c("def")} does, and it happens when this line runs, not before.`;
         break;
       }
-      case "CALL_FUNCTION": {
+      case "CALL": {
         const args = f.stack.splice(f.stack.length - ins.arg, ins.arg);
+        f.stack.pop();  // the NULL
         const fn = f.stack.pop();
         const argText = args.map((a) => c(show(a))).join(", ");
         if (fn.t === "class" && fn.name === "range") {
           const [s, e, st] = args.length === 1 ? [0, args[0].v, 1] : [args[0].v, args[1].v, args[2] ? args[2].v : 1];
           const r = { t: "range", start: s, stop: e, step: st };
           f.stack.push(r);
-          note = `Pop ${ins.arg} arguments (${argText}) and the callable under them, and call ${c(`range(${args.map(show).join(", ")})`)}. ${c("range")} is written in C, so it runs without a new frame; its result, ${c(show(r))}, goes straight onto this stack.`;
+          note = `Pop ${ins.arg} arguments (${argText}), the ${c("NULL")}, and the callable under them, and call ${c(`range(${args.map(show).join(", ")})`)}. ${c("range")} is written in C, so it runs without a new frame; its result, ${c(show(r))}, goes straight onto this stack.`;
         } else {
           const callee = newFrame(fn.co, args, false);
           frames.push(callee);
           const slots = fn.co.varnames.slice(0, args.length).map((n, i) => `${c(n)} = ${c(show(args[i]))}`).join(", ");
-          note = `Pop ${ins.arg} argument${ins.arg === 1 ? "" : "s"} (${argText}) and the function under ${ins.arg === 1 ? "it" : "them"}. Calling a Python function <strong>pushes a new frame</strong> onto the call stack, with the arguments already in its slots (${slots}). ${c(name)} waits at offset ${f.co.instrs[f.ip].offset} until it returns.`;
+          note = `Pop ${ins.arg} argument${ins.arg === 1 ? "" : "s"} (${argText}), the ${c("NULL")}, and the function under ${ins.arg === 1 ? "it" : "them"}. Calling a Python function <strong>pushes a new frame</strong> onto the call stack, with the arguments already in its slots (${slots}). ${c(name)} waits here until it returns.`;
         }
         break;
       }
-      case "BINARY_ADD":
-      case "INPLACE_ADD": {
+      case "BINARY_OP": {
         const r = f.stack.pop();
         const l = f.stack.pop();
         const v = { t: "int", v: l.v + r.v };
         f.stack.push(v);
-        note = ins.op === "BINARY_ADD"
-          ? `Pop the top two values, ${c(show(r))} and ${c(show(l))}, add them, and push the sum, ${c(show(v))}.`
-          : `Pop the top two values and add them for ${c("+=")}: ${c(`${show(l)} + ${show(r)} = ${show(v)}`)}. Push ${c(show(v))}. Nothing is saved yet; the next instruction does that.`;
+        note = ins.argrepr === "+"
+          ? `The argument, ${ins.arg}, means ${c("+")}. Pop the top two values, ${c(show(r))} and ${c(show(l))}, add them, and push the sum, ${c(show(v))}.`
+          : `The argument, ${ins.arg}, means ${c("+=")}. Pop the top two values and add them: ${c(`${show(l)} + ${show(r)} = ${show(v)}`)}. Push ${c(show(v))}. Nothing is saved yet; the next instruction does that.`;
         break;
       }
       case "COMPARE_OP": {
@@ -1253,16 +1314,16 @@ function buildSteps(WALK, key, opts) {
         const l = f.stack.pop();
         const v = { t: "bool", v: l.v === r.v };
         f.stack.push(v);
-        note = `Pop ${c(show(r))} and ${c(show(l))}, compare them with ${c(ins.argrepr)}, and push the answer, ${c(show(v))}.`;
+        note = `Pop ${c(show(r))} and ${c(show(l))}, compare them with ${c("==")}, and push the answer, ${c(show(v))}. The ${c("bool()")} around it in the listing says the result is guaranteed to be a real ${c("True")} or ${c("False")}, which is what the jump after it needs.`;
         break;
       }
       case "POP_JUMP_IF_FALSE": {
         const v = f.stack.pop();
         if (!truthy(v)) {
           f.ip = ipOf(f.co, ins.argval);
-          note = `Pop ${c(show(v))}. It's false, so <strong>jump</strong> to offset ${ins.argval}, skipping the instructions in between (the ${c("return True")} branch).`;
+          note = `Pop ${c(show(v))}. It's false, so <strong>jump</strong> to ${where(ins.argval)}, skipping the instructions in between (the ${c("return True")} branch).`;
         } else {
-          note = `Pop ${c(show(v))}. It's true, so <strong>don't jump</strong>: carry on to the next instruction, offset ${f.co.instrs[f.ip].offset}.`;
+          note = `Pop ${c(show(v))}. It's true, so <strong>don't jump</strong>: carry on to the next instruction.`;
         }
         break;
       }
@@ -1281,15 +1342,19 @@ function buildSteps(WALK, key, opts) {
           f.stack.push(v);
           note = `Ask the iterator on top of the stack for its next item: ${c(show(v))}. Push it, and leave the iterator underneath for next time.`;
         } else {
-          f.stack.pop();
-          f.ip = ipOf(f.co, ins.argval);
-          note = `The iterator is out of items. Pop it and <strong>jump</strong> to offset ${ins.argval}, past the end of the loop.`;
+          f.ip = ipOf(f.co, ins.argval) + 1;
+          note = `The iterator is out of items. <strong>Jump</strong> past the end of the loop: to ${where(ins.argval)}, ${c("END_FOR")}, and over it to the ${c("POP_ITER")} right after. In a loop like this one, ${c("END_FOR")} never actually runs.`;
         }
         break;
       }
-      case "JUMP_ABSOLUTE": {
+      case "POP_ITER": {
+        const it = f.stack.pop();
+        note = `Pop the used-up iterator, ${c(show(it))}, and throw it away. The loop is over.`;
+        break;
+      }
+      case "JUMP_BACKWARD": {
         f.ip = ipOf(f.co, ins.argval);
-        note = `<strong>Jump</strong> back to offset ${ins.argval}, the ${c("FOR_ITER")}, for the next item.`;
+        note = `<strong>Jump</strong> back to ${where(ins.argval)}, the ${c("FOR_ITER")}, for the next item.`;
         break;
       }
       case "BUILD_LIST": {
@@ -1338,29 +1403,16 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  // Let the fused instruction's long name break between its halves.
+  const wrapOp = (s) => s.replace("BORROW_LOAD", "BORROW_<wbr>LOAD");
 
   // ---------- dis-style listings ----------
-  // Format one 3.10 instruction the way dis does (Instruction._disassemble).
-  const disLine = (ins, current) => {
-    const f = [];
-    f.push(ins.line != null ? String(ins.line).padStart(3) : "   ");
-    f.push(current ? "-->" : "   ");
-    f.push(ins.target ? ">>" : "  ");
-    f.push(String(ins.offset).padStart(4));
-    f.push(ins.op.padEnd(20));
-    if (ins.arg != null) {
-      f.push(String(ins.arg).padStart(5));
-      if (ins.argrepr) f.push(`(${ins.argrepr})`);
-    }
-    return f.join(" ").trimEnd();
-  };
-
   // Static listings from dis text, with chosen opcodes (or tokens) highlighted.
   const renderText = (el, text, marks = [], cls = "mark") => {
     const re = marks.length ? new RegExp(`(${marks.map((m) => m.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})(?![A-Z_])`, "g") : null;
     el.innerHTML = text.replace(/\n$/, "").split("\n").map((ln) => {
       if (!ln.trim()) return `<span class="ln blank"></span>`;
-      if (/^(Disassembly of|ExceptionTable)/.test(ln)) return `<span class="ln hdr">${esc(ln)}</span>`;
+      if (/^(Disassembly of|ExceptionTable|  L\d+ to L\d+)/.test(ln)) return `<span class="ln hdr">${esc(ln)}</span>`;
       let hit = false;
       let html = esc(ln);
       if (re) html = html.replace(re, (m) => { hit = true; return `<span class="tok">${m}</span>`; });
@@ -1397,16 +1449,14 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
   (() => {
     const parts = [
       { k: "line", t: "  5", label: "Source line", text: "Which line of your Python this instruction came from. Shown only on the first instruction of each line." },
-      { t: "     " },
-      { k: "target", t: ">>", label: "Jump target", text: "Some other instruction can jump here. Look for it: here, a POP_JUMP_IF_FALSE that says (to 12)." },
       { t: "   " },
-      { k: "offset", t: "12", label: "Offset", text: "Where the instruction starts, in bytes from the start of the bytecode. In 3.10 every instruction is 2 bytes: one for the opcode, one for its argument." },
-      { t: " " },
-      { k: "op", t: "LOAD_CONST          ", label: "Instruction (opname)", text: "What to do. The primer below lists the common ones." },
+      { k: "target", t: "L1:", label: "Label", text: "Some other instruction can jump here. Look for it: here, a POP_JUMP_IF_FALSE that says (to L1). dis makes these labels up to help you read; the bytecode itself stores a distance." },
       { t: "     " },
-      { k: "arg", t: "3", label: "Argument", text: "A number the instruction uses, usually an index: here, constant number 3. For a jump in 3.10, the argument counts instructions, not bytes: 6 means byte 12." },
+      { k: "op", t: "LOAD_CONST", label: "Instruction (opname)", text: "What to do. The primer below lists the common ones." },
+      { t: "               " },
+      { k: "arg", t: "2", label: "Argument", text: "A number the instruction uses, usually an index: here, constant number 2." },
       { t: " " },
-      { k: "repr", t: "(False)", label: "What the argument means", text: "dis looks the index up for you. Constant 3 in this code object is False." },
+      { k: "repr", t: "(False)", label: "What the argument means", text: "dis looks the index up for you. Constant 2 in this code object is False." },
     ];
     const line = $("anatomy-line");
     const keys = $("anatomy-keys");
@@ -1431,19 +1481,12 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     { key: "loop", label: "A for loop", args: [[1, 4, 1]] },
     { key: "comp", label: "A list comprehension", src: "compy(), with range(0, 3) to keep it short" },
   ];
-  // Each code object's real co_consts in 3.10.8, shown the way the walkthrough shows values.
-  const CONSTS = {
-    add: { "<module>": ["<code add_two_numbers>", "'add_two_numbers'", "2", "3", "None"], add_two_numbers: ["None"] },
-    if: { equals_five: ["None", "5", "True", "False"] },
-    loop: { looping_sum: ["None", "0"] },
-    fold: { add_ones: ["None", "2"] },
-    comp: { compy: ["None", "<code <listcomp>>", "'compy.<locals>.<listcomp>'", "0", "3"], "<listcomp>": [] },
-  };
   // How many values each instruction pops off its frame's stack. popCount handles the ones that depend on what happens.
   const POPS = {
-    LOAD_CONST: 0, LOAD_FAST: 0, LOAD_NAME: 0, LOAD_GLOBAL: 0, BUILD_LIST: 0, JUMP_ABSOLUTE: 0,
-    STORE_NAME: 1, STORE_FAST: 1, GET_ITER: 1, POP_JUMP_IF_FALSE: 1, LIST_APPEND: 1, RETURN_VALUE: 1,
-    MAKE_FUNCTION: 2, BINARY_ADD: 2, INPLACE_ADD: 2, COMPARE_OP: 2,
+    RESUME: 0, NOT_TAKEN: 0, LOAD_CONST: 0, LOAD_SMALL_INT: 0, LOAD_FAST_BORROW: 0, LOAD_FAST_BORROW_LOAD_FAST_BORROW: 0,
+    LOAD_FAST_AND_CLEAR: 0, LOAD_NAME: 0, LOAD_GLOBAL: 0, PUSH_NULL: 0, BUILD_LIST: 0, JUMP_BACKWARD: 0, SWAP: 0, FOR_ITER: 0,
+    STORE_NAME: 1, STORE_FAST: 1, STORE_FAST_LOAD_FAST: 1, GET_ITER: 1, POP_JUMP_IF_FALSE: 1, LIST_APPEND: 1, RETURN_VALUE: 1,
+    POP_ITER: 1, MAKE_FUNCTION: 1, BINARY_OP: 2, COMPARE_OP: 2,
   };
   let prog = PROGRAMS[0];
   let argChoice = 0;
@@ -1472,43 +1515,54 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     return null;
   };
 
-  const W = () => D310.walk[prog.key];
+  const W = () => D314.walk[prog.key];
   const codeNamed = (name) => codeObjects(W().module, prog.key).find((co) => co.name === name);
   const insOf = (st) => st.ran ? codeNamed(st.ran.frame).instrs.find((x) => x.offset === st.ran.offset) : null;
   const label = (ins) => `${ins.op}${ins.arg != null ? " " + ins.arg : ""}${ins.argrepr ? ` (${ins.argrepr})` : ""}`;
   const frameIdx = (frames, name) => frames.findIndex((f) => f.name === name);
   const called = (st, prev) => st.frames.length > prev.frames.length;
   const popCount = (ins, before, after) => {
-    if (ins.op === "CALL_FUNCTION") return ins.arg + 1;
-    if (ins.op === "FOR_ITER") return after.length > before.length ? 0 : 1;
+    if (ins.op === "CALL") return ins.arg + 2;
     return POPS[ins.op] ?? 0;
   };
   // Where the frame that ran goes next, if that isn't the next instruction down.
   const jumpTo = (st, prev, ins) => {
     const fi = frameIdx(prev.frames, st.ran.frame);
     const f = st.frames[fi];
-    return f && f.name === st.ran.frame && f.next !== ins.offset + 2 ? f.next : null;
+    if (!f || f.name !== st.ran.frame) return null;
+    const instrs = codeNamed(st.ran.frame).instrs;
+    const after = instrs[instrs.indexOf(ins) + 1];
+    return after && f.next !== after.offset ? f.next : null;
   };
+  // Name a jump's landing spot the way dis does, by its label if it has one.
+  const spot = (st, offset) => codeNamed(st.ran.frame).instrs.find((x) => x.offset === offset).label;
 
+  const before = (st, prev) => { const s = prev.frames[frameIdx(prev.frames, st.ran.frame)].stack; return s[s.length - 1]; };
   // Words only where the shape of things changes, not where a value just moves.
   const say = (st, prev, ins) => {
     const to = jumpTo(st, prev, ins);
     switch (ins.op) {
-      case "LOAD_CONST":
-        return prog.key === "fold" ? "1 + 1 was already 2 before this ran: the compiler did it. No BINARY_ADD." : null;
-      case "MAKE_FUNCTION":
-        return st.ran.frame === "compy"
-          ? "code object + name → function. In 3.10 a comprehension is a function of its own."
-          : "code object + name → function. This is the moment def happens.";
-      case "CALL_FUNCTION":
+      case "RESUME": return st.ran.frame === "<module>" || at <= 1 ? "Does nothing to the stack. Every code object starts with one." : null;
+      case "NOT_TAKEN": return "Does nothing. It marks that the jump wasn't taken, for tools like coverage.";
+      case "LOAD_SMALL_INT":
+        return prog.key === "fold" ? "1 + 1 was already 2 before this ran: the compiler did it. No BINARY_OP." : "The number is in the instruction itself. Nothing read from the constants.";
+      case "LOAD_FAST_BORROW_LOAD_FAST_BORROW": return "Two loads, fused into one instruction.";
+      case "STORE_FAST_LOAD_FAST": return "A store and a load, fused into one instruction.";
+      case "LOAD_FAST_AND_CLEAR": return "Save the old i on the stack, so the comprehension can use its slot.";
+      case "SWAP": return "Reorder the stack for what comes next.";
+      case "PUSH_NULL": return "CALL wants a self or a NULL under the arguments. No self here.";
+      case "MAKE_FUNCTION": return "code object → function. This is the moment def happens.";
+      case "CALL":
         return called(st, prev) ? "A new frame. The arguments become its slots." : "range is written in C, so no new frame: its result lands right here.";
       case "RETURN_VALUE":
         if (st.frames.length) return "The frame is done. Its value goes to the caller.";
         return prog.key === "add" ? "The module is done. Nobody uses its None." : "The frame is done. Its value goes back to whoever called it.";
-      case "POP_JUMP_IF_FALSE": return to != null ? `False, so jump to ${to}.` : "True, so carry on to the next instruction.";
-      case "FOR_ITER": return to != null ? `Out of items: drop the iterator and jump to ${to}.` : null;
-      case "JUMP_ABSOLUTE": return `Back to ${to} for the next item.`;
-      case "LOAD_GLOBAL": return "Not a slot: look it up by name, in the module's globals, then the builtins.";
+      case "POP_JUMP_IF_FALSE": return to != null ? `False, so jump to ${spot(st, to)}.` : "True, so carry on to the next instruction.";
+      case "FOR_ITER": return to != null ? `Out of items: jump past END_FOR, straight to POP_ITER.` : null;
+      case "POP_ITER": return "Drop the used-up iterator.";
+      case "JUMP_BACKWARD": return `Back to ${spot(st, to)} for the next item.`;
+      case "LOAD_GLOBAL": return "Not a slot: look it up by name, in the module's globals, then the builtins. Push it and a NULL.";
+      case "STORE_FAST": return before(st, prev) === "NULL" ? "The saved value goes back: i is empty again." : null;
     }
     return null;
   };
@@ -1527,7 +1581,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
       ? after.map((v, j) => `<b class="${pushed && j === after.length - 1 ? "new" : ""}" title="${esc(v)}">${esc(brief(v))}</b>`).join("")
       : `<i>empty</i>`;
   };
-  const opText = (ins) => `<span class="off">${ins.offset}</span>${esc(ins.op)}${ins.argrepr ? " " + esc(ins.argrepr) : ""}`;
+  const opText = (ins) => `<span class="off">${ins.label || ""}</span>${wrapOp(esc(ins.op))}${ins.argrepr ? " " + esc(ins.argrepr) : ""}`;
 
   const renderStrip = () => {
     const box = $("strip-box");
@@ -1536,7 +1590,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     const rows = [];
     if (parallel) {
       // Same function, different arguments: one row per instruction in the listing, one column per run.
-      $("strip-cap").innerHTML = `<span>Instruction, by offset</span><span>value stack after · top →</span>`;
+      $("strip-cap").innerHTML = `<span>Instruction</span><span>value stack after · top →</span>`;
       const co = codeNamed(steps[1].ran.frame);
       rows.push(`<li class="head"><span></span>${prog.args.map((a) => `<span>x = ${esc(a.join(", "))}</span>`).join("")}</li>`);
       co.instrs.forEach((ins) => {
@@ -1559,7 +1613,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
         const gap = (n, text) => rows.push(`<li class="gap" data-after="${i}"><span class="rails">${rails(n)}</span><span>${text}</span><span></span></li>`);
         rows.push(`<li data-i="${i}"><span class="rails">${rails(depth)}</span><span class="op">${opText(ins)}</span><span class="mini">${mini(st, prev, ins)}</span></li>`);
         const to = jumpTo(st, prev, ins);
-        if (to != null) gap(depth, to < ins.offset ? `↺ back to offset ${to}` : `↷ jump to offset ${to}`);
+        if (to != null) gap(depth, to < ins.offset ? `↺ back to ${spot(st, to)}` : ins.op === "FOR_ITER" ? "↷ out of items: past END_FOR" : `↷ jump to ${spot(st, to)}`);
         if (called(st, prev)) gap(depth + 1, `↳ new frame: ${esc(st.frames[st.frames.length - 1].name)}`);
         if (ins.op === "RETURN_VALUE" && st.frames.length) gap(depth - 1, `↲ back in ${esc(st.frames[st.frames.length - 1].name)}`);
       });
@@ -1571,7 +1625,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
   const frameHTML = (f, idx, state, popped, touch) => {
     const t = (key) => touch.has(key) ? " touch" : "";
     const cell = (key, k, v) => `<div class="cell${t(key)}" data-a="${key}">${k != null ? `<span class="k">${esc(k)}</span>` : ""}<span>${v}</span></div>`;
-    const consts = CONSTS[prog.key][f.name] || [];
+    const consts = codeNamed(f.name).consts;
     const constHTML = consts.length ? consts.map((v, i) => cell(`c${idx}-${i}`, i, esc(v))).join("") : `<div class="cell empty">none</div>`;
     const vars = f.isModule
       ? (f.names.length ? f.names.map((n) => cell(`n${idx}-${n.name}`, n.name, esc(n.value))).join("") : `<div class="cell empty" data-a="n${idx}-none">no names yet</div>`)
@@ -1583,7 +1637,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     const pop = popped.length
       ? `<div><h4>Popped</h4><div class="pstack popped">${popped.map((v, i) => cell(`p${idx}-${i}`, null, esc(v))).join("")}</div></div>`
       : "";
-    const status = state === "gone" ? "returned · off the call stack" : state === "top" ? `running · next offset ${f.next}` : `waiting at offset ${f.next}`;
+    const status = state === "gone" ? "returned · off the call stack" : state === "top" ? `running · next: ${f.nextOp}` : `waiting · next: ${f.nextOp}`;
     return `<div class="pframe ${state === "top" ? "" : state}">
       <div class="fh"><b data-a="f${idx}">${esc(f.name)}</b><span>${status}</span></div>
       <div class="bins">
@@ -1607,25 +1661,37 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     const arrows = [];
     switch (ins.op) {
       case "LOAD_CONST": arrows.push([`c${fi}-${ins.arg}`, top]); break;
-      case "LOAD_FAST": arrows.push([`s${fi}-${ins.arg}`, top]); break;
+      case "LOAD_FAST_BORROW":
+      case "LOAD_FAST_AND_CLEAR": arrows.push([`s${fi}-${ins.arg}`, top]); break;
+      case "LOAD_FAST_BORROW_LOAD_FAST_BORROW":
+        arrows.push([`s${fi}-${ins.arg >> 4}`, `v${fi}-${after.length - 2}`], [`s${fi}-${ins.arg & 15}`, top]);
+        break;
+      case "STORE_FAST_LOAD_FAST": arrows.push([pops[0], `s${fi}-${ins.arg >> 4}`], [`s${fi}-${ins.arg & 15}`, top]); break;
       case "LOAD_NAME": arrows.push([`n${fi}-${ins.argval}`, top]); break;
-      case "LOAD_GLOBAL": arrows.push([`g-${ins.argval}`, top]); break;
+      case "LOAD_GLOBAL": arrows.push([`g-${ins.argval}`, `v${fi}-${after.length - 2}`]); break;
       case "STORE_NAME": arrows.push([pops[0], `n${fi}-${ins.argval}`]); break;
       case "STORE_FAST": arrows.push([pops[0], `s${fi}-${ins.arg}`]); break;
-      case "BUILD_LIST": arrows.push([null, top]); break;
+      case "BUILD_LIST":
+      case "LOAD_SMALL_INT":
+      case "PUSH_NULL": arrows.push([null, top]); break;
+      case "SWAP": {
+        const other = `v${fi}-${after.length - ins.arg}`;
+        arrows.push([top, other], [other, top]);
+        break;
+      }
       case "MAKE_FUNCTION":
-      case "BINARY_ADD":
-      case "INPLACE_ADD":
+      case "BINARY_OP":
       case "COMPARE_OP":
       case "GET_ITER": pops.forEach((p) => arrows.push([p, top])); break;
-      case "FOR_ITER": if (!nPop) arrows.push([`v${fi}-${before.length - 1}`, top]); break;
+      case "FOR_ITER": if (after.length > before.length) arrows.push([`v${fi}-${before.length - 1}`, top]); break;
       case "LIST_APPEND": arrows.push([pops[0], `v${fi}-${after.length - ins.arg}`]); break;
-      case "POP_JUMP_IF_FALSE": arrows.push([pops[0], null]); break;
-      case "CALL_FUNCTION":
+      case "POP_JUMP_IF_FALSE":
+      case "POP_ITER": arrows.push([pops[0], null]); break;
+      case "CALL":
         if (called(st, prev)) {
           arrows.push([pops[0], `f${fi + 1}`]);
-          pops.slice(1).forEach((p, i) => arrows.push([p, `s${fi + 1}-${i}`]));
-        } else pops.forEach((p) => arrows.push([p, top]));
+          pops.slice(2).forEach((p, i) => arrows.push([p, `s${fi + 1}-${i}`]));
+        } else pops.filter((_, i) => i !== 1).forEach((p) => arrows.push([p, top]));
         break;
       case "RETURN_VALUE":
         arrows.push([pops[0], fi > 0 ? `v${fi - 1}-${st.frames[fi - 1].stack.length - 1}` : "exit"]);
@@ -1676,7 +1742,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
 
   const load = (keepStrip) => {
     stop();
-    runs = (prog.args || [[]]).map((args) => buildSteps(D310.walk, prog.key, { args }));
+    runs = (prog.args || [[]]).map((args) => buildSteps(D314.walk, prog.key, { args }));
     steps = runs[argChoice];
     at = Math.min(at, steps.length - 1);
     $("scrub").max = steps.length - 1;
@@ -1714,7 +1780,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
 
     const words = ins && prev ? say(st, prev, ins) : null;
     $("instr").innerHTML = ins
-      ? `<span class="op">${esc(label(ins))}</span>${words ? `<span class="say">${esc(words)}</span>` : ""}`
+      ? `<span class="op">${wrapOp(esc(label(ins)))}</span>${words ? `<span class="say">${esc(words)}</span>` : ""}`
       : `<span class="op">Ready</span><span class="say">${prog.key === "add" ? "Nothing has run yet, not even the def." : `${esc(callText())} was just called. Its arguments are already in its slots.`}</span>`;
     $("note").innerHTML = st.note;
     $("live").innerHTML = (ins ? esc(label(ins)) + ". " : "") + st.note;
@@ -1752,8 +1818,9 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
         const isRan = st.ran && st.ran.frame === co.name && st.ran.offset === x.offset;
         const isNext = top && !st.finished && top.name === co.name && top.next === x.offset;
         const active = st.frames.some((f) => f.name === co.name) || isRan;
-        html.push(`<span class="ln${isRan ? " hot" : ""}${isNext ? " next" : ""}${active ? "" : " dim"}">${esc(disLine(x, isRan))}</span>`);
+        html.push(`<span class="ln${isRan ? " hot" : ""}${isNext ? " next" : ""}${active ? "" : " dim"}">${esc(x.text)}</span>`);
       });
+      co.tail.forEach((t) => html.push(`<span class="ln hdr">${esc(t)}</span>`));
       if (ci < cos.length - 1) html.push(`<span class="ln blank"></span>`);
     });
     $("bytecode").innerHTML = html.join("");
@@ -1820,40 +1887,32 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
 
   // ---------- LOAD_FAST vs LOAD_NAME ----------
   renderSrc($("fast-fn-src"), EX.loopFn.src);
-  renderText($("fast-fn"), EX.loopFn.out, ["LOAD_FAST", "STORE_FAST", "LOAD_GLOBAL"]);
+  renderText($("fast-fn"), EX.loopFn.out, ["LOAD_FAST_BORROW_LOAD_FAST_BORROW", "LOAD_FAST_BORROW", "STORE_FAST", "LOAD_GLOBAL"]);
   renderSrc($("fast-mod-src"), EX.loopMod.src);
   renderText($("fast-mod"), EX.loopMod.out, ["LOAD_NAME", "STORE_NAME"]);
   renderSrc($("time-fn"), EX.timeFn.src);
   renderSrc($("time-mod"), EX.timeMod.src);
-  // Bar length is seconds, on one scale for both versions.
-  const TIMES = [
-    { ver: "Python 3.10.8", fn: 0.24, mod: 0.48 },
-    { ver: "Python 3.14", fn: 0.23, mod: 0.61 },
-  ];
-  const tMax = Math.max(...TIMES.map((t) => t.mod));
-  $("timing").innerHTML = TIMES.map((t) => `<div class="grp"><span class="ver">${t.ver}</span>${[
-    ["Inside a function", t.fn, "fn"], ["At module level", t.mod, "mod"],
-  ].map(([l, v, c]) => `<div class="br"><span>${l}</span><span class="track" title="${t.ver}, ${l.toLowerCase()}: ${v.toFixed(2)} s"><span class="fill ${c}" style="width:${(v / tMax) * 82}%"></span><span class="v">${v.toFixed(2)} s</span></span></div>`).join("")}</div>`).join("");
+  // Bar length is seconds, on one scale.
+  const TIMES = [["Inside a function", 0.23, "fn"], ["At module level", 0.57, "mod"]];
+  const tMax = Math.max(...TIMES.map((t) => t[1]));
+  $("timing").innerHTML = `<div class="grp">${TIMES.map(([l, v, c]) => `<div class="br"><span>${l}</span><span class="track" title="${l}: ${v.toFixed(2)} s"><span class="fill ${c}" style="width:${(v / tMax) * 82}%"></span><span class="v">${v.toFixed(2)} s</span></span></div>`).join("")}</div>`;
 
-  // Color each LOAD_NAME line by which dictionary it searches.
-  const zone = (n) => (n >= 2903 && n <= 2919 ? " loc" : n >= 2920 && n <= 2927 ? " glob" : n >= 2928 && n <= 2952 ? " blt" : "");
-  const renderC = (el, snip, zones = false) => {
+  // Each LOAD_NAME line is colored by which dictionary it searches (row.z).
+  const renderC = (el, snip) => {
     el.innerHTML = snip.map((row) => row.gap
       ? `<span class="ln gap"><span class="n"></span><span class="t">    …</span></span>`
-      : `<span class="ln${row.mark ? " mark" : ""}${zones ? zone(row.n) : ""}"><a class="n" href="https://github.com/python/cpython/blob/v3.10.8/Python/ceval.c#L${row.n}" target="_blank" rel="noopener">${row.n}</a><span class="t">${esc(row.t)}</span></span>`).join("");
+      : `<span class="ln${row.z ? " " + row.z : ""}"><a class="n" href="https://github.com/python/cpython/blob/v3.14.3/Python/${row.f}#L${row.n}" target="_blank" rel="noopener">${row.n}</a><span class="t">${esc(row.t)}</span></span>`).join("");
   };
   renderC($("c-fast"), CSRC.loadFast);
-  renderC($("c-name"), CSRC.loadName, true);
+  renderC($("c-name"), CSRC.loadName);
 
   $("stack-src").textContent = STACK_DEMO.source;
   // Number each traceback entry (two lines each) to match the stack picture beside it.
   $("stack-out").innerHTML = STACK_DEMO.output.replace(/\n$/, "").split("\n").map((ln, i) =>
     `<span class="ln">${i % 2 === 0 ? `<span class="num">${i / 2 + 1}</span>` : "<span style=\"display:inline-block;width:calc(1.4em + 8px)\"></span>"}${esc(ln)}</span>`).join("");
-  renderCells($("add3-cells"), [{ ex: "add3", head: "add_three_numbers, disassembled", marks: ["CALL_FUNCTION_KW", "BINARY_ADD"] }]);
+  renderCells($("add3-cells"), [{ ex: "add3", head: "add_three_numbers, disassembled", marks: ["CALL_KW", "BINARY_OP"] }]);
   // Label the lines worth noticing, right where they are.
-  (() => {
-    const notes = [[/\(\('limit',\)\)/, "keyword names"], [/CALL_FUNCTION_KW/, "print_stack(limit=3)"], [/POP_TOP/, "throw away what it returned"], [/BINARY_ADD/, "a + b"], [/BINARY_ADD/, "(a + b) + c"]];
-    const lines = [...$("add3-cells").querySelectorAll("[data-out] .ln")];
+  function annotate(lines, notes) {
     let from = 0;
     notes.forEach(([re, text]) => {
       const k = lines.findIndex((l, i) => i >= from && re.test(l.textContent));
@@ -1861,6 +1920,10 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
       lines[k].insertAdjacentHTML("beforeend", `<span class="anno">← ${esc(text)}</span>`);
       from = k + 1;
     });
+  }
+  (() => {
+    const notes = [[/\(\('limit',\)\)/, "keyword names"], [/CALL_KW/, "print_stack(limit=3)"], [/POP_TOP/, "throw away what it returned"], [/BINARY_OP/, "a + b"], [/BINARY_OP/, "(a + b) + c"]];
+    annotate([...$("add3-cells").querySelectorAll("[data-out] .ln")], notes);
   })();
 
   // Buttons elsewhere on the page that open a program in the step-through.
@@ -1872,20 +1935,24 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
   }));
 
   // ---------- loop vs comprehension ----------
-  // Mark every instruction from FOR_ITER to the JUMP_ABSOLUTE back to it: the ones that run once per item.
+  // Mark every instruction from FOR_ITER to the JUMP_BACKWARD to it: the ones that run once per item.
   const renderLoop = (el, text) => {
     renderText(el, text);
     let on = false;
     el.querySelectorAll(".ln").forEach((ln) => {
       if (/FOR_ITER/.test(ln.textContent)) on = true;
       if (on) ln.classList.add("mark");
-      if (/JUMP_ABSOLUTE/.test(ln.textContent)) on = false;
+      if (/JUMP_BACKWARD/.test(ln.textContent)) on = false;
     });
   };
   renderSrc($("loopy-src"), EX.loopy.src);
   renderLoop($("loopy-out"), EX.loopy.out);
   renderSrc($("compy-src"), EX.compy.src);
   renderLoop($("compy-out"), EX.compy.out);
+  annotate([...$("compy-out").querySelectorAll(".ln")], [
+    [/LOAD_FAST_AND_CLEAR/, "save the old i"], [/STORE_FAST +0 \(i\)/, "put the old i back"],
+    [/L5:/, "from here down: only on an error"], [/^ExceptionTable/, "why: an error between L1 and L4 jumps to L5"],
+  ]);
 
   // ---------- is ----------
   renderCells($("is-fn-cells"), [
@@ -1894,7 +1961,7 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
   ]);
   renderText($("is-repl"), ">>> two_hundred_fifty_seven = 257\n>>> two_hundred_fifty_seven_again = 257\n>>> two_hundred_fifty_seven is two_hundred_fifty_seven_again\nFalse\n");
   renderCells($("is-str-cells"), [{ ex: "isStr", head: "All three lines as one string", note: "both say constant 0", marks: ["(257)"] }]);
-  renderText($("is-dis"), D310.text.is, ["(257)"]);
+  renderText($("is-dis"), D314.text.is, ["(257)"]);
 
   // Names on the left, objects on the right, grouped by where they came from; an arrow per reference.
   const NAMES = ["two_hundred_fifty_seven", "two_hundred_fifty_seven_again"];
@@ -1950,53 +2017,66 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
   renderRefs();
 
   // ---------- primer ----------
-  const SEEN = new Set(["LOAD_CONST", "LOAD_FAST", "STORE_FAST", "LOAD_NAME", "STORE_NAME", "LOAD_GLOBAL", "MAKE_FUNCTION",
-    "CALL_FUNCTION", "RETURN_VALUE", "BINARY_ADD", "INPLACE_ADD", "COMPARE_OP", "POP_JUMP_IF_FALSE", "GET_ITER", "FOR_ITER",
-    "JUMP_ABSOLUTE", "BUILD_LIST", "LIST_APPEND"]);
+  const SEEN = new Set(Object.values(D314.walk).flatMap(({ module }) => {
+    const ops = [];
+    const walk = (co) => { co.instrs.forEach((x) => ops.push(x.op)); co.children.forEach(walk); };
+    walk(module);
+    return ops;
+  }).filter((op) => !["END_FOR", "POP_TOP", "RERAISE"].includes(op)));
   const PRIMER = [
+    { group: "Every function", ops: [
+      { op: "RESUME", eff: "(no change)", d: "The first instruction of every code object. Where the interpreter checks for things like tracing and interrupts as a frame starts." },
+      { op: "RETURN_VALUE", eff: "… value → (frame ends)", d: "Pop the top of the stack and return it. The frame comes off the call stack and the value is pushed onto the caller's stack." },
+    ] },
     { group: "Loading and storing", ops: [
-      { op: "LOAD_CONST", eff: "… → … value", d: "Push a constant from the code object's table of constants. The argument is its index.", n: "3.14 uses <b>LOAD_SMALL_INT</b> for ints from 0 to 255, putting the number right in the argument." },
-      { op: "LOAD_FAST", eff: "… → … value", d: "Push a local variable. The argument is its slot number, chosen by the compiler. No name lookup at all.", n: "3.13 can fuse two into <b>LOAD_FAST_LOAD_FAST</b>. 3.14 often uses <b>LOAD_FAST_BORROW</b>, which skips updating the object's reference count when it's safe to." },
-      { op: "STORE_FAST", eff: "… value → …", d: "Pop the top of the stack into a local variable's slot.", n: "Same name. 3.13 can fuse it with a load: <b>STORE_FAST_LOAD_FAST</b>." },
-      { op: "LOAD_NAME", eff: "… → … value", d: "Push a variable by looking up its name: the local dictionary, then globals, then builtins. Used by module-level code and class bodies.", n: "Same name." },
-      { op: "STORE_NAME", eff: "… value → …", d: "Pop the top of the stack and store it in the local dictionary under a name.", n: "Same name." },
-      { op: "LOAD_GLOBAL", eff: "… → … value", d: "Inside a function, push a name that isn't local, like range or another function: globals, then builtins.", n: "3.11+ can also push a NULL for the call that follows; dis shows <b>(range + NULL)</b>." },
-      { op: "LOAD_DEREF", eff: "… → … value", d: "Push a variable that belongs to an enclosing function (a closure), through the 'cell' object that holds it.", n: "Same name." },
-      { op: "LOAD_ATTR", eff: "… obj → … obj.name", d: "Pop an object, push one of its attributes. Can check the instance, its class, and every parent class.", n: "Same name. 3.12+ also does method loading (see LOAD_METHOD)." },
-      { op: "POP_TOP", eff: "… value → …", d: "Throw away the top of the stack. Shows up after an expression whose result nobody uses, like a call on a line by itself.", n: "Same name." },
+      { op: "LOAD_SMALL_INT", eff: "… → … int", d: "Push an int from 0 to 255. The number is the instruction's argument, so there's nothing to look up." },
+      { op: "LOAD_CONST", eff: "… → … value", d: "Push a constant from the code object's table of constants. The argument is its index." },
+      { op: "LOAD_FAST_BORROW", eff: "… → … value", d: "Push a local variable. The argument is its slot number, chosen by the compiler. No name lookup at all, and no updating the object's reference count." },
+      { op: "LOAD_FAST", eff: "… → … value", d: "The same, but it does update the reference count. The compiler uses it when it can't prove borrowing is safe." },
+      { op: "LOAD_FAST_BORROW_LOAD_FAST_BORROW", eff: "… → … a, b", d: "Two LOAD_FAST_BORROWs fused into one. The argument packs both slot numbers, 4 bits each. Plain LOAD_FAST_LOAD_FAST exists too." },
+      { op: "STORE_FAST", eff: "… value → …", d: "Pop the top of the stack into a local variable's slot." },
+      { op: "STORE_FAST_LOAD_FAST", eff: "… value → … other", d: "A STORE_FAST and a load fused into one. The argument packs both slot numbers." },
+      { op: "LOAD_FAST_AND_CLEAR", eff: "… → … old", d: "Move a slot's value onto the stack and empty the slot, pushing NULL if it was already empty. Comprehensions use it to save a variable they're about to reuse." },
+      { op: "LOAD_NAME", eff: "… → … value", d: "Push a variable by looking up its name: the local dictionary, then globals, then builtins. Used by module-level code and class bodies." },
+      { op: "STORE_NAME", eff: "… value → …", d: "Pop the top of the stack and store it in the local dictionary under a name." },
+      { op: "LOAD_GLOBAL", eff: "… → … value", d: "Inside a function, push a name that isn't local, like range or another function: globals, then builtins. When a call follows, it pushes a NULL too; dis shows (range + NULL)." },
+      { op: "LOAD_DEREF", eff: "… → … value", d: "Push a variable that belongs to an enclosing function (a closure), through the 'cell' object that holds it." },
+      { op: "LOAD_ATTR", eff: "… obj → … obj.name", d: "Pop an object, push one of its attributes. Can check the instance, its class, and every parent class. For a method call, it pushes the method and self; dis shows (append + NULL|self)." },
+    ] },
+    { group: "Moving things on the stack", ops: [
+      { op: "POP_TOP", eff: "… value → …", d: "Throw away the top of the stack. Shows up after an expression whose result nobody uses, like a call on a line by itself." },
+      { op: "PUSH_NULL", eff: "… → … NULL", d: "Push an empty marker, which isn't a Python value. CALL expects a self or a NULL right after the function." },
+      { op: "SWAP", eff: "… a, …, b → … b, …, a", d: "Swap the top of the stack with the value further down that the argument names. SWAP 2 swaps the top two." },
     ] },
     { group: "Math and comparisons", ops: [
-      { op: "BINARY_ADD", eff: "… a, b → … a+b", d: "Pop two values, add them, push the result. There's one of these for each operator: BINARY_SUBTRACT, BINARY_MULTIPLY, and so on.", n: "3.11+: <b>BINARY_OP</b>, one instruction for every operator, with the operator in its argument: <b>BINARY_OP 0 (+)</b>." },
-      { op: "INPLACE_ADD", eff: "… a, b → … a+=b", d: "The += version. For mutable things like lists it changes a in place; for ints and strings it makes a new object. The next instruction stores the result.", n: "3.11+: <b>BINARY_OP 13 (+=)</b>." },
-      { op: "COMPARE_OP", eff: "… a, b → … a<op>b", d: "Pop two values, compare them, push True or False. The argument picks the comparison: ==, <, >=, and so on.", n: "Same name. In 3.13+, the argument can also say 'turn the result into a bool,' shown as <b>bool(==)</b>." },
-      { op: "IS_OP", eff: "… a, b → … a is b", d: "Pop two values and push whether they're the same object. With argument 1 it's is not.", n: "Same name." },
-      { op: "CONTAINS_OP", eff: "… a, b → … a in b", d: "Pop two values and push whether a is in b. With argument 1 it's not in.", n: "Same name." },
+      { op: "BINARY_OP", eff: "… a, b → … a<op>b", d: "Pop two values, apply an operator, push the result. One instruction for every binary operator; the argument says which, like 0 for + and 13 for +=. For += on mutable things like lists, it changes a in place." },
+      { op: "COMPARE_OP", eff: "… a, b → … a<op>b", d: "Pop two values, compare them, push the answer. The argument picks the comparison. dis shows bool(==) when the result is guaranteed to be a real bool." },
+      { op: "IS_OP", eff: "… a, b → … a is b", d: "Pop two values and push whether they're the same object. With argument 1 it's is not." },
+      { op: "CONTAINS_OP", eff: "… a, b → … a in b", d: "Pop two values and push whether a is in b. With argument 1 it's not in." },
+      { op: "TO_BOOL", eff: "… value → … bool(value)", d: "Turn the top of the stack into True or False, before a jump that needs one." },
     ] },
     { group: "Jumps and loops", ops: [
-      { op: "POP_JUMP_IF_FALSE", eff: "… value → …", d: "Pop a value. If it's false, jump to the target; otherwise carry on. This is how if works.", n: "Same name (3.11 briefly split it into forward and backward versions). 3.14 follows it with <b>NOT_TAKEN</b>, which does nothing but mark the branch for debuggers." },
-      { op: "JUMP_FORWARD", eff: "(no change)", d: "Skip ahead past some instructions. Shows up when an if has to jump over its else.", n: "Same name." },
-      { op: "JUMP_ABSOLUTE", eff: "(no change)", d: "Jump to an exact offset. In a loop, it's the jump back to the top.", n: "3.11+: <b>JUMP_BACKWARD</b>, which counts backward from where it is." },
-      { op: "GET_ITER", eff: "… obj → … iter(obj)", d: "Pop something you can loop over and push an iterator for it. Every for loop starts with one.", n: "Same name." },
-      { op: "FOR_ITER", eff: "… iter → … iter, item", d: "Ask the iterator on top for its next item and push it. When it runs out, pop the iterator and jump past the loop.", n: "Same name. 3.12+ ends loops with <b>END_FOR</b>, and 3.14 adds <b>POP_ITER</b>." },
+      { op: "POP_JUMP_IF_FALSE", eff: "… value → …", d: "Pop a value. If it's false, jump to the target; otherwise carry on. This is how if works." },
+      { op: "NOT_TAKEN", eff: "(no change)", d: "Does nothing. It marks the path where a jump wasn't taken, so tools like coverage can see which way the branch went." },
+      { op: "JUMP_FORWARD", eff: "(no change)", d: "Skip ahead past some instructions. Shows up when an if has to jump over its else." },
+      { op: "JUMP_BACKWARD", eff: "(no change)", d: "Jump back to an earlier instruction. In a loop, it's the jump to the top. Also where the interpreter checks for interrupts like Ctrl-C." },
+      { op: "GET_ITER", eff: "… obj → … iter(obj)", d: "Pop something you can loop over and push an iterator for it. Every for loop starts with one." },
+      { op: "FOR_ITER", eff: "… iter → … iter, item", d: "Ask the iterator on top for its next item and push it. When it runs out, jump past the END_FOR to the POP_ITER after it." },
+      { op: "END_FOR", eff: "… value → …", d: "Marks the end of a loop. FOR_ITER jumps over it, so in the loops on this page it never runs." },
+      { op: "POP_ITER", eff: "… iter → …", d: "Pop the used-up iterator when a loop finishes." },
     ] },
     { group: "Functions and calls", ops: [
-      { op: "MAKE_FUNCTION", eff: "… code, name → … function", d: "Pop a code object and a name and build a function object. This is what def does when its line runs.", n: "3.11+ no longer pushes the name first; the code object carries it." },
-      { op: "CALL_FUNCTION", eff: "… f, arg1, …, argN → … result", d: "Pop N arguments and the function under them, and call it. A Python function gets a new frame on the call stack; a built-in one, written in C, doesn't.", n: "3.11+: <b>CALL</b>." },
-      { op: "CALL_FUNCTION_KW", eff: "… f, args, (names) → … result", d: "A call with keyword arguments, like print_stack(limit=3). The tuple on top of the stack lists the keyword names; their values sit just below it.", n: "3.11 and 3.12: <b>KW_NAMES</b> followed by <b>CALL</b>. 3.13+: <b>CALL_KW</b>." },
-      { op: "LOAD_METHOD", eff: "… obj → … method, obj", d: "Like LOAD_ATTR, for obj.method() calls. Skips building a 'bound method' object.", n: "3.12+: folded into <b>LOAD_ATTR</b>." },
-      { op: "CALL_METHOD", eff: "… method, obj, args → … result", d: "Call a method loaded by LOAD_METHOD.", n: "3.11+: <b>CALL</b>." },
-      { op: "RETURN_VALUE", eff: "… value → (frame ends)", d: "Pop the top of the stack and return it. The frame comes off the call stack and the value is pushed onto the caller's stack.", n: "Same name. 3.12 and 3.13 also had <b>RETURN_CONST</b> for returning a constant directly; 3.14 removed it again." },
+      { op: "MAKE_FUNCTION", eff: "… code → … function", d: "Pop a code object and build a function object. This is what def does when its line runs." },
+      { op: "CALL", eff: "… f, NULL, arg1, …, argN → … result", d: "Pop N arguments, a self or NULL, and the function under them, and call it. A Python function gets a new frame on the call stack; a built-in one, written in C, doesn't." },
+      { op: "CALL_KW", eff: "… f, NULL, args, (names) → … result", d: "A call with keyword arguments, like print_stack(limit=3). The tuple on top of the stack lists the keyword names; their values sit just below it." },
     ] },
     { group: "Building things", ops: [
-      { op: "BUILD_LIST", eff: "… item1, …, itemN → … [items]", d: "Pop N items and push a new list of them. With 0, it pushes an empty list.", n: "Same name." },
-      { op: "LIST_APPEND", eff: "… list, …, value → … list, …", d: "Pop a value and append it to a list further down the stack. List comprehensions use it.", n: "Same name." },
-      { op: "BUILD_TUPLE", eff: "… item1, …, itemN → … (items)", d: "Pop N items and push a tuple of them. Also BUILD_MAP for dicts and BUILD_SET for sets.", n: "Same name." },
+      { op: "BUILD_LIST", eff: "… item1, …, itemN → … [items]", d: "Pop N items and push a new list of them. With 0, it pushes an empty list." },
+      { op: "LIST_APPEND", eff: "… list, …, value → … list, …", d: "Pop a value and append it to a list further down the stack. List comprehensions use it." },
+      { op: "BUILD_TUPLE", eff: "… item1, …, itemN → … (items)", d: "Pop N items and push a tuple of them. Also BUILD_MAP for dicts and BUILD_SET for sets." },
     ] },
-    { group: "Only in 3.11 and later", ops: [
-      { op: "RESUME", eff: "(no change)", d: "The first instruction of every function. The interpreter uses it to check for things like tracing and interrupts when a frame starts or resumes.", n: "3.11+." },
-      { op: "BINARY_OP", eff: "… a, b → … a<op>b", d: "One instruction for every binary operator; the argument says which. Replaced BINARY_ADD, INPLACE_ADD, and the rest.", n: "3.11+." },
-      { op: "CALL", eff: "… f, NULL/self, args → … result", d: "One instruction for every kind of call. Replaced CALL_FUNCTION and CALL_METHOD.", n: "3.11+." },
-      { op: "TO_BOOL", eff: "… value → … bool(value)", d: "Turn the top of the stack into True or False, before a jump that needs one.", n: "3.13+." },
+    { group: "When something goes wrong", ops: [
+      { op: "RERAISE", eff: "… exception → (unwinds)", d: "Raise the exception again after cleaning up. The ExceptionTable under a listing says where to jump when an instruction in a range raises; on the normal path it costs nothing." },
     ] },
   ];
   // "… a, b → … a+b" drawn as two little stacks, top on the right.
@@ -2017,73 +2097,17 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     const query = q.trim().toUpperCase();
     let hits = 0;
     primerEl.innerHTML = PRIMER.map((g) => {
-      const ops = g.ops.filter((o) => !query || o.op.includes(query) || o.d.toUpperCase().includes(query) || o.n.toUpperCase().includes(query));
+      const ops = g.ops.filter((o) => !query || o.op.includes(query) || o.d.toUpperCase().includes(query));
       hits += ops.length;
       if (!ops.length) return "";
       return `<div><h3>${esc(g.group)}</h3></div><div class="ops">${ops.map((o) =>
-        `<div class="op-card${SEEN.has(o.op) ? " seen" : ""}"><span class="nm">${o.op}</span><span class="eff2" aria-label="${esc(o.eff)}">${effHtml(o.eff)}</span><span>${esc(o.d)}</span><span class="newer">${o.n}</span></div>`).join("")}</div>`;
+        `<div class="op-card${SEEN.has(o.op) ? " seen" : ""}"><span class="nm">${wrapOp(o.op)}</span><span class="eff2" aria-label="${esc(o.eff)}">${effHtml(o.eff)}</span><span>${esc(o.d)}</span></div>`).join("")}</div>`;
     }).join("") || `<p class="no-hits">No instruction matches “${esc(q)}”.</p>`;
   };
   $("op-filter").addEventListener("input", (e) => renderPrimer(e.target.value));
   renderPrimer("");
 
-  // ---------- 3.10 vs 3.14 ----------
-  const NEW = ["RESUME", "LOAD_FAST_BORROW_LOAD_FAST_BORROW", "LOAD_FAST_BORROW", "LOAD_SMALL_INT", "NOT_TAKEN", "BINARY_OP",
-    "CALL", "JUMP_BACKWARD", "END_FOR", "POP_ITER", "LOAD_FAST_AND_CLEAR", "SWAP", "STORE_FAST_LOAD_FAST", "RERAISE", "bool(==)", "+ NULL"];
-  const CMP = [
-    { key: "add", label: "add_two_numbers" },
-    { key: "if", label: "equals_five" },
-    { key: "loop", label: "looping_sum" },
-    { key: "comp", label: "compy", note: "range(0, 3) here, to match the step-through" },
-  ];
-  const DIFFS = {
-    add: [
-      ["RESUME", "3.11+", "Every function now starts with it. It's where the interpreter checks for tracing and interrupts as a frame starts. Does nothing to the stack."],
-      ["LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (a, b)", "3.13+ / 3.14", "Two loads fused into one instruction, a <em>superinstruction</em>: one trip through the loop instead of two. The argument packs both slot numbers. BORROW means it skips the reference-count bookkeeping."],
-      ["BINARY_OP 0 (+)", "3.11+", "One instruction for every operator. The argument says which one: 0 is +."],
-      ["No byte offsets", "3.13+", "dis hides the offsets now. Pass show_offsets=True to see them."],
-    ],
-    if: [
-      ["LOAD_SMALL_INT 5", "3.14", "Small ints go straight in the argument, so there's no trip to the constants table."],
-      ["COMPARE_OP 88 (bool(==))", "3.13+", "The argument encodes the comparison <em>and</em> 'make sure the result is a real bool,' so the jump after it can trust it."],
-      ["POP_JUMP_IF_FALSE 3 (to L1)", "3.12+ / 3.13+", "The argument is now a relative distance, counted in instructions (3.12+), and dis names jump targets with labels like L1 instead of offsets (3.13+)."],
-      ["NOT_TAKEN", "3.14", "Does nothing. It marks the path where the jump wasn't taken, so tools like coverage can see which way each branch went."],
-    ],
-    loop: [
-      ["LOAD_GLOBAL 1 (range + NULL)", "3.11+", "Pushes range and an empty placeholder that the call convention expects in the 'self' position."],
-      ["CALL 3", "3.11+", "Replaces CALL_FUNCTION and CALL_METHOD."],
-      ["BINARY_OP 13 (+=)", "3.11+", "INPLACE_ADD became BINARY_OP with argument 13."],
-      ["JUMP_BACKWARD 13 (to L1)", "3.11+", "Replaces JUMP_ABSOLUTE. Backward jumps are also where the interpreter checks for interrupts like Ctrl-C."],
-      ["END_FOR, POP_ITER", "3.12+ / 3.14", "Cleanup when the loop finishes, split out of FOR_ITER."],
-    ],
-    comp: [
-      ["No <listcomp> code object", "3.12+", "The comprehension is <em>inlined</em> (PEP 709): no separate function, no extra frame, no MAKE_FUNCTION or call. In the step-through, 3.10 pushes a whole new frame for it."],
-      ["LOAD_FAST_AND_CLEAR, SWAP, STORE_FAST 0 (i)", "3.12+", "Saves any i you already had and puts it back afterward, so the comprehension's i still doesn't leak out. Same behavior as 3.10, no frame needed."],
-      ["ExceptionTable, RERAISE", "3.11+", "If something goes wrong mid-comprehension, this table says where to jump to restore i. On the normal path it costs nothing: no instructions run for it."],
-    ],
-  };
-  let cmp = CMP[0];
-  const renderCmp = () => {
-    $("cmp").innerHTML = CMP.map((c, i) => `<button type="button" data-i="${i}" aria-pressed="${c === cmp}"><code>${c.label}</code></button>`).join("");
-    renderSrc($("cmp-src"), D310.walk[cmp.key].source.split("\n\n")[0]);  // just the def, which is all the listings cover
-    $("cmp-note").textContent = cmp.note || "";
-    renderText($("cmp-old"), D310.text[cmp.key]);
-    renderText($("cmp-new"), D314.text[cmp.key], NEW, "new");
-    const countOps = (t) => t.split("\n").filter((l) => !/^(Disassembly|ExceptionTable)/.test(l) && /\b[A-Z][A-Z_]{3,}\b/.test(l)).length;
-    const n310 = countOps(D310.text[cmp.key]);
-    const n314 = countOps(D314.text[cmp.key]);
-    $("cmp-count").textContent = `${n314} instructions (3.10: ${n310})`;
-    $("diffs").innerHTML = DIFFS[cmp.key].map(([t, when, d]) =>
-      `<div class="card"><b>${esc(t)}</b><span class="when">${esc(when)}</span><span>${d}</span></div>`).join("");
-  };
-  $("cmp").addEventListener("click", (e) => {
-    const b = e.target.closest("button");
-    if (!b) return;
-    cmp = CMP[+b.dataset.i];
-    renderCmp();
-  });
-  renderCmp();
-
+  // ---------- specialization ----------
   renderSrc($("ad-src"), `def looping_sum(start, end, increment):
     result = 0
     for item in range(start, end, increment):
