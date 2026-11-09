@@ -27,6 +27,7 @@
     --d-loc: #2a78d6;
     --d-glob: #eb6834;
     --d-blt: #1baf7a;
+    --on-hit: #FFFFFF;
     --display: Georgia, "Times New Roman", serif;
     --body: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
     --mono: ui-monospace, Menlo, Consolas, monospace;
@@ -55,9 +56,11 @@
       --d-loc: #3987e5;
       --d-glob: #d95926;
       --d-blt: #199e70;
+      --on-hit: #0B2410;
     }
   }
   :root[data-theme="dark"] {
+    --on-hit: #0B2410;
     color-scheme: dark;
     --ground: #15131C;
     --surface: #1E1B28;
@@ -96,7 +99,7 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 52px;
   }
-  .page > *, .anatomy, .pipeline, .picker, .callout > * { min-width: 0; }
+  .page > *, .picker, .callout > * { min-width: 0; }
   h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
   h1 { font-size: clamp(2.3rem, 7vw, 3.6rem); line-height: 1.02; }
   h2 { font-size: 1.7rem; line-height: 1.15; }
@@ -112,49 +115,6 @@
   section { display: grid; gap: 16px; min-width: 0; }
   header { display: grid; gap: 14px; }
   .lede { font-size: 1.15rem; max-width: 70ch; }
-  /* Opening picture: an instruction pointer steps down the bytecode while blocks go on and off a stack. */
-  .intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 14px 32px; align-items: center; }
-  .intro-text { display: grid; gap: 14px; }
-  .sm { width: 100%; height: auto; overflow: visible; }
-  .sm .bar { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
-  .sm .ln { stroke: var(--line); stroke-width: 5; stroke-linecap: round; }
-  .sm .well { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
-  .sm .loop { fill: none; stroke: var(--muted); stroke-width: 2; stroke-dasharray: 4 4; }
-  .sm .loop-tip { fill: var(--muted); }
-  .sm .hl { fill: none; stroke: var(--accent); stroke-width: 3; transform: translateY(50px); animation: sm-hl 10s infinite; }
-  .sm .va { fill: var(--d-loc); }
-  .sm .vb { fill: var(--tag); }
-  .sm .vc { fill: var(--hit); }
-  .sm .blk { stroke: var(--ink); stroke-width: 1.5; }
-  .sm .pa { animation: sm-a 10s infinite; }
-  .sm .pb { animation: sm-b 10s infinite; }
-  .sm .pc { opacity: 0; animation: sm-c 10s infinite; }
-  .sm .ring { fill: none; stroke: var(--hit); stroke-width: 2.5; }
-  @keyframes sm-hl {
-    0%, 17% { transform: translateY(0); opacity: 1; }
-    20%, 37% { transform: translateY(50px); }
-    40%, 57% { transform: translateY(100px); }
-    60%, 77% { transform: translateY(150px); opacity: 1; }
-    83%, 95% { transform: translateY(150px); opacity: 0; }
-    97% { transform: translateY(0); opacity: 0; }
-    100% { transform: translateY(0); opacity: 1; }
-  }
-  @keyframes sm-a {
-    0% { transform: translateY(-60px); opacity: 0; }
-    6%, 40% { transform: translateY(0); opacity: 1; }
-    47%, 100% { transform: translateY(0); opacity: 0; }
-  }
-  @keyframes sm-b {
-    0%, 20% { transform: translateY(-60px); opacity: 0; }
-    26%, 40% { transform: translateY(0); opacity: 1; }
-    47%, 100% { transform: translateY(42px); opacity: 0; }
-  }
-  @keyframes sm-c {
-    0%, 42% { transform: translate(0, 0); opacity: 0; }
-    48%, 62% { transform: translate(0, 0); opacity: 1; }
-    74%, 100% { transform: translate(70px, -160px); opacity: 0; }
-  }
-  @media (max-width: 760px) { .intro { grid-template-columns: minmax(0, 1fr); } .sm { max-width: 280px; justify-self: center; } }
   .prose { display: grid; gap: 10px; max-width: 72ch; }
   .prose ul, .prose ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
 
@@ -180,33 +140,8 @@
     padding: 18px 20px; display: grid; gap: 12px; align-content: start; min-width: 0;
   }
 
-  /* ---------- the big picture ---------- */
-  .pipeline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-items: stretch; }
-  .pipeline .stage { position: relative; }
-  .pipeline .stage + .stage::before {
-    content: "→"; position: absolute; left: -10px; top: 50%; transform: translate(-50%, -50%);
-    color: var(--muted); font-size: 1.1rem;
-  }
-  .pipeline pre { margin: 0; font: 0.78rem/1.45 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
-  @media (max-width: 760px) {
-    .pipeline { grid-template-columns: minmax(0, 1fr); gap: 22px; }
-    .pipeline .stage + .stage::before { content: "↓"; left: 50%; top: -12px; }
-  }
   .loop-sketch { background: var(--machine); color: var(--machine-ink); border-radius: 12px; padding: 14px 16px; font: 0.86rem/1.6 var(--mono); white-space: pre; overflow-x: auto; margin: 0; }
   .loop-sketch .c { color: var(--machine-muted); }
-
-  .anatomy { display: grid; gap: 14px; }
-  .anatomy .line {
-    background: var(--machine); color: var(--machine-ink); border-radius: 12px; padding: 16px;
-    font: 0.95rem/1.4 var(--mono); white-space: pre; overflow-x: auto;
-  }
-  .anatomy .line span { border-radius: 4px; cursor: help; }
-  .anatomy .line span[data-k] { outline: 1px dashed var(--machine-muted); outline-offset: 2px; }
-  .anatomy .line span.on { background: var(--tag); color: var(--tag-ink); outline-color: var(--tag); }
-  .anatomy ol { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
-  .anatomy li { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 12px; font-size: 0.92rem; display: grid; gap: 2px; cursor: default; }
-  .anatomy li.on { border-color: var(--tag-edge); box-shadow: 0 0 0 2px var(--tag) inset; }
-  .anatomy li b { font-family: var(--mono); font-size: 0.85rem; }
 
   /* ---------- walkthrough ---------- */
   .picker { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
@@ -391,22 +326,6 @@
   /* two kinds of stack */
   .ts-f { border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 12px; font: 700 0.85rem var(--mono); background: var(--surface); }
   .ts-f.top { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 35%, transparent); }
-  /* The two things called "the stack": a pile of frames, each holding its own pile of values. */
-  .stk2 { margin-bottom: 12px; }
-  .stk2 .dg { justify-items: center; }
-  .stk2 .dg-h { justify-self: stretch; font-size: 0.8rem; color: var(--ink); }
-  .stk2 .cs { border-top: 4px solid var(--accent); }
-  .stk2 .vs { border-top: 4px solid var(--tag); }
-  .stk2 .io { display: flex; gap: 22px; font: 0.76rem var(--mono); color: var(--muted); }
-  .stk2 .io b { font: 700 1.2rem/1 var(--body); color: var(--ink); margin-right: 4px; vertical-align: -0.1em; }
-  .stk2 .well { border: 2.5px solid var(--ink); border-top: 0; border-radius: 0 0 8px 8px; padding: 8px; display: flex; flex-direction: column; gap: 5px; width: min(100%, 15em); min-height: 10.5em; justify-content: flex-end; }
-  .stk2 .vs .well { width: min(100%, 8em); }
-  .stk2 .fr { border: 1.5px solid var(--line); border-radius: 8px; padding: 5px 8px; background: var(--surface); font: 700 0.76rem var(--mono); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .stk2 .fr.top { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 35%, transparent); }
-  .stk2 .mini { display: flex; flex-direction: column-reverse; gap: 2px; padding: 2px 3px 3px; border: 1.5px solid var(--tag-edge); border-top: 0; border-radius: 0 0 4px 4px; min-height: 18px; justify-content: flex-start; }
-  .stk2 .mini i { display: block; width: 14px; height: 6px; border-radius: 2px; background: var(--tag); }
-  .stk2 .well > .bx { display: block; text-align: center; }
-
   /* code object, opened up */
   .consts { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
   .consts > .bx { align-self: start; }
@@ -564,6 +483,82 @@
   .faq-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 4px 16px 18px; min-width: 0; }
   .faq-body > h4 { font: 400 1.1rem/1.2 var(--display); margin: 8px 0 0; }
 
+  /* ---------- layers: one new idea per picture, new things in color, earlier ones grey ---------- */
+  .layers { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .layer-group { margin-top: 18px; }
+  .layer { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 14px; min-width: 0; }
+  .layer-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .layer-head h3 { flex: 1 1 14em; min-width: 0; }
+  .layer-head .btn { font-size: 0.8rem; padding: 4px 12px; }
+  .num { display: inline-grid; place-items: center; min-width: 1.9em; height: 1.9em; padding: 0 4px; border-radius: 999px; background: var(--ink); color: var(--ground); font: 700 0.9rem var(--body); flex: none; }
+  h2 .num { vertical-align: 0.2em; margin-right: 10px; }
+  .layer-body { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 18px; align-items: start; }
+  .layer-body > * { min-width: 0; }
+  .layer-side { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  @media (max-width: 860px) { .layer-body { grid-template-columns: minmax(0, 1fr); } .scene { max-width: 420px; } }
+  .scene { width: 100%; height: auto; display: block; overflow: visible; transition: opacity 0.35s; }
+  .scene.fade { opacity: 0; }
+  .scene g { transform-box: fill-box; transform-origin: center; transition: transform 0.65s cubic-bezier(0.3, 0.7, 0.3, 1), opacity 0.45s; }
+  .scene.instant g, .scene g.snap { transition: none; }
+  .scene .bar { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+  .scene .bar.old { fill: var(--ground); stroke: var(--line); }
+  .scene .lbl { font-family: var(--mono); font-weight: 700; fill: var(--ink); }
+  .scene .lbl.old { font-weight: 400; fill: var(--muted); }
+  .scene .targ.a { fill: var(--d-loc); font-weight: 700; }
+  .scene .targ.b { fill: var(--tag-edge); font-weight: 700; }
+  .scene .hl { fill: none; stroke: var(--accent); stroke-width: 3; }
+  .scene .hl.old { stroke: var(--muted); stroke-width: 2; }
+  .scene .well { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+  .scene .well.old { stroke: var(--muted); stroke-width: 2; }
+  .scene .chip { stroke: var(--ink); stroke-width: 1; }
+  .scene .chip.old { opacity: 0.5; }
+  .scene .ring { fill: none; stroke: var(--hit); stroke-width: 2.5; }
+  .scene .blk { stroke: var(--ink); stroke-width: 1.5; }
+  .scene .v-a { fill: var(--d-loc); }
+  .scene .v-b { fill: var(--tag); }
+  .scene .v-c { fill: var(--hit); }
+  .scene .v-d { fill: var(--d-glob); }
+  .scene .bt { font-family: var(--mono); font-weight: 700; }
+  .scene .on-a, .scene .on-d { fill: #FFFFFF; }
+  .scene .on-b { fill: var(--tag-ink); }
+  .scene .on-c { fill: var(--on-hit); }
+  .scene .srcx { font: 600 20px var(--mono); fill: var(--ink); }
+  .scene .slotbox { fill: var(--slot); stroke: var(--ink); stroke-width: 1.5; }
+  .scene .slotbox.old { stroke: var(--line); }
+  .scene .sidx { font: 11px var(--mono); fill: var(--muted); }
+  .scene .sname { font: 700 15px var(--mono); fill: var(--ink); }
+  .scene .sname.old { font-weight: 400; fill: var(--muted); }
+  .scene .jump { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+  .scene .jhead { fill: var(--accent); }
+  .scene .jump.old { stroke: var(--muted); stroke-width: 1.5; }
+  .scene .jhead.old { fill: var(--muted); }
+  .scene .exitarr { fill: none; stroke: var(--hit); stroke-width: 2.5; }
+  .scene .exithead { fill: var(--hit); }
+  .scene .exitarr.old { stroke: var(--muted); }
+  .scene .exithead.old { fill: var(--muted); }
+  .scene .card { fill: var(--surface); stroke: var(--ink); stroke-width: 2; }
+  .scene .card.old { stroke: var(--muted); stroke-width: 1.5; }
+  .scene .cardt { font: 700 13px var(--mono); fill: var(--ink); }
+  .scene .cardt.old { font-weight: 400; fill: var(--muted); }
+  .code .tint { border-radius: 3px; padding: 0 2px; margin: 0 -2px; color: var(--machine-ink); }
+  .code .tint.a { background: color-mix(in oklab, var(--d-loc) 65%, transparent); }
+  .code .tint.b { background: color-mix(in oklab, var(--tag) 55%, transparent); }
+  .code .tint.c { background: color-mix(in oklab, var(--hit) 55%, transparent); }
+  .code .tint.r { box-shadow: inset 0 0 0 1.5px var(--hit); }
+
+  /* reading one dis line, one piece per card */
+  .reads { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 10px; }
+  .read { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 10px; background: var(--ground); align-content: start; min-width: 0; }
+  .read h4 { margin: 0; font: 700 0.9rem var(--body); display: flex; gap: 8px; align-items: center; }
+  .read h4 .num { font-size: 0.72rem; }
+  .dline { background: var(--machine); color: var(--machine-ink); border-radius: 8px; padding: 8px 10px; font: 0.68rem/1.5 var(--mono); white-space: pre; overflow-x: auto; }
+  .dline .lit, .crow .lit { background: var(--tag); color: var(--tag-ink); border-radius: 3px; padding: 0 2px; margin: 0 -2px; }
+  .dline.src .ln { display: block; }
+  .dline.src .ln.mark { background: color-mix(in oklab, var(--tag) 30%, transparent); }
+  .crow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .crow .lbl { font-size: 0.72rem; color: var(--muted); margin-right: 2px; }
+  .opbar { font: 700 0.78rem var(--mono); border: 1.5px solid var(--ink); border-radius: 6px; padding: 5px 10px; background: var(--surface); }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
@@ -575,102 +570,18 @@
   <header>
     <div class="label">Session 6 · How Python runs your code</div>
     <h1>The Stack Machine</h1>
-    <div class="intro">
-      <div class="intro-text">
-      <p class="lede">Before Python runs your code, it compiles it into <strong>bytecode</strong>: a list of tiny instructions like <code>LOAD_SMALL_INT</code> and <code>BINARY_OP</code>. Then a loop in the interpreter runs those instructions one at a time. Almost every one of them does the same kind of thing: it pushes values onto a <strong>stack</strong>, or pops them off. Here's what that looks like.</p>
-      <p class="muted" style="max-width:72ch">Every listing below is real output from <code>dis.dis()</code> in <strong>Python 3.14.3</strong>. To run the examples yourself, start <code>python3.14</code> and type <code>import dis</code> first; every example assumes you have. Bytecode changes from one Python version to the next, so any other version will print something a little different.</p>
-      </div>
-      <svg class="sm" viewBox="0 0 320 230" role="img" aria-label="An animation: a highlight steps down four instructions, one at a time, then loops back to the top. The first instruction pushes a blue block onto a stack, the second pushes a yellow block on top of it, the third pops both and pushes one green block, and the fourth pops the green block off the stack and out.">
-        <path class="loop" d="M30 197 H16 V31 H24"/>
-        <path class="loop-tip" d="M24 25 L33 31 L24 37 Z"/>
-        <g>
-          <rect class="bar" x="40" y="14" width="140" height="34" rx="8"/>
-          <rect class="va blk" x="52" y="22" width="18" height="18" rx="3"/>
-          <line class="ln" x1="82" y1="31" x2="160" y2="31"/>
-          <rect class="bar" x="40" y="64" width="140" height="34" rx="8"/>
-          <rect class="vb blk" x="52" y="72" width="18" height="18" rx="3"/>
-          <line class="ln" x1="82" y1="81" x2="150" y2="81"/>
-          <rect class="bar" x="40" y="114" width="140" height="34" rx="8"/>
-          <rect class="vc blk" x="52" y="122" width="18" height="18" rx="3"/>
-          <line class="ln" x1="82" y1="131" x2="166" y2="131"/>
-          <rect class="bar" x="40" y="164" width="140" height="34" rx="8"/>
-          <rect class="ring" x="53" y="173" width="16" height="16" rx="3"/>
-          <line class="ln" x1="82" y1="181" x2="140" y2="181"/>
-        </g>
-        <rect class="hl" x="37" y="11" width="146" height="40" rx="10"/>
-        <rect class="vc blk pc" x="222" y="168" width="76" height="34" rx="6"/>
-        <rect class="vb blk pb" x="222" y="126" width="76" height="34" rx="6"/>
-        <rect class="va blk pa" x="222" y="168" width="76" height="34" rx="6"/>
-        <path class="well" d="M212 70 V212 H308 V70"/>
-      </svg>
-    </div>
+    <p class="muted" style="max-width:72ch">Every listing below is real output from <code>dis.dis()</code> in <strong>Python 3.14.3</strong>. To run the examples yourself, start <code>python3.14</code> and type <code>import dis</code> first; every example assumes you have. Bytecode changes from one Python version to the next, so any other version will print something a little different.</p>
   </header>
 
-  <section aria-labelledby="how-h">
-    <h2 id="how-h">From source code to a running loop</h2>
-    <div class="pipeline">
-      <div class="card stage">
-        <div class="label">1 · You write</div>
-        <pre>def add_two_numbers(a, b):
-    return a + b</pre>
-      </div>
-      <div class="card stage">
-        <div class="label">2 · The compiler makes</div>
-        <p style="font-size:0.92rem">A <strong>code object</strong>: the instructions as bytes, plus a table of constants and a list of variable names.</p>
-      </div>
-      <div class="card stage">
-        <div class="label">3 · The bytecode instructions</div>
-        <pre>RESUME 0
-LOAD_FAST_BORROW_<wbr>LOAD_FAST_BORROW 1 (a, b)
-BINARY_OP 0 (+)
-RETURN_VALUE</pre>
-      </div>
-      <div class="card stage">
-        <div class="label">4 · The interpreter</div>
-        <p style="font-size:0.92rem">Runs one instruction, moves to the next, and repeats until something says <code>RETURN_VALUE</code>.</p>
-      </div>
-    </div>
-
-    <div class="prose">
-      <p>That interpreter is, at its heart, one enormous loop with a <code>switch</code> statement inside it: one <code>case</code> for every kind of instruction. In Python-flavored pseudocode:</p>
-    </div>
-    <pre class="loop-sketch"><span class="c"># the shape of CPython's main loop (the real one is C, in Python/ceval.c)</span>
-while True:
-    instruction = code[next_offset]
-    next_offset += instruction.size        <span class="c"># 2 bytes, plus any cache after it</span>
-    match instruction.name:
-        case "LOAD_FAST_BORROW": stack.push(slots[instruction.arg])
-        case "BINARY_OP":   right = stack.pop(); left = stack.pop(); stack.push(left + right)
-        case "RETURN_VALUE": return stack.pop()
-        ...                               <span class="c"># over 200 more cases</span></pre>
-
-    <div class="prose">
-      <p>Two different things in there are called "the stack":</p>
-    </div>
-    <div class="pair stk2">
-      <div class="dg cs" role="img" aria-label="The call stack: a pile of frames, add_three_numbers on top of caller on top of module. A call pushes a frame; a return pops it. Each frame holds its own small value stack.">
-        <div class="dg-h">The call stack</div>
-        <div class="io" aria-hidden="true"><span><b>↓</b>call</span><span><b>↑</b>return</span></div>
-        <div class="well" aria-hidden="true">
-          <div class="fr top">add_three_numbers<span class="mini"><i></i><i></i></span></div>
-          <div class="fr">caller<span class="mini"><i></i></span></div>
-          <div class="fr">&lt;module&gt;<span class="mini"></span></div>
-        </div>
-      </div>
-      <div class="dg vs" role="img" aria-label="The value stack: a pile of values, 2 on top of 1. LOAD_FAST_BORROW pushes a value; BINARY_OP pops two.">
-        <div class="dg-h">The value stack</div>
-        <div class="io" aria-hidden="true"><span><b>↓</b>LOAD_FAST_BORROW</span><span><b>↑</b>BINARY_OP</span></div>
-        <div class="well" aria-hidden="true">
-          <span class="bx hl">2</span>
-          <span class="bx">1</span>
-        </div>
-      </div>
-    </div>
+  <section aria-labelledby="layers-h">
+    <h2 id="layers-h">One idea at a time</h2>
+    <p class="cap">Each picture adds one thing, in color. What came before turns grey.</p>
+    <div class="layers" id="layers"></div>
   </section>
 
   <section aria-labelledby="walk-h">
-    <h2 id="walk-h">Step through it</h2>
-    <p class="cap">Pick a program, then step with → or <b>Next</b>. Click any row to jump there.</p>
+    <h2 id="walk-h"><span class="num">15</span>Everything together</h2>
+    <p class="cap">Every layer at once. Pick a program, then step with → or <b>Next</b>. Click any row to jump there.</p>
 
     <div class="picker">
       <div class="seg" id="prog" role="group" aria-label="Which program to step through"></div>
@@ -716,15 +627,6 @@ while True:
     </div>
   </section>
 
-  <section aria-labelledby="read-h">
-    <h2 id="read-h">How to read one line of <code>dis</code> output</h2>
-    <div class="cells" id="if-cells"></div>
-    <p class="cap">The line with <code>L1:</code>, taken apart. Hover over or tab to a piece.</p>
-    <div class="anatomy" id="anatomy">
-      <div class="line" id="anatomy-line" aria-hidden="true"></div>
-      <ol id="anatomy-keys"></ol>
-    </div>
-  </section>
 
   <section aria-labelledby="primer-h">
     <h2 id="primer-h">What the different <code>dis</code> commands mean</h2>
@@ -1116,6 +1018,8 @@ const CSRC = {"loadFast":[{"f":"bytecodes.c","n":282,"t":"        replicate(8) p
 const STACK_DEMO = {"source":"import traceback\n\ndef add_three_numbers(a, b, c):\n    traceback.print_stack(limit=3)  # just the 3 newest frames\n    return a + b + c\n\ndef caller():\n    return add_three_numbers(1, 2, 3)\n\ncaller()","output":"  File \"stack_demo.py\", line 10, in <module>\n    caller()\n  File \"stack_demo.py\", line 8, in caller\n    return add_three_numbers(1, 2, 3)\n  File \"stack_demo.py\", line 4, in add_three_numbers\n    traceback.print_stack(limit=3)  # just the 3 newest frames\n"};
 // Every example's code, with what it prints in the Python 3.14.3 REPL.
 const EX = {"if":{"src":"def equals_five(x):\n    if x == 5:\n        return True\n    else:\n        return False\n\ndis.dis(equals_five)","out":"  1           RESUME                   0\n\n  2           LOAD_FAST_BORROW         0 (x)\n              LOAD_SMALL_INT           5\n              COMPARE_OP              88 (bool(==))\n              POP_JUMP_IF_FALSE        3 (to L1)\n              NOT_TAKEN\n\n  3           LOAD_CONST               1 (True)\n              RETURN_VALUE\n\n  5   L1:     LOAD_CONST               2 (False)\n              RETURN_VALUE\n"},"add3":{"src":"def add_three_numbers(a, b, c):\n    traceback.print_stack(limit=3)  # just the 3 newest frames\n    return a + b + c\n\ndis.dis(add_three_numbers)","out":"  1           RESUME                   0\n\n  2           LOAD_GLOBAL              0 (traceback)\n              LOAD_ATTR                3 (print_stack + NULL|self)\n              LOAD_SMALL_INT           3\n              LOAD_CONST               1 (('limit',))\n              CALL_KW                  1\n              POP_TOP\n\n  3           LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (a, b)\n              BINARY_OP                0 (+)\n              LOAD_FAST_BORROW         2 (c)\n              BINARY_OP                0 (+)\n              RETURN_VALUE\n"},"loopFn":{"src":"def looping_sum(start, end, increment):\n    result = 0\n    for item in range(start, end, increment):\n        result += item\n    return result\n\ndis.dis(looping_sum)","out":"  1           RESUME                   0\n\n  2           LOAD_SMALL_INT           0\n              STORE_FAST               3 (result)\n\n  3           LOAD_GLOBAL              1 (range + NULL)\n              LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (start, end)\n              LOAD_FAST_BORROW         2 (increment)\n              CALL                     3\n              GET_ITER\n      L1:     FOR_ITER                11 (to L2)\n              STORE_FAST               4 (item)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 52 (result, item)\n              BINARY_OP               13 (+=)\n              STORE_FAST               3 (result)\n              JUMP_BACKWARD           13 (to L1)\n\n  3   L2:     END_FOR\n              POP_ITER\n\n  5           LOAD_FAST_BORROW         3 (result)\n              RETURN_VALUE\n"},"loopMod":{"src":"dis.dis(\n\"\"\"\nresult = 0\nfor item in range(start, end, increment):\n    result += item\n\"\"\"\n)","out":"  0           RESUME                   0\n\n  2           LOAD_SMALL_INT           0\n              STORE_NAME               0 (result)\n\n  3           LOAD_NAME                1 (range)\n              PUSH_NULL\n              LOAD_NAME                2 (start)\n              LOAD_NAME                3 (end)\n              LOAD_NAME                4 (increment)\n              CALL                     3\n              GET_ITER\n      L1:     FOR_ITER                12 (to L2)\n              STORE_NAME               5 (item)\n\n  4           LOAD_NAME                0 (result)\n              LOAD_NAME                5 (item)\n              BINARY_OP               13 (+=)\n              STORE_NAME               0 (result)\n              JUMP_BACKWARD           14 (to L1)\n\n  3   L2:     END_FOR\n              POP_ITER\n              LOAD_CONST               1 (None)\n              RETURN_VALUE\n"},"timeFn":{"src":"import time\n\nstart = time.perf_counter()\nlooping_sum(1, 10000000, 1)\nend = time.perf_counter()\n\nprint(end - start)","out":""},"timeMod":{"src":"import time\n\nstart = time.perf_counter()\nresult = 0\nfor item in range(1, 10000000, 1):\n    result += item\nprint(result)\nend = time.perf_counter()\n\nprint(end - start)","out":""},"loopy":{"src":"def loopy():\n    x = []\n    for i in range(0, 10):\n        x.append(i)\n    return x\n\ndis.dis(loopy)","out":"  1           RESUME                   0\n\n  2           BUILD_LIST               0\n              STORE_FAST               0 (x)\n\n  3           LOAD_GLOBAL              1 (range + NULL)\n              LOAD_SMALL_INT           0\n              LOAD_SMALL_INT          10\n              CALL                     2\n              GET_ITER\n      L1:     FOR_ITER                20 (to L2)\n              STORE_FAST               1 (i)\n\n  4           LOAD_FAST_BORROW         0 (x)\n              LOAD_ATTR                3 (append + NULL|self)\n              LOAD_FAST_BORROW         1 (i)\n              CALL                     1\n              POP_TOP\n              JUMP_BACKWARD           22 (to L1)\n\n  3   L2:     END_FOR\n              POP_ITER\n\n  5           LOAD_FAST_BORROW         0 (x)\n              RETURN_VALUE\n"},"compy":{"src":"def compy():\n    x = [i for i in range(0, 10)]\n    return x\n\ndis.dis(compy)","out":"   1           RESUME                   0\n\n   2           LOAD_GLOBAL              1 (range + NULL)\n               LOAD_SMALL_INT           0\n               LOAD_SMALL_INT          10\n               CALL                     2\n               GET_ITER\n               LOAD_FAST_AND_CLEAR      0 (i)\n               SWAP                     2\n       L1:     BUILD_LIST               0\n               SWAP                     2\n       L2:     FOR_ITER                 4 (to L3)\n               STORE_FAST_LOAD_FAST     0 (i, i)\n               LIST_APPEND              2\n               JUMP_BACKWARD            6 (to L2)\n       L3:     END_FOR\n               POP_ITER\n       L4:     STORE_FAST               1 (x)\n               STORE_FAST               0 (i)\n\n   3           LOAD_FAST_BORROW         1 (x)\n               RETURN_VALUE\n\n  --   L5:     SWAP                     2\n               POP_TOP\n\n   2           SWAP                     2\n               STORE_FAST               0 (i)\n               RERAISE                  0\nExceptionTable:\n  L1 to L4 -> L5 [2]\n"},"isDef":{"src":"def is_in_a_function():\n    two_hundred_fifty_seven = 257\n    two_hundred_fifty_seven_again = 257\n    return two_hundred_fifty_seven is two_hundred_fifty_seven_again","out":""},"isCall":{"src":"is_in_a_function()","out":"True\n"},"isDis":{"src":"dis.dis(is_in_a_function)","out":"  1           RESUME                   0\n\n  2           LOAD_CONST               0 (257)\n              STORE_FAST               0 (two_hundred_fifty_seven)\n\n  3           LOAD_CONST               0 (257)\n              STORE_FAST               1 (two_hundred_fifty_seven_again)\n\n  4           LOAD_FAST_BORROW_LOAD_FAST_BORROW 1 (two_hundred_fifty_seven, two_hundred_fifty_seven_again)\n              IS_OP                    0 (is)\n              RETURN_VALUE\n"},"isStr":{"src":"dis.dis('''\ntwo_hundred_fifty_seven = 257\ntwo_hundred_fifty_seven_again = 257\n\ntwo_hundred_fifty_seven is two_hundred_fifty_seven_again\n''')","out":"  0           RESUME                   0\n\n  2           LOAD_CONST               0 (257)\n              STORE_NAME               0 (two_hundred_fifty_seven)\n\n  3           LOAD_CONST               0 (257)\n              STORE_NAME               1 (two_hundred_fifty_seven_again)\n\n  5           LOAD_NAME                0 (two_hundred_fifty_seven)\n              LOAD_NAME                1 (two_hundred_fifty_seven_again)\n              IS_OP                    0 (is)\n              POP_TOP\n              LOAD_CONST               1 (None)\n              RETURN_VALUE\n"}};
+// The listings beside the layer pictures, from Python 3.14.3.
+const LAYER_EX = {"add": "  1           RESUME                   0\n\n  2           LOAD_FAST_BORROW         0 (a)\n              LOAD_SMALL_INT           1\n              BINARY_OP                0 (+)\n              RETURN_VALUE\n", "count": "  1           RESUME                   0\n\n  2           LOAD_GLOBAL              1 (range + NULL)\n              LOAD_FAST_BORROW         0 (n)\n              CALL                     1\n              GET_ITER\n      L1:     FOR_ITER                 3 (to L2)\n              STORE_FAST               1 (i)\n\n  3           JUMP_BACKWARD            5 (to L1)\n\n  2   L2:     END_FOR\n              POP_ITER\n              LOAD_CONST               0 (None)\n              RETURN_VALUE\n", "mod": "  0           RESUME                   0\n\n  2           LOAD_CONST               0 (<code object add_one at 0x102e4c030, file \"<dis>\", line 2>)\n              MAKE_FUNCTION\n              STORE_NAME               0 (add_one)\n\n  5           LOAD_SMALL_INT          10\n              LOAD_NAME                0 (add_one)\n              PUSH_NULL\n              LOAD_SMALL_INT           2\n              CALL                     1\n              BINARY_OP                0 (+)\n              STORE_NAME               1 (total)\n              LOAD_CONST               1 (None)\n              RETURN_VALUE\n\nDisassembly of <code object add_one at 0x102e4c030, file \"<dis>\", line 2>:\n  2           RESUME                   0\n\n  3           LOAD_FAST_BORROW         0 (a)\n              LOAD_SMALL_INT           1\n              BINARY_OP                0 (+)\n              RETURN_VALUE\n"};
 // A code object up close, run in Python 3.14.3.
 const CODEOBJ = {"source":"source = \"\"\"\ndef add_two_numbers(a, b):\n    return a + b\n\ntotal = add_two_numbers(2, 3)\n\"\"\"\nmodule_code = compile(source, \"<module>\", \"exec\")\nprint(module_code.co_consts)\n\nfunction_code = module_code.co_consts[0]\nprint(function_code.co_name)\nprint(function_code.co_varnames)\nprint(function_code.co_code)\n\nexec(module_code)\nprint(add_two_numbers.__code__ is function_code)\n","output":"(<code object add_two_numbers at 0x1062d0120, file \"<module>\", line 2>, None)\nadd_two_numbers\n('a', 'b')\nb'\\x80\\x00W\\x01,\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00#\\x00'\nTrue\n"};
 </script>
@@ -1475,38 +1379,8 @@ if (typeof module !== "undefined") module.exports = { buildSteps };
     });
   };
 
-  renderCells($("if-cells"), [{ ex: "if", head: "A function with an if" }]);
-
   renderSrc($("codeobj-src"), CODEOBJ.source);
   renderText($("codeobj-out"), CODEOBJ.output);
-
-  // ---------- anatomy of a dis line ----------
-  (() => {
-    const parts = [
-      { k: "line", t: "  5", label: "Source line", text: "Which line of your Python this instruction came from. Shown only on the first instruction of each line." },
-      { t: "   " },
-      { k: "target", t: "L1:", label: "Label", text: "Some other instruction can jump here. Look for it: here, a POP_JUMP_IF_FALSE that says (to L1). dis makes these labels up to help you read; the bytecode itself stores a distance." },
-      { t: "     " },
-      { k: "op", t: "LOAD_CONST", label: "Instruction (opname)", text: "What to do. The next section lists the common ones." },
-      { t: "               " },
-      { k: "arg", t: "2", label: "Argument", text: "A number the instruction uses, usually an index: here, constant number 2." },
-      { t: " " },
-      { k: "repr", t: "(False)", label: "What the argument means", text: "dis looks the index up for you. Constant 2 in this code object is False." },
-    ];
-    const line = $("anatomy-line");
-    const keys = $("anatomy-keys");
-    line.innerHTML = parts.map((p) => p.k ? `<span data-k="${p.k}">${esc(p.t)}</span>` : esc(p.t)).join("");
-    keys.innerHTML = parts.filter((p) => p.k).map((p) => `<li data-k="${p.k}" tabindex="0"><b>${esc(p.t.trim())}</b><span><strong>${p.label}.</strong> ${esc(p.text)}</span></li>`).join("");
-    const light = (k) => {
-      document.querySelectorAll("#anatomy [data-k]").forEach((el) => el.classList.toggle("on", el.dataset.k === k));
-    };
-    document.querySelectorAll("#anatomy [data-k]").forEach((el) => {
-      el.addEventListener("mouseenter", () => light(el.dataset.k));
-      el.addEventListener("focus", () => light(el.dataset.k));
-      el.addEventListener("mouseleave", () => light(null));
-      el.addEventListener("blur", () => light(null));
-    });
-  })();
 
   // ---------- walkthrough ----------
   const PROGRAMS = [
@@ -2172,6 +2046,443 @@ dis.dis(looping_sum, adaptive=True)   # after 100 calls
 `);
   renderText($("ad-old"), D314.text.loop);
   renderText($("ad-new"), D314.text.loopAdaptive, ["LOAD_GLOBAL_BUILTIN", "CALL_BUILTIN_CLASS", "FOR_ITER_RANGE", "BINARY_OP_ADD_INT", "RESUME_CHECK", "JUMP_BACKWARD_NO_JIT"], "new");
+
+  // ---------- layers: one new idea per picture ----------
+  // Each picture is a list of steps. A step moves parts of the picture (x, y, scale k, opacity o)
+  // and can light one line of the listing beside it. Steps loop while the picture is on screen.
+  (() => {
+    const host = $("layers");
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Bar layouts: five tall bars for add_one, shorter ones for the longer listings.
+    const LA = { x: 10, w: 176, h: 32, top: 12, step: 46, fs: 11.5, lx: 44 };
+    const LB = { x: 60, w: 190, h: 18, top: 8, step: 22, fs: 10, lx: 70 };
+    const LC = { x: 60, w: 190, h: 15, top: 6, step: 19, fs: 9.5, lx: 70 };
+    const midY = (L, i) => L.top + i * L.step + L.h / 2;
+    const bar = (L, i, { tone = "old", label, ltone = "old", chip, ctone = "old" } = {}) => {
+      const y = L.top + i * L.step;
+      let m = `<rect class="bar ${tone}" x="${L.x}" y="${y}" width="${L.w}" height="${L.h}" rx="${Math.min(8, L.h / 3)}"/>`;
+      if (chip === "r") m += `<rect class="chip ring ${ctone}" x="${L.x + 10}" y="${y + L.h / 2 - 7}" width="14" height="14" rx="3"/>`;
+      else if (chip) m += `<rect class="chip v-${chip} ${ctone}" x="${L.x + 9}" y="${y + L.h / 2 - 8}" width="16" height="16" rx="3"/>`;
+      if (label) m += `<text class="lbl ${ltone}" x="${L.lx}" y="${y + L.h / 2 + L.fs * 0.36}" style="font-size:${L.fs}px">${label}</text>`;
+      return m;
+    };
+    const hlMark = (L, tone) => `<rect class="hl ${tone}" x="${L.x - 4}" y="${L.top - 4}" width="${L.w + 8}" height="${L.h + 8}" rx="${Math.min(10, L.h / 2 + 2)}"/>`;
+    const on = (L, i) => ({ y: i * L.step, o: 1 });
+    const blk = (v, val, x, y, w, h) =>
+      `<rect class="blk v-${v}" x="${x}" y="${y}" width="${w}" height="${h}" rx="${h / 5}"/><text class="bt on-${v}" x="${x + w / 2}" y="${y + h / 2 + h * 0.17}" text-anchor="middle" style="font-size:${h * 0.5}px">${val}</text>`;
+    // The value stack: a well whose floor is at y = 236. A block sits at y = 202; each one above it is 34 higher.
+    const WELL = `M300 70 V236 H390 V70`;
+    const wellBlk = (v, val) => blk(v, val, 307, 202, 76, 30);
+    const up = (n) => -34 * n;
+
+    // ---------- the frame around each picture ----------
+    const makeScene = (el, w, h, label) => {
+      el.innerHTML = `<svg class="scene" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(label)}"></svg>`;
+      const svg = el.firstElementChild;
+      const parts = {};
+      const add = (id, markup) => { svg.insertAdjacentHTML("beforeend", `<g>${markup}</g>`); parts[id] = svg.lastElementChild; };
+      return { svg, parts, add };
+    };
+    const srcPanel = (side, head, text) => {
+      side.insertAdjacentHTML("beforeend", `<div class="code-panel"><div class="code-head"><span>${head}</span></div><div class="code src"></div></div>`);
+      renderSrc(side.lastElementChild.querySelector(".code"), text);
+    };
+    // A dis listing; returns its instruction lines, in order, so steps can light them.
+    const disPanel = (side, head, text, tints = []) => {
+      side.insertAdjacentHTML("beforeend", `<div class="code-panel"><div class="code-head"><span>${head}</span><span>highlighted: running</span></div><div class="code"></div></div>`);
+      const el = side.lastElementChild.querySelector(".code");
+      renderText(el, text);
+      const lines = [...el.querySelectorAll(".ln")].filter((l) => !l.classList.contains("blank") && !l.classList.contains("hdr"));
+      tints.forEach(([k, sub, cls]) => { lines[k].innerHTML = lines[k].innerHTML.replace(esc(sub), `<span class="tint ${cls}">${esc(sub)}</span>`); });
+      return lines;
+    };
+
+    const players = [];
+    const play = (art, sc, steps, lines) => {
+      const ids = Object.keys(sc.parts);
+      let cur = Object.fromEntries(ids.map((id) => [id, {}]));
+      let line = null;
+      const states = steps.map((st) => {
+        cur = { ...cur };
+        Object.entries(st.set || {}).forEach(([id, s]) => { cur[id] = { ...cur[id], ...s }; });
+        if (st.line !== undefined) line = st.line;
+        return { cur, st, line };
+      });
+      let i = 0, timer = null, visible = false, paused = still;
+      const show = (k, instant) => {
+        const { cur, st, line } = states[k];
+        sc.svg.classList.toggle("instant", !!instant);
+        ids.forEach((id) => {
+          const g = sc.parts[id], s = cur[id];
+          g.classList.toggle("snap", !!(st.snap && st.snap.includes(id)));
+          g.style.transform = `translate(${s.x || 0}px, ${s.y || 0}px) scale(${s.k ?? 1})`;
+          g.style.opacity = s.o ?? 1;
+        });
+        if (lines) lines.forEach((l, j) => l.classList.toggle("hot", j === line));
+        sc.svg.getBoundingClientRect();
+      };
+      const halt = () => { clearTimeout(timer); timer = null; };
+      const schedule = () => { halt(); if (!paused && visible) timer = setTimeout(next, states[i].st.d || 1100); };
+      function next() {
+        if (i === states.length - 1) {
+          sc.svg.classList.add("fade");
+          timer = setTimeout(() => { i = 0; show(0, true); sc.svg.classList.remove("fade"); schedule(); }, 380);
+          return;
+        }
+        i += 1;
+        show(i);
+        schedule();
+      }
+      // Without motion, rest on the last step: the picture with everything in it.
+      i = still ? states.length - 1 : 0;
+      show(i, true);
+      const btn = art.querySelector(".layer-head .btn");
+      const label = () => { btn.textContent = paused ? "Play" : "Pause"; btn.setAttribute("aria-pressed", String(paused)); };
+      btn.addEventListener("click", () => { paused = !paused; label(); schedule(); });
+      label();
+      players.push({ art, setVisible: (v) => { visible = v; schedule(); } });
+    };
+
+    // ---------- the frames ----------
+    const ADD_SRC = "def add_one(a):\n    return a + 1\n";
+    const ADD_HEAD = "Python source · called as <code>add_one(2)</code>";
+    const ADD_NAMES = ["RESUME", "LOAD_FAST_BORROW", "LOAD_SMALL_INT", "BINARY_OP", "RETURN_VALUE"];
+    const ADD_CHIPS = [null, "a", "b", "c", "r"];
+    const addBars = (sc, cfg) => ADD_NAMES.forEach((nm, i) => sc.add(`bar${i}`, bar(LA, i, cfg(i, nm))));
+    // The values: a's 2 (blue), the 1 (yellow), and their sum, 3 (green).
+    const addBlocks = (sc) => { sc.add("A", wellBlk("a", 2)); sc.add("B", wellBlk("b", 1)); sc.add("C", wellBlk("c", 3)); };
+    const MERGE = { x: -48, y: -172 };
+    const exitMark = (tone) => `<path class="exitarr ${tone}" d="M345 64 V24"/><path class="exithead ${tone}" d="M338 30 L345 18 L352 30 Z"/><text class="note${tone === "old" ? " old" : ""}" x="334" y="34" text-anchor="end" style="font:600 12px var(--body);fill:var(${tone === "old" ? "--muted" : "--ink"})">returned</text>`;
+
+    const FRAMES = [
+      { group: "The value stack" },
+      {
+        title: "Your function becomes a list of instructions",
+        aria: "The line return a + 1 shrinks away while five instruction bars slide out of it into a column.",
+        size: [400, 250],
+        side: (s) => srcPanel(s, "Python source", ADD_SRC),
+        build: (sc) => {
+          sc.add("src", `<text class="srcx" x="200" y="132" text-anchor="middle">return a + 1</text>`);
+          addBars(sc, () => ({ tone: "new" }));
+          const start = { src: { o: 1 } };
+          ADD_NAMES.forEach((_, i) => { start[`bar${i}`] = { x: 102, y: 97 - 46 * i, k: 0.25, o: 0 }; });
+          return [
+            { set: start, d: 1300 },
+            ...ADD_NAMES.map((_, i) => ({ set: { [`bar${i}`]: { x: 0, y: 0, k: 1, o: 1 }, ...(i === 0 ? { src: { o: 0 } } : {}) }, d: i === 4 ? 2600 : 420 })),
+          ];
+        },
+      },
+      {
+        title: "Python runs them one at a time, top to bottom",
+        aria: "A highlight steps down the five bars, one at a time, then starts over at the top.",
+        size: [400, 250],
+        side: (s) => srcPanel(s, "Python source", ADD_SRC),
+        build: (sc) => {
+          addBars(sc, () => ({}));
+          sc.add("hl", hlMark(LA, "new"));
+          return ADD_NAMES.map((_, i) => ({ set: { hl: on(LA, i) }, d: i === 4 ? 1800 : 900 }));
+        },
+      },
+      {
+        title: "Some instructions push a value onto a stack",
+        aria: "As the highlight reaches the second bar, a blue block marked 2 drops into a well on the right. At the third bar, a yellow block marked 1 drops on top of it.",
+        size: [400, 250],
+        side: (s) => srcPanel(s, ADD_HEAD, ADD_SRC),
+        build: (sc) => {
+          addBars(sc, (i) => ({ chip: i === 1 ? "a" : i === 2 ? "b" : null, ctone: "new" }));
+          sc.add("hl", hlMark(LA, "old"));
+          sc.add("well", `<path class="well new" d="${WELL}"/>`);
+          sc.add("A", wellBlk("a", 2));
+          sc.add("B", wellBlk("b", 1));
+          return [
+            { set: { hl: on(LA, 0), A: { y: -200, o: 0 }, B: { y: -200, o: 0 } }, d: 900 },
+            { set: { hl: on(LA, 1), A: { y: 0, o: 1 } }, d: 1200 },
+            { set: { hl: on(LA, 2), B: { y: up(1), o: 1 } }, d: 2600 },
+          ];
+        },
+      },
+      {
+        title: "An operation pops two values off and pushes one back",
+        aria: "At the fourth bar, the blue 2 and the yellow 1 lift out of the well, merge into one green block marked 3, and the green block drops back into the well.",
+        size: [400, 250],
+        side: (s) => srcPanel(s, ADD_HEAD, ADD_SRC),
+        build: (sc) => {
+          addBars(sc, (i) => ({ chip: ADD_CHIPS[i] === "r" ? null : ADD_CHIPS[i], ctone: i === 3 ? "new" : "old" }));
+          sc.add("hl", hlMark(LA, "old"));
+          sc.add("well", `<path class="well old" d="${WELL}"/>`);
+          addBlocks(sc);
+          return [
+            { set: { hl: on(LA, 2), A: { y: 0 }, B: { y: up(1) }, C: { ...MERGE, o: 0, k: 0.6 } }, d: 1100 },
+            { set: { hl: on(LA, 3), A: { x: -90, y: MERGE.y }, B: { x: -6, y: MERGE.y } }, d: 1000 },
+            { set: { A: { ...MERGE, o: 0 }, B: { ...MERGE, o: 0 }, C: { o: 1, k: 1 } }, d: 900 },
+            { set: { C: { x: 0, y: 0 } }, d: 2600 },
+          ];
+        },
+      },
+      {
+        title: "Returning pops the last value out of the function",
+        aria: "At the last bar, the green 3 lifts out of the top of the well and leaves, along an arrow marked returned.",
+        size: [400, 250],
+        side: (s) => srcPanel(s, ADD_HEAD, ADD_SRC),
+        build: (sc) => {
+          addBars(sc, (i) => ({ chip: ADD_CHIPS[i], ctone: i === 4 ? "new" : "old" }));
+          sc.add("hl", hlMark(LA, "old"));
+          sc.add("well", `<path class="well old" d="${WELL}"/>`);
+          sc.add("exit", exitMark("new"));
+          sc.add("C", wellBlk("c", 3));
+          return [
+            { set: { hl: on(LA, 3), C: { y: 0, o: 1 }, exit: { o: 0.25 } }, d: 1100 },
+            { set: { hl: on(LA, 4) }, d: 900 },
+            { set: { C: { y: -215, o: 0 }, exit: { o: 1 } }, d: 2600 },
+          ];
+        },
+      },
+      {
+        title: "Each instruction has a name, and dis prints them",
+        aria: "The same five bars, now labeled RESUME, LOAD_FAST_BORROW, LOAD_SMALL_INT, BINARY_OP, and RETURN_VALUE, run the whole function again while the same line lights up in the dis listing beside them.",
+        size: [400, 250],
+        side: (s) => {
+          srcPanel(s, "Python source", ADD_SRC + "\ndis.dis(add_one)");
+          return disPanel(s, "Output", LAYER_EX.add, [[1, "LOAD_FAST_BORROW", "a"], [2, "LOAD_SMALL_INT", "b"], [3, "BINARY_OP", "c"], [4, "RETURN_VALUE", "r"]]);
+        },
+        build: (sc) => {
+          addBars(sc, (i, nm) => ({ chip: ADD_CHIPS[i], label: nm, ltone: "new" }));
+          sc.add("hl", hlMark(LA, "old"));
+          sc.add("well", `<path class="well old" d="${WELL}"/>`);
+          sc.add("exit", exitMark("old"));
+          addBlocks(sc);
+          return [
+            { set: { hl: on(LA, 0), A: { y: -200, o: 0 }, B: { y: -200, o: 0 }, C: { ...MERGE, o: 0, k: 0.6 }, exit: { o: 0 } }, line: 0, d: 900 },
+            { set: { hl: on(LA, 1), A: { y: 0, o: 1 } }, line: 1 },
+            { set: { hl: on(LA, 2), B: { y: up(1), o: 1 } }, line: 2 },
+            { set: { hl: on(LA, 3), A: { x: -90, y: MERGE.y }, B: { x: -6, y: MERGE.y } }, line: 3, d: 900 },
+            { set: { A: { ...MERGE, o: 0 }, B: { ...MERGE, o: 0 }, C: { o: 1, k: 1 } }, d: 800 },
+            { set: { C: { x: 0, y: 0 } }, d: 1000 },
+            { set: { hl: on(LA, 4), C: { y: -215, o: 0 }, exit: { o: 1 } }, line: 4, d: 2400 },
+          ];
+        },
+      },
+      {
+        title: "A variable's value comes from a numbered slot",
+        aria: "A box labeled slot 0, a, holds a blue 2. At the LOAD_FAST_BORROW 0 bar, a copy of the 2 comes out of the slot and drops into the well. The slot still holds its 2.",
+        size: [400, 250],
+        side: (s) => {
+          srcPanel(s, ADD_HEAD, ADD_SRC + "\ndis.dis(add_one)");
+          return disPanel(s, "Output", LAYER_EX.add, [[1, "0 (a)", "a"]]);
+        },
+        build: (sc) => {
+          addBars(sc, (i, nm) => ({ chip: ADD_CHIPS[i], label: i === 1 ? `${nm} <tspan class="targ a">0</tspan>` : nm }));
+          sc.add("slot", `<rect class="slotbox new" x="200" y="18" width="86" height="46" rx="7"/><text class="sidx" x="207" y="33">0</text><text class="sname" x="208" y="54">a</text>${blk("a", 2, 234, 27, 44, 28)}`);
+          sc.add("hl", hlMark(LA, "old"));
+          sc.add("well", `<path class="well old" d="${WELL}"/>`);
+          sc.add("A", wellBlk("a", 2));
+          const inSlot = { x: -89, y: -176, k: 0.58 };
+          return [
+            { set: { hl: on(LA, 0), A: { ...inSlot, o: 0 } }, line: 0, d: 1000 },
+            { set: { hl: on(LA, 1), A: { o: 1 } }, line: 1, d: 600, snap: ["A"] },
+            { set: { A: { x: 0, y: 0, k: 1 } }, d: 2600 },
+          ];
+        },
+      },
+      {
+        title: "A small number rides inside the instruction itself",
+        aria: "At the LOAD_SMALL_INT 1 bar, a yellow 1 comes straight out of the bar, not out of a slot, and drops onto the blue 2 in the well.",
+        size: [400, 250],
+        side: (s) => {
+          srcPanel(s, ADD_HEAD, ADD_SRC + "\ndis.dis(add_one)");
+          return disPanel(s, "Output", LAYER_EX.add, [[2, "1", "b"]]);
+        },
+        build: (sc) => {
+          addBars(sc, (i, nm) => ({ chip: ADD_CHIPS[i], label: i === 1 ? `${nm} 0` : i === 2 ? `${nm} <tspan class="targ b">1</tspan>` : nm }));
+          sc.add("slot", `<rect class="slotbox old" x="200" y="18" width="86" height="46" rx="7"/><text class="sidx" x="207" y="33">0</text><text class="sname old" x="208" y="54">a</text>${blk("a", 2, 234, 27, 44, 28)}`);
+          sc.add("hl", hlMark(LA, "old"));
+          sc.add("well", `<path class="well old" d="${WELL}"/>`);
+          sc.add("A", wellBlk("a", 2));
+          sc.add("B", wellBlk("b", 1));
+          // Where the "1" sits in its bar, relative to the bottom of the well.
+          const inBar = { x: -194, y: -97, k: 0.3 };
+          return [
+            { set: { hl: on(LA, 1), A: { y: 0 }, B: { ...inBar, o: 0 } }, line: 1, d: 1000 },
+            { set: { hl: on(LA, 2), B: { o: 1 } }, line: 2, d: 600, snap: ["B"] },
+            { set: { B: { x: 0, y: up(1), k: 1 } }, d: 2600 },
+          ];
+        },
+      },
+      { group: "Jumps" },
+      {
+        title: "A jump sends Python somewhere other than the next instruction",
+        cap: "Running <code>equals_five(7)</code>",
+        aria: "Ten bars for equals_five. The highlight steps down to POP_JUMP_IF_FALSE, then an arrow carries it past three greyed-out bars to the second LOAD_CONST, and on to the last RETURN_VALUE.",
+        size: [330, 236],
+        side: (s) => {
+          srcPanel(s, "Python source", EX.if.src);
+          return disPanel(s, "Output", EX.if.out, [[4, "(to L1)", "a"], [8, "L1:", "a"]]);
+        },
+        build: (sc) => {
+          const names = ["RESUME", "LOAD_FAST_BORROW", "LOAD_SMALL_INT", "COMPARE_OP", "POP_JUMP_IF_FALSE", "NOT_TAKEN", "LOAD_CONST", "RETURN_VALUE", "LOAD_CONST", "RETURN_VALUE"];
+          names.forEach((nm, i) => sc.add(`bar${i}`, bar(LB, i, { label: nm })));
+          sc.add("hl", hlMark(LB, "old"));
+          const a = midY(LB, 4), b = midY(LB, 8);
+          sc.add("jump", `<path class="jump new" d="M252 ${a} C 312 ${a}, 312 ${b}, 261 ${b}"/><path class="jhead new" d="M252 ${b} l10 -5.5 v11 z"/>`);
+          const skipped = (o) => ({ bar5: { o }, bar6: { o }, bar7: { o } });
+          return [
+            { set: { hl: on(LB, 0), jump: { o: 0 }, ...skipped(1) }, line: 0, d: 700 },
+            ...[1, 2, 3, 4].map((i) => ({ set: { hl: on(LB, i) }, line: i, d: i === 4 ? 1100 : 650 })),
+            { set: { hl: on(LB, 8), jump: { o: 1 }, ...skipped(0.3) }, line: 8, d: 1500, snap: ["hl"] },
+            { set: { hl: on(LB, 9) }, line: 9, d: 2400 },
+          ];
+        },
+      },
+      {
+        title: "A loop is a jump backward",
+        cap: "Running <code>count_to(3)</code>",
+        aria: "Twelve bars for count_to. The highlight steps down to JUMP_BACKWARD, and an arrow on the left carries it back up to FOR_ITER, three times. Then it leaves the loop and runs to the end.",
+        size: [330, 236],
+        side: (s) => {
+          srcPanel(s, "Python source", "def count_to(n):\n    for i in range(n):\n        pass\n\ndis.dis(count_to)");
+          return disPanel(s, "Output", LAYER_EX.count, [[7, "(to L1)", "a"], [5, "L1:", "a"]]);
+        },
+        build: (sc) => {
+          const names = ["RESUME", "LOAD_GLOBAL", "LOAD_FAST_BORROW", "CALL", "GET_ITER", "FOR_ITER", "STORE_FAST", "JUMP_BACKWARD", "END_FOR", "POP_ITER", "LOAD_CONST", "RETURN_VALUE"];
+          names.forEach((nm, i) => sc.add(`bar${i}`, bar(LC, i, { label: nm })));
+          sc.add("hl", hlMark(LC, "old"));
+          const y5 = midY(LC, 5), y7 = midY(LC, 7), y9 = midY(LC, 9);
+          sc.add("back", `<path class="jump new" d="M58 ${y7} C 14 ${y7}, 14 ${y5}, 47 ${y5}"/><path class="jhead new" d="M57 ${y5} l-10 -5.5 v11 z"/>`);
+          sc.add("out", `<path class="jump old" d="M252 ${y5} C 300 ${y5}, 300 ${y9}, 261 ${y9}"/><path class="jhead old" d="M252 ${y9} l10 -5.5 v11 z"/>`);
+          const steps = [{ set: { hl: on(LC, 0), back: { o: 0.25 }, out: { o: 0 }, bar8: { o: 1 } }, line: 0, d: 600 }];
+          const go = (i, extra = {}, more = {}) => steps.push({ set: { hl: on(LC, i), ...extra }, line: i, d: 600, ...more });
+          [1, 2, 3, 4, 5, 6, 7].forEach((i) => go(i));
+          for (let pass = 0; pass < 3; pass++) {
+            go(5, { back: { o: 1 } }, { snap: ["hl"], d: 1000 });
+            if (pass < 2) { go(6, { back: { o: 0.25 } }); go(7); }
+          }
+          go(9, { back: { o: 0.25 }, out: { o: 1 }, bar8: { o: 0.3 } }, { snap: ["hl"], d: 1000 });
+          go(10);
+          go(11, {}, { d: 2400 });
+          return steps;
+        },
+      },
+      { group: "Calls" },
+      ...(() => {
+        const SRC = "dis.dis('''\ndef add_one(a):\n    return a + 1\n\ntotal = 10 + add_one(2)\n''')";
+        // The call stack: a wide well of frames. <module> sits at the bottom; add_one lands on it.
+        const CS = `M20 24 V244 H280 V24`;
+        const MOD_Y = 172, ADD_Y = 100;
+        const card = (y, name, tone, mini) =>
+          `<rect class="card ${tone}" x="30" y="${y}" width="240" height="66" rx="10"/><text class="cardt ${tone}" x="44" y="${y + 25}">${name}</text>` +
+          (mini ? `<path class="well ${mini}" d="M190 ${y + 7} V${y + 60} H262 V${y + 7}"/>` : "");
+        const side = (s) => { srcPanel(s, "Python source", SRC); return disPanel(s, "Output", LAYER_EX.mod); };
+        // Instruction lines in the listing: the module's are 0-12 (CALL is 8), add_one's are 13-17.
+        return [
+          {
+            title: "A call puts a new frame on top of the caller's",
+            aria: "A wide well holds one frame card, <module>. When the CALL line runs, a second card, add_one, drops onto it.",
+            size: [300, 250],
+            side,
+            build: (sc) => {
+              sc.add("cs", `<path class="well new" d="${CS}"/>`);
+              sc.add("mod", card(MOD_Y, "&lt;module&gt;", "new"));
+              sc.add("add", card(ADD_Y, "add_one", "new"));
+              return [
+                { set: { add: { y: -170, o: 0 } }, line: 7, d: 1100 },
+                { set: { add: { y: 0, o: 1 } }, line: 8, d: 1100 },
+                { line: 13, d: 2400 },
+              ];
+            },
+          },
+          {
+            title: "Each frame has its own value stack",
+            aria: "Each frame card now has a small well inside it. The module's holds an orange 10. Inside add_one's, a blue 2 and a yellow 1 land, then merge into a green 3, while the module's 10 waits in its own well.",
+            size: [300, 250],
+            side,
+            build: (sc) => {
+              sc.add("cs", `<path class="well old" d="${CS}"/>`);
+              sc.add("mod", card(MOD_Y, "&lt;module&gt;", "old", "new"));
+              sc.add("add", card(ADD_Y, "add_one", "old", "new"));
+              sc.add("D", blk("d", 10, 196, MOD_Y + 37, 60, 20));
+              sc.add("A", blk("a", 2, 196, ADD_Y + 37, 60, 20));
+              sc.add("B", blk("b", 1, 196, ADD_Y + 15, 60, 20));
+              sc.add("C", blk("c", 3, 196, ADD_Y + 37, 60, 20));
+              return [
+                { set: { A: { y: -70, o: 0 }, B: { y: -70, o: 0 }, C: { y: -11, o: 0, k: 0.6 } }, line: 13, d: 1000 },
+                { set: { A: { y: 0, o: 1 } }, line: 14, d: 1000 },
+                { set: { B: { y: 0, o: 1 } }, line: 15, d: 1100 },
+                { set: { A: { y: -11, o: 0 }, B: { y: 11, o: 0 }, C: { o: 1, k: 1 } }, line: 16, d: 900 },
+                { set: { C: { y: 0 } }, d: 2600 },
+              ];
+            },
+          },
+          {
+            title: "Returning removes the frame, and its value lands on the caller's stack",
+            aria: "The green 3 lifts out of add_one's well. The add_one card lifts off the call stack and fades, and the 3 drops into the module's well, on top of the orange 10.",
+            size: [300, 250],
+            side,
+            build: (sc) => {
+              sc.add("cs", `<path class="well old" d="${CS}"/>`);
+              sc.add("mod", card(MOD_Y, "&lt;module&gt;", "old", "old"));
+              sc.add("add", card(ADD_Y, "add_one", "old", "old"));
+              sc.add("D", blk("d", 10, 196, MOD_Y + 37, 60, 20));
+              sc.add("C", blk("c", 3, 196, ADD_Y + 37, 60, 20));
+              return [
+                { set: { add: { y: 0, o: 1 }, C: { y: 0 } }, line: 16, d: 1100 },
+                { set: { C: { y: -44 } }, line: 17, d: 800 },
+                { set: { add: { y: -60, o: 0 }, C: { y: MOD_Y + 15 - (ADD_Y + 37) } }, d: 2800 },
+              ];
+            },
+          },
+        ];
+      })(),
+      { group: "Reading dis" },
+      { reads: true },
+    ];
+
+    let n = 0;
+    FRAMES.forEach((f) => {
+      if (f.group) { host.insertAdjacentHTML("beforeend", `<div class="label layer-group">${esc(f.group)}</div>`); return; }
+      n += 1;
+      if (f.reads) { host.insertAdjacentHTML("beforeend", readsHTML(n)); fillReads(); return; }
+      const id = `layer-${n}`;
+      host.insertAdjacentHTML("beforeend", `<article class="layer" id="${id}" aria-labelledby="${id}-h">
+        <div class="layer-head"><span class="num">${n}</span><h3 id="${id}-h">${f.title}</h3><button class="btn" type="button" aria-label="Pause or play picture ${n}">Pause</button></div>
+        ${f.cap ? `<p class="cap" style="margin-top:-6px">${f.cap}</p>` : ""}
+        <div class="layer-body"><div class="pic"></div><div class="layer-side"></div></div>
+      </article>`);
+      const art = host.lastElementChild;
+      const lines = f.side(art.querySelector(".layer-side"));
+      const sc = makeScene(art.querySelector(".pic"), f.size[0], f.size[1], f.aria);
+      play(art, sc, f.build(sc), lines);
+    });
+
+    // Run a picture only while it's on screen.
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+      const p = players.find((x) => x.art === e.target);
+      if (p) p.setVisible(e.isIntersecting);
+    }), { threshold: 0.35 });
+    players.forEach((p) => io.observe(p.art));
+
+    // ---------- 14: one line of dis, one piece at a time ----------
+    function readsHTML(num) {
+      const LINE = [["  5", "line"], ["   ", null], ["L1:", "label"], ["     ", null], ["LOAD_CONST", "op"], ["               ", null], ["2", "arg"], [" ", null], ["(False)", "repr"]];
+      const dline = (k) => `<div class="dline">${LINE.map(([t, kk]) => kk === k ? `<span class="lit">${esc(t)}</span>` : esc(t)).join("")}</div>`;
+      const consts = (lit) => `<div class="crow"><span class="lbl">co_consts</span>${["5", "True", "False"].map((v, i) =>
+        `<span class="bx"><span class="i">${lit === "i" && i === 2 ? `<span class="lit">${i}</span>` : i}</span>${lit === "v" && i === 2 ? `<span class="lit">${v}</span>` : v}</span>`).join("")}</div>`;
+      const src = EX.if.src.split("\n").slice(0, 5).map((t, i) => `<span class="ln${i === 4 ? " mark" : ""}">${String(i + 1).padStart(2)}  ${esc(t)}</span>`).join("");
+      const cards = [
+        ["Which line of your code it came from", "line", `<div class="dline src">${src}</div>`],
+        ["A place something jumps to", "label", `<div class="dline">              POP_JUMP_IF_FALSE        3 <span class="lit">(to L1)</span></div>`],
+        ["The instruction", "op", `<div class="row"><span class="opbar">LOAD_CONST</span><span class="eff2">${effHtml("… → … value")}</span></div>`],
+        ["Its argument: an index", "arg", consts("i")],
+        ["What the index points to, looked up by dis", "repr", consts("v")],
+      ];
+      return `<article class="layer" id="layer-${num}" aria-labelledby="layer-${num}-h">
+        <div class="layer-head"><span class="num">${num}</span><h3 id="layer-${num}-h">One line of <code>dis</code> output, one piece at a time</h3></div>
+        <div class="cells" id="if-cells"></div>
+        <div class="reads">${cards.map(([h, k, extra], i) => `<div class="read"><h4><span class="num">${num}${"abcde"[i]}</span>${h}</h4>${dline(k)}${extra}</div>`).join("")}</div>
+      </article>`;
+    }
+    function fillReads() { renderCells($("if-cells"), [{ ex: "if", head: "A function with an if" }]); }
+  })();
 })();
 </script>
 </body>
