@@ -23,6 +23,18 @@
     --code-bg: #1C1F29;
     --code-ink: #E9EAF0;
     --code-muted: #9AA0B2;
+    --sq: #2B2E36;
+    --sq-line: #15171C;
+    --sq-ink: #EEF0F4;
+    --sq-muted: #A3A8B5;
+    --sq-miss: #FF9B85;
+    --sq-btn: #3B3F4A;
+    --field: #D9DCE2;
+    --field-ink: #16181F;
+    --stamp: #FF5C9E;
+    --green-lo: #1E5A34;
+    --green-hi: #4BE07C;
+    --green-ink: #0B2414;
     --display: "Bowlby One SC", "Arial Black", Impact, sans-serif;
     --body: "IBM Plex Sans", -apple-system, system-ui, "Segoe UI", sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
@@ -33,12 +45,14 @@
       --paper: #101217; --card: #181B23; --ink: #ECEDF2; --muted: #9AA0AF; --rule: #2B2F3D;
       --dauber: #F0609A; --on-dauber: #1C0812; --ok: #5CC48A; --err: #F08A6E;
       --code-bg: #0A0C11; --code-ink: #E9EAF0; --code-muted: #8E94A6; color-scheme: dark;
+      --sq: #262932; --sq-line: #0B0C10; --field: #C9CCD3;
     }
   }
   :root[data-theme="dark"] {
     --paper: #101217; --card: #181B23; --ink: #ECEDF2; --muted: #9AA0AF; --rule: #2B2F3D;
     --dauber: #F0609A; --on-dauber: #1C0812; --ok: #5CC48A; --err: #F08A6E;
     --code-bg: #0A0C11; --code-ink: #E9EAF0; --code-muted: #8E94A6; color-scheme: dark;
+    --sq: #262932; --sq-line: #0B0C10; --field: #C9CCD3;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--body); }
@@ -69,19 +83,16 @@
   .room { display: grid; gap: 10px; }
   .room-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; }
   .room-top .who { font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .heat { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 4px; }
-  .hc { position: relative; border-radius: 6px; padding: 6px 8px; min-height: 46px; display: grid; align-content: space-between; background: var(--card); border: 1px solid var(--rule); overflow: hidden; }
-  .hc::before { content: ""; position: absolute; inset: 0; background: var(--dauber); opacity: var(--a, 0); transition: opacity 0.6s; }
-  .hc > * { position: relative; }
-  .hc .n { font: 600 0.7rem var(--mono); overflow-wrap: anywhere; }
-  .hc .c { font: 600 0.72rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
-  .hc.hot .n, .hc.hot .c { color: var(--on-dauber); }
-  .hc.none { background: transparent; border-style: dashed; }
-  .hc.none .n { color: var(--muted); font-weight: 400; }
-  @media (max-width: 620px) { .heat { grid-template-columns: repeat(3, minmax(0, 1fr)); } .hc { min-height: 40px; padding: 5px 6px; } .hc .n, .hc .c { font-size: 0.6rem; } }
-  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 0.8rem; color: var(--muted); }
-  .ramp { display: inline-flex; gap: 2px; vertical-align: middle; }
-  .ramp span { width: 16px; height: 12px; border-radius: 2px; background: var(--dauber); }
+  .heat { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 3px solid var(--ink); border-radius: 12px; overflow: hidden; background: var(--sq-line); gap: 1px; }
+  .hc { padding: 8px 10px; min-height: 56px; display: grid; align-content: space-between; gap: 2px; min-width: 0;
+        background: var(--sq); color: var(--sq-muted); transition: background-color 0.6s, color 0.6s; }
+  .hc.some { background: color-mix(in oklab, var(--green-hi) var(--g, 0%), var(--green-lo)); color: var(--sq-ink); }
+  .hc.many { color: var(--green-ink); }
+  .hc .n { font: 600 0.74rem var(--mono); overflow-wrap: anywhere; }
+  .hc .c { font: 600 0.74rem var(--mono); font-variant-numeric: tabular-nums; }
+  .hc.free { color: var(--stamp); font: 400 0.95rem var(--display); align-content: center; justify-items: center; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 0.8rem; color: var(--muted); }
+  .legend .sw { display: inline-block; width: 22px; height: 14px; border-radius: 3px; vertical-align: middle; }
 
   /* the card */
   .card-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; }
@@ -89,31 +100,32 @@
   .score small { font: 400 0.85rem var(--body); color: var(--muted); margin-left: 6px; }
   .btn { font: 600 0.82rem var(--body); color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
   .btn:hover { border-color: var(--muted); }
-  .card { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 3px solid var(--ink); border-radius: 12px; overflow: hidden; background: var(--rule); gap: 1px; }
-  @media (max-width: 980px) { .card { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-  @media (max-width: 620px) { .card { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  .sq { position: relative; overflow: hidden; background: var(--card); padding: 12px 12px 10px; display: grid; gap: 8px; align-content: start; min-width: 0; min-height: 132px; }
+  .card { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 3px solid var(--ink); border-radius: 12px; overflow: hidden; background: var(--sq-line); gap: 1px; }
+  @media (max-width: 980px) { .card, .heat { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 620px) { .card, .heat { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hc { min-height: 48px; padding: 6px 8px; } .hc .n, .hc .c { font-size: 0.66rem; } }
+  .sq { position: relative; overflow: hidden; background: var(--sq); color: var(--sq-ink); padding: 12px 12px 10px; display: grid; gap: 8px; align-content: start; min-width: 0; min-height: 132px; }
   .sq .nm { font: 600 0.98rem var(--mono); overflow-wrap: anywhere; position: relative; z-index: 1; }
-  .sq .nm .u { color: var(--muted); font-weight: 400; }
+  .sq .nm .u { color: var(--sq-muted); font-weight: 400; }
   .sq form { display: flex; gap: 4px; position: relative; z-index: 1; }
-  .sq input { flex: 1 1 0; width: 0; min-width: 0; font: 0.8rem var(--mono); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 5px 7px; }
+  .sq input { flex: 1 1 0; width: 0; min-width: 0; font: 0.8rem var(--mono); color: var(--field-ink); background: var(--field); border: 1px solid transparent; border-radius: 6px; padding: 5px 7px; }
+  .sq input::placeholder { color: #6B7080; }
   .sq input:focus-visible, .btn:focus-visible, .sq button:focus-visible, summary:focus-visible { outline: 2px solid var(--dauber); outline-offset: 1px; }
-  .sq button { font: 600 0.78rem var(--body); color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: 4px 9px; cursor: pointer; }
+  .sq button { font: 600 0.78rem var(--body); color: var(--sq-ink); background: var(--sq-btn); border: 1px solid var(--sq-btn); border-radius: 6px; padding: 4px 9px; cursor: pointer; }
   .sq button:disabled { opacity: 0.45; cursor: wait; }
-  .sq .res { font-size: 0.76rem; color: var(--muted); position: relative; z-index: 1; overflow-wrap: anywhere; }
-  .sq .res.miss { color: var(--err); }
+  .sq .res { font-size: 0.76rem; color: var(--sq-muted); position: relative; z-index: 1; overflow-wrap: anywhere; }
+  .sq .res.miss { color: var(--sq-miss); }
   .sq .res code { font-size: 0.74rem; }
   /* the dauber: a translucent ink blot stamped in the corner once a square lights */
   .dab { position: absolute; width: 112px; height: 112px; right: -22px; bottom: -26px; border-radius: 50%; pointer-events: none;
-         background: radial-gradient(circle at 46% 44%, var(--dauber) 0 52%, color-mix(in oklab, var(--dauber) 70%, transparent) 62%, transparent 71%);
+         background: radial-gradient(circle at 46% 44%, var(--stamp) 0 52%, color-mix(in oklab, var(--stamp) 70%, transparent) 62%, transparent 71%);
          opacity: 0; transform: scale(0.4) rotate(var(--r, 0deg)); transition: opacity 0.25s, transform 0.35s cubic-bezier(0.2, 1.6, 0.4, 1); }
-  .sq.lit .dab { opacity: 0.32; transform: scale(1) rotate(var(--r, 0deg)); }
-  .sq.lit .nm { color: var(--dauber); }
+  .sq.lit .dab { opacity: 0.42; transform: scale(1) rotate(var(--r, 0deg)); }
+  .sq.lit .nm { color: var(--stamp); }
   .sq.free { align-content: center; justify-items: center; text-align: center; }
-  .sq.free .nm { font: 400 1.4rem var(--display); color: var(--dauber); }
-  .sq.free p { font-size: 0.8rem; color: var(--muted); position: relative; z-index: 1; }
-  .sq .won { font: 0.74rem var(--mono); color: var(--ink); position: relative; z-index: 1; overflow-wrap: anywhere; }
-  .sq .won::before { content: "lit by "; font-family: var(--body); color: var(--muted); }
+  .sq.free .nm { font: 400 1.4rem var(--display); color: var(--stamp); }
+  .sq.free p { font-size: 0.8rem; color: var(--sq-muted); position: relative; z-index: 1; }
+  .sq .won { font: 0.74rem var(--mono); color: var(--sq-ink); position: relative; z-index: 1; overflow-wrap: anywhere; }
+  .sq .won::before { content: "lit by "; font-family: var(--body); color: var(--sq-muted); }
 
   /* console: what the last line printed, and everything the spy saw */
   .console { background: var(--code-bg); color: var(--code-ink); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0; }
@@ -156,7 +168,7 @@
       <span class="who" id="who"></span>
     </div>
     <div class="heat" id="heat"></div>
-    <div class="legend"><span>Nobody</span><span class="ramp" aria-hidden="true"><span style="opacity:0.12"></span><span style="opacity:0.35"></span><span style="opacity:0.6"></span><span style="opacity:0.9"></span></span><span>everyone playing</span></div>
+    <div class="legend"><span class="sw" style="background:var(--sq)"></span><span>nobody</span><span class="sw" style="background:var(--green-lo)"></span><span>a few</span><span class="sw" style="background:var(--green-hi)"></span><span>most of the class</span></div>
   </section>
 
   <section aria-labelledby="card-h" style="display:grid;gap:12px">
@@ -324,7 +336,8 @@ fresh()
       <div class="res" id="res-${i}" aria-live="polite"></div>
     </div>`).join("");
   $("sq-14").insertAdjacentHTML("beforebegin", `<div class="sq free lit" style="--r:-12deg"><span class="dab" aria-hidden="true"></span><div class="nm">Free</div><p><code>spy = Spy()</code><br>the page already did it</p></div>`);
-  $("heat").innerHTML = SQUARES.map((n, i) => `<div class="hc none" id="hc-${i}"><span class="n">${esc(n)}</span><span class="c" id="hcc-${i}">0</span></div>`).join("");
+  $("heat").innerHTML = SQUARES.map((n, i) => `<div class="hc" id="hc-${i}"><span class="n">${esc(n)}</span><span class="c" id="hcc-${i}">0</span></div>`).join("");
+  $("hc-14").insertAdjacentHTML("beforebegin", `<div class="hc free" aria-hidden="true">Free</div>`);
   $("src-view").textContent = $("spykit-src").textContent;
 
   const paintCard = () => {
@@ -416,9 +429,10 @@ fresh()
       const c = board.counts[n] || 0;
       const frac = total ? c / total : 0;
       const cell = $(`hc-${i}`);
-      cell.style.setProperty("--a", c ? (0.14 + 0.86 * frac).toFixed(3) : "0");
-      cell.classList.toggle("none", c === 0);
-      cell.classList.toggle("hot", frac >= 0.45);
+      cell.style.setProperty("--g", `${Math.round(frac * 100)}%`);
+      cell.classList.toggle("some", c > 0);
+      // Past about 40% of the class, dark text reads better on the green than light text does.
+      cell.classList.toggle("many", frac >= 0.4);
       $(`hcc-${i}`).textContent = c ? `${c} of ${total}` : "0";
       cell.title = `${n}: lit by ${c} of ${total} players in the last hour`;
     });
