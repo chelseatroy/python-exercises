@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dunder Bingo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect x=%221%22 y=%221%22 width=%2214%22 height=%2214%22 rx=%222%22 fill=%22none%22 stroke=%22%2316181F%22 stroke-width=%222%22/%3E%3Ccircle cx=%2210%22 cy=%226%22 r=%223.5%22 fill=%22%23CC2366%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bowlby+One+SC&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+  /* Layout: a bingo card in dir() order; the class's heat map of the same card sits above it, and a console below. */
+  :root {
+    --paper: #F1F2EC;
+    --card: #FFFFFF;
+    --ink: #16181F;
+    --muted: #5C6270;
+    --rule: #D3D6CC;
+    --dauber: #CC2366;
+    --on-dauber: #FFFFFF;
+    --ok: #2C7A4B;
+    --err: #B3402A;
+    --code-bg: #1C1F29;
+    --code-ink: #E9EAF0;
+    --code-muted: #9AA0B2;
+    --display: "Bowlby One SC", "Arial Black", Impact, sans-serif;
+    --body: "IBM Plex Sans", -apple-system, system-ui, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #101217; --card: #181B23; --ink: #ECEDF2; --muted: #9AA0AF; --rule: #2B2F3D;
+      --dauber: #F0609A; --on-dauber: #1C0812; --ok: #5CC48A; --err: #F08A6E;
+      --code-bg: #0A0C11; --code-ink: #E9EAF0; --code-muted: #8E94A6; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #101217; --card: #181B23; --ink: #ECEDF2; --muted: #9AA0AF; --rule: #2B2F3D;
+    --dauber: #F0609A; --on-dauber: #1C0812; --ok: #5CC48A; --err: #F08A6E;
+    --code-bg: #0A0C11; --code-ink: #E9EAF0; --code-muted: #8E94A6; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--body); }
+  .page {
+    max-width: 1180px; margin: 0 auto; display: grid; gap: 28px;
+    padding-block: 28px 56px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .page > * { min-width: 0; }
+  h1 { font: 400 clamp(2.2rem, 7vw, 3.6rem)/0.95 var(--display); margin: 0; letter-spacing: 0.01em; }
+  h2 { font: 600 0.78rem var(--body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0; }
+  p { margin: 0; }
+  code { font-family: var(--mono); }
+  .head { display: grid; gap: 12px; }
+  .rule { font-size: 1.05rem; max-width: 62ch; text-wrap: balance; }
+  .rule b { color: var(--dauber); }
+  .status { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.85rem; color: var(--muted); }
+  .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--rule); background: var(--card); border-radius: 999px; padding: 3px 10px; }
+  .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .pill.on i { background: var(--ok); }
+  .pill.bad i { background: var(--err); }
+  details.src { border: 1px solid var(--rule); border-radius: 12px; background: var(--card); max-width: 62ch; }
+  details.src summary { cursor: pointer; padding: 10px 14px; font-weight: 600; }
+  details.src pre { margin: 0; padding: 0 14px 14px; font: 0.78rem/1.5 var(--mono); overflow-x: auto; white-space: pre; }
+
+  /* the class: the same card, each square as bright as the share of players who lit it */
+  .room { display: grid; gap: 10px; }
+  .room-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; }
+  .room-top .who { font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .heat { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 4px; }
+  .hc { position: relative; border-radius: 6px; padding: 6px 8px; min-height: 46px; display: grid; align-content: space-between; background: var(--card); border: 1px solid var(--rule); overflow: hidden; }
+  .hc::before { content: ""; position: absolute; inset: 0; background: var(--dauber); opacity: var(--a, 0); transition: opacity 0.6s; }
+  .hc > * { position: relative; }
+  .hc .n { font: 600 0.7rem var(--mono); overflow-wrap: anywhere; }
+  .hc .c { font: 600 0.72rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .hc.hot .n, .hc.hot .c { color: var(--on-dauber); }
+  .hc.none { background: transparent; border-style: dashed; }
+  .hc.none .n { color: var(--muted); font-weight: 400; }
+  @media (max-width: 620px) { .heat { grid-template-columns: repeat(3, minmax(0, 1fr)); } .hc { min-height: 40px; padding: 5px 6px; } .hc .n, .hc .c { font-size: 0.6rem; } }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 0.8rem; color: var(--muted); }
+  .ramp { display: inline-flex; gap: 2px; vertical-align: middle; }
+  .ramp span { width: 16px; height: 12px; border-radius: 2px; background: var(--dauber); }
+
+  /* the card */
+  .card-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; }
+  .score { font: 400 1.3rem var(--display); }
+  .score small { font: 400 0.85rem var(--body); color: var(--muted); margin-left: 6px; }
+  .btn { font: 600 0.82rem var(--body); color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+  .btn:hover { border-color: var(--muted); }
+  .card { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 3px solid var(--ink); border-radius: 12px; overflow: hidden; background: var(--rule); gap: 1px; }
+  @media (max-width: 980px) { .card { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 620px) { .card { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .sq { position: relative; overflow: hidden; background: var(--card); padding: 12px 12px 10px; display: grid; gap: 8px; align-content: start; min-width: 0; min-height: 132px; }
+  .sq .nm { font: 600 0.98rem var(--mono); overflow-wrap: anywhere; position: relative; z-index: 1; }
+  .sq .nm .u { color: var(--muted); font-weight: 400; }
+  .sq form { display: flex; gap: 4px; position: relative; z-index: 1; }
+  .sq input { flex: 1 1 0; width: 0; min-width: 0; font: 0.8rem var(--mono); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 5px 7px; }
+  .sq input:focus-visible, .btn:focus-visible, .sq button:focus-visible, summary:focus-visible { outline: 2px solid var(--dauber); outline-offset: 1px; }
+  .sq button { font: 600 0.78rem var(--body); color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: 4px 9px; cursor: pointer; }
+  .sq button:disabled { opacity: 0.45; cursor: wait; }
+  .sq .res { font-size: 0.76rem; color: var(--muted); position: relative; z-index: 1; overflow-wrap: anywhere; }
+  .sq .res.miss { color: var(--err); }
+  .sq .res code { font-size: 0.74rem; }
+  /* the dauber: a translucent ink blot stamped in the corner once a square lights */
+  .dab { position: absolute; width: 112px; height: 112px; right: -22px; bottom: -26px; border-radius: 50%; pointer-events: none;
+         background: radial-gradient(circle at 46% 44%, var(--dauber) 0 52%, color-mix(in oklab, var(--dauber) 70%, transparent) 62%, transparent 71%);
+         opacity: 0; transform: scale(0.4) rotate(var(--r, 0deg)); transition: opacity 0.25s, transform 0.35s cubic-bezier(0.2, 1.6, 0.4, 1); }
+  .sq.lit .dab { opacity: 0.32; transform: scale(1) rotate(var(--r, 0deg)); }
+  .sq.lit .nm { color: var(--dauber); }
+  .sq.free { align-content: center; justify-items: center; text-align: center; }
+  .sq.free .nm { font: 400 1.4rem var(--display); color: var(--dauber); }
+  .sq.free p { font-size: 0.8rem; color: var(--muted); position: relative; z-index: 1; }
+  .sq .won { font: 0.74rem var(--mono); color: var(--ink); position: relative; z-index: 1; overflow-wrap: anywhere; }
+  .sq .won::before { content: "lit by "; font-family: var(--body); color: var(--muted); }
+
+  /* console: what the last line printed, and everything the spy saw */
+  .console { background: var(--code-bg); color: var(--code-ink); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0; }
+  .console h2 { color: var(--code-muted); }
+  .console .btn { background: transparent; color: var(--code-ink); border-color: var(--code-muted); }
+  .console pre { margin: 0; font: 0.84rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .console .prompt { color: var(--code-muted); }
+  .console .err { color: #FF9B85; }
+  .trail { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip { font: 600 0.74rem var(--mono); border-radius: 999px; padding: 2px 9px; background: #CC2366; color: #FFFFFF; }
+  .chip.read { background: transparent; color: var(--code-ink); box-shadow: inset 0 0 0 1.5px var(--code-muted); font-weight: 400; }
+  .console .key { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.76rem; color: var(--code-muted); align-items: center; }
+
+  /* the one shortcut that would light every square */
+  dialog.nope { border: 3px solid var(--ink); border-radius: 14px; background: var(--card); color: var(--ink); padding: 22px 26px; max-width: min(92vw, 420px); text-align: center; }
+  dialog.nope::backdrop { background: color-mix(in oklab, var(--ink) 45%, transparent); }
+  dialog.nope p { font: 400 1.5rem/1.15 var(--display); margin: 0 0 16px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  @media (prefers-reduced-motion: reduce) { *, *::before { transition: none !important; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="head">
+    <h1>Dunder Bingo</h1>
+    <p class="rule">This page has already made a <code>spy</code> for you. Python tells it every time it calls one of its dunder methods. In each square, type a line of ordinary Python that uses <code>spy</code> and makes Python call the dunder in that square. <b>No double underscores allowed.</b></p>
+    <div class="status">
+      <span class="pill" id="py-pill"><i></i><span id="py-text">Loading Python 3.14…</span></span>
+      <span class="pill" id="room-pill"><i></i><span id="room-text">Connecting to the class board…</span></span>
+    </div>
+    <details class="src">
+      <summary>Look at the spy</summary>
+      <pre id="src-view"></pre>
+    </details>
+  </header>
+
+  <section class="room" aria-labelledby="room-h">
+    <div class="room-top">
+      <h2 id="room-h">The class, last hour</h2>
+      <span class="who" id="who"></span>
+    </div>
+    <div class="heat" id="heat"></div>
+    <div class="legend"><span>Nobody</span><span class="ramp" aria-hidden="true"><span style="opacity:0.12"></span><span style="opacity:0.35"></span><span style="opacity:0.6"></span><span style="opacity:0.9"></span></span><span>everyone playing</span></div>
+  </section>
+
+  <section aria-labelledby="card-h" style="display:grid;gap:12px">
+    <div class="card-top">
+      <h2 id="card-h">Your card</h2>
+      <span class="score" id="score">0<small>of 29 lit</small></span>
+      <button class="btn" type="button" id="clear">Clear my card</button>
+    </div>
+    <div class="card" id="card"></div>
+  </section>
+
+  <section class="console" aria-labelledby="console-h">
+    <div class="card-top">
+      <h2 id="console-h">Last line</h2>
+      <button class="btn" type="button" id="respy">Fresh spy</button>
+    </div>
+    <pre id="out"><span class="prompt">Run a line in any square to see what the spy saw.</span></pre>
+    <div class="trail" id="trail" aria-label="Every dunder the spy saw, in order"></div>
+    <div class="key"><span class="chip">called</span><span class="chip read">read</span><span>in the order Python did it</span></div>
+  </section>
+</main>
+
+<dialog class="nope" id="nope" aria-labelledby="nope-text">
+  <p id="nope-text">Nice try, but I thought of that 😉</p>
+  <form method="dialog"><button class="btn" type="submit">Back to the card</button></form>
+</dialog>
+
+<script type="text/plain" id="spykit-src">"""The spy. Every dunder Python calls on it, or reads off it, gets written down."""
+from abc import ABCMeta
+
+SQUARES = [
+    "__abstractmethods__", "__call__", "__class__", "__delattr__", "__dict__", "__dir__",
+    "__doc__", "__eq__", "__format__", "__ge__", "__getattribute__", "__gt__", "__hash__",
+    "__init__", "__init_subclass__", "__le__", "__lt__", "__module__", "__ne__", "__new__",
+    "__reduce__", "__reduce_ex__", "__repr__", "__setattr__", "__sizeof__", "__slots__",
+    "__str__", "__subclasshook__", "__weakref__",
+]
+_WATCH = set(SQUARES)
+trail = []          # ("call" | "read", name), in order
+recording = False
+
+def note(kind, name):
+    if recording and name in _WATCH:
+        trail.append((kind, name))
+
+
+class SpyMeta(ABCMeta):
+    """Notices when Python reads a dunder off the class itself."""
+    def __getattribute__(cls, name):
+        note("read", name)
+        return super().__getattribute__(name)
+
+
+def _spying(name):
+    def method(self, *args, **kwargs):
+        note("call", name)
+        return getattr(object, name)(self, *args, **kwargs)
+    method.__name__ = name
+    return method
+
+
+class Spy(metaclass=SpyMeta):
+    """A perfectly ordinary object that tells on Python."""
+
+    for _name in ["__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__", "__hash__",
+                  "__str__", "__repr__", "__format__", "__dir__", "__setattr__", "__delattr__",
+                  "__sizeof__", "__reduce__", "__reduce_ex__", "__init__"]:
+        locals()[_name] = _spying(_name)
+    del _name
+
+    def __new__(cls, *args, **kwargs):
+        note("call", "__new__")
+        return object.__new__(cls)
+
+    def __call__(self, *args, **kwargs):
+        note("call", "__call__")
+        return self
+
+    def __getattribute__(self, name):
+        note("call", "__getattribute__")
+        note("read", name)
+        return object.__getattribute__(self, name)
+
+    def __init_subclass__(cls, **kwargs):
+        note("call", "__init_subclass__")
+        super().__init_subclass__(**kwargs)
+
+    @classmethod
+    def __subclasshook__(cls, other):
+        note("call", "__subclasshook__")
+        return NotImplemented
+
+
+spy = Spy()
+</script>
+
+<script type="text/plain" id="runner-src">import sys, io, json, contextlib, traceback
+sys.path.insert(0, "/home/pyodide")
+import spykit
+from spykit import Spy
+
+def fresh():
+    global ns
+    ns = {"__name__": "__main__", "Spy": Spy}
+    ns["spy"] = Spy()
+
+def run_line(line):
+    spykit.trail.clear()
+    out = io.StringIO()
+    err = ""
+    spykit.recording = True
+    try:
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(out):
+            exec(compile(line + "\n", "<square>", "single"), ns)
+    except BaseException as e:
+        err = "".join(traceback.format_exception_only(type(e), e)).strip()
+    finally:
+        spykit.recording = False
+    trail = []
+    for kind, name in spykit.trail:
+        if not trail or trail[-1] != [kind, name]:
+            trail.append([kind, name])
+    return json.dumps({"out": out.getvalue()[-4000:], "err": err, "trail": trail[:300]})
+
+fresh()
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/pyodide@314.0.7/pyodide.js"></script>
+<script>
+(() => {
+  "use strict";
+  // The class board: the same Cloudflare Worker as the Session 1 polls (backend/ in the repo).
+  const BOARD_URL = "https://python-exercises-backend.chelseatroy.workers.dev/bingo";
+  const PYODIDE_URL = "https://cdn.jsdelivr.net/npm/pyodide@314.0.7/";
+  const REFRESH_MS = 5000;
+  // A line that touches more squares than this at once is reading everything (inspect.getmembers and friends).
+  const TOO_MANY = 12;
+  const SQUARES = ["__abstractmethods__", "__call__", "__class__", "__delattr__", "__dict__", "__dir__",
+    "__doc__", "__eq__", "__format__", "__ge__", "__getattribute__", "__gt__", "__hash__",
+    "__init__", "__init_subclass__", "__le__", "__lt__", "__module__", "__ne__", "__new__",
+    "__reduce__", "__reduce_ex__", "__repr__", "__setattr__", "__sizeof__", "__slots__",
+    "__str__", "__subclasshook__", "__weakref__"];
+  const KEY = "dunder-bingo-v1";
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const pretty = (n) => `<span class="u">__</span>${esc(n.slice(2, -2))}<span class="u">__</span>`;
+
+  // ---------- this player's card, kept in their own browser ----------
+  let card = { lit: {} };
+  try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s && s.lit && typeof s.lit === "object") card = s; } catch (e) { /* storage off: start blank */ }
+  if (!card.player) card.player = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now());
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(card)); } catch (e) { /* fine */ } };
+  save();
+
+  $("card").innerHTML = SQUARES.map((n, i) => `
+    <div class="sq" id="sq-${i}" style="--r:${(i * 47) % 70 - 35}deg">
+      <span class="dab" aria-hidden="true"></span>
+      <div class="nm">${pretty(n)}</div>
+      <form data-i="${i}" autocomplete="off">
+        <label class="sr-only" for="in-${i}">A line that makes Python call ${n} on spy</label>
+        <input id="in-${i}" spellcheck="false" autocapitalize="off" placeholder="spy …">
+        <button type="submit" disabled>Run</button>
+      </form>
+      <div class="won" id="won-${i}" hidden></div>
+      <div class="res" id="res-${i}" aria-live="polite"></div>
+    </div>`).join("");
+  $("sq-14").insertAdjacentHTML("beforebegin", `<div class="sq free lit" style="--r:-12deg"><span class="dab" aria-hidden="true"></span><div class="nm">Free</div><p><code>spy = Spy()</code><br>the page already did it</p></div>`);
+  $("heat").innerHTML = SQUARES.map((n, i) => `<div class="hc none" id="hc-${i}"><span class="n">${esc(n)}</span><span class="c" id="hcc-${i}">0</span></div>`).join("");
+  $("src-view").textContent = $("spykit-src").textContent;
+
+  const paintCard = () => {
+    let n = 0;
+    SQUARES.forEach((name, i) => {
+      const hit = card.lit[name];
+      $(`sq-${i}`).classList.toggle("lit", !!hit);
+      const won = $(`won-${i}`);
+      won.hidden = !hit;
+      if (hit) { won.textContent = hit.line; n += 1; }
+    });
+    $("score").innerHTML = `${n}<small>of 29 lit</small>`;
+  };
+  const setPill = (id, cls, text) => { const p = $(`${id}-pill`); p.className = `pill ${cls}`; $(`${id}-text`).textContent = text; };
+
+  // ---------- Python 3.14, running in this browser ----------
+  let runLine = null, freshSpy = null;
+  (async () => {
+    try {
+      const py = await loadPyodide({ indexURL: PYODIDE_URL });
+      py.FS.writeFile("/home/pyodide/spykit.py", $("spykit-src").textContent);
+      py.runPython($("runner-src").textContent);
+      runLine = py.globals.get("run_line");
+      freshSpy = py.globals.get("fresh");
+      setPill("py", "on", `Python ${py.runPython("import sys; sys.version.split()[0]")}, running in your browser`);
+      document.querySelectorAll(".sq button").forEach((b) => { b.disabled = false; });
+    } catch (e) {
+      setPill("py", "bad", "Python didn't load. Reload the page to try again.");
+    }
+  })();
+
+  const trailHTML = (trail) => trail.map(([k, n]) => `<span class="chip${k === "read" ? " read" : ""}">${esc(n)}</span>`).join("");
+  const short = (names, max) => names.slice(0, max).map((n) => `<code>${esc(n)}</code>`).join(", ") + (names.length > max ? `, +${names.length - max} more` : "");
+
+  const run = (i, line) => {
+    const name = SQUARES[i], res = $(`res-${i}`);
+    res.className = "res";
+    res.textContent = "";
+    if (!line.trim()) return;
+    if (line.includes("__")) {
+      res.className = "res miss";
+      res.textContent = "No double underscores. Find something ordinary that makes Python do it.";
+      return;
+    }
+    if (!runLine) { res.textContent = "Python is still loading."; return; }
+    const r = JSON.parse(runLine(line));
+    $("out").innerHTML = `<span class="prompt">&gt;&gt;&gt; </span>${esc(line)}\n${esc(r.out)}${r.err ? `<span class="err">${esc(r.err)}</span>` : ""}`;
+    $("trail").innerHTML = r.trail.length ? trailHTML(r.trail) : `<span style="color:var(--code-muted)">The spy saw nothing.</span>`;
+    const seen = [...new Set(r.trail.map(([, n]) => n))];
+    if (seen.length > TOO_MANY) {
+      res.className = "res miss";
+      res.textContent = "That line reads everything at once. It doesn't count.";
+      $("nope").showModal();
+      return;
+    }
+    if (seen.includes(name)) {
+      card.lit[name] = { at: Date.now(), line };
+      save();
+      paintCard();
+      post({ player: card.player, square: name });
+      if (r.err) res.innerHTML = `Lit, then: <code>${esc(r.err.split("\n").pop())}</code>`;
+    } else {
+      res.className = "res miss";
+      res.innerHTML = seen.length ? `Not this one. The spy saw ${short(seen, 4)}.` : (r.err ? esc(r.err.split("\n").pop()) : "The spy saw nothing.");
+    }
+  };
+  $("card").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const i = +e.target.dataset.i;
+    run(i, $(`in-${i}`).value);
+  });
+  $("clear").addEventListener("click", () => {
+    card.lit = {};
+    save();
+    paintCard();
+    post({ player: card.player, clear: true });
+  });
+  $("respy").addEventListener("click", () => {
+    if (!freshSpy) return;
+    freshSpy();
+    $("out").innerHTML = `<span class="prompt">A fresh spy is ready.</span>`;
+    $("trail").innerHTML = "";
+  });
+
+  // ---------- the class board: how many players lit each square in the last hour ----------
+  const paintBoard = (board) => {
+    const total = board.players;
+    SQUARES.forEach((n, i) => {
+      const c = board.counts[n] || 0;
+      const frac = total ? c / total : 0;
+      const cell = $(`hc-${i}`);
+      cell.style.setProperty("--a", c ? (0.14 + 0.86 * frac).toFixed(3) : "0");
+      cell.classList.toggle("none", c === 0);
+      cell.classList.toggle("hot", frac >= 0.45);
+      $(`hcc-${i}`).textContent = c ? `${c} of ${total}` : "0";
+      cell.title = `${n}: lit by ${c} of ${total} players in the last hour`;
+    });
+    $("who").textContent = total === 1 ? "1 player has lit a square" : `${total} players have lit a square`;
+  };
+  // A plain-string body goes out as text/plain, which skips the CORS preflight.
+  async function call(options) {
+    const response = await fetch(BOARD_URL, options);
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    return data;
+  }
+  const ok = (board) => { setPill("room", "on", "Live with the class"); paintBoard(board); };
+  const down = () => setPill("room", "bad", "Can't reach the class board right now. Your card still works.");
+  function post(body) { call({ method: "POST", body: JSON.stringify(body) }).then(ok, down); }
+  const refresh = () => call({ cache: "no-store" }).then(ok, down);
+
+  let timer = null;
+  const start = () => { if (!timer) { refresh(); timer = setInterval(refresh, REFRESH_MS); } };
+  const stop = () => { clearInterval(timer); timer = null; };
+  document.addEventListener("visibilitychange", () => (document.hidden ? stop() : start()));
+  start();
+  paintCard();
+})();
+</script>
+</body>
+</html>
