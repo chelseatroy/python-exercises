@@ -32,8 +32,11 @@
     --field: #D9DCE2;
     --field-ink: #16181F;
     --stamp: #FF5C9E;
-    --green-lo: #1E5A34;
-    --green-hi: #4BE07C;
+    /* the class grid's four bands: up to a third of the players, up to two thirds, all but some, everyone */
+    --g1: #1D5A33;
+    --g2: #277A43;
+    --g3: #3DAF60;
+    --g4: #7CF2A2;
     --green-ink: #0B2414;
     --display: "Bowlby One SC", "Arial Black", Impact, sans-serif;
     --body: "IBM Plex Sans", -apple-system, system-ui, "Segoe UI", sans-serif;
@@ -87,8 +90,10 @@
   .heat { display: grid; grid-template-columns: repeat(5, 64px); justify-self: center; border: 3px solid var(--ink); border-radius: 12px; overflow: hidden; background: var(--sq-line); gap: 1px; }
   .hc { aspect-ratio: 1; padding: 5px 6px; display: grid; align-content: space-between; gap: 2px; min-width: 0; overflow: hidden;
         background: var(--sq); color: var(--sq-muted); transition: background-color 0.6s, color 0.6s; }
-  .hc.some { background: color-mix(in oklab, var(--green-hi) var(--g, 0%), var(--green-lo)); color: var(--sq-ink); }
-  .hc.many { color: var(--green-ink); }
+  .hc.l1 { background: var(--g1); color: var(--sq-ink); }
+  .hc.l2 { background: var(--g2); color: var(--sq-ink); }
+  .hc.l3 { background: var(--g3); color: var(--green-ink); }
+  .hc.l4 { background: var(--g4); color: var(--green-ink); }
   .hc .n { font: 600 0.6rem/1.2 var(--mono); overflow-wrap: anywhere; hyphens: none; }
   .hc .c { font: 600 0.62rem var(--mono); font-variant-numeric: tabular-nums; }
   .hc.free { color: var(--stamp); font: 400 0.8rem var(--display); align-content: center; justify-items: center; }
@@ -169,7 +174,7 @@
       <span class="who" id="who"></span>
     </div>
     <div class="heat" id="heat"></div>
-    <div class="legend"><span class="sw" style="background:var(--sq)"></span><span>nobody</span><span class="sw" style="background:var(--green-lo)"></span><span>a few</span><span class="sw" style="background:var(--green-hi)"></span><span>most of the class</span></div>
+    <div class="legend" id="legend"></div>
   </section>
 
   <section aria-labelledby="card-h" style="display:grid;gap:12px">
@@ -426,16 +431,26 @@ fresh()
   });
 
   // ---------- the class board: how many players lit each square in the last hour ----------
+  // Which band a square is in, by how many of the players lit it.
+  const level = (c, n) => c === 0 ? 0 : c >= n ? 4 : c <= Math.floor(n / 3) ? 1 : c <= Math.floor((2 * n) / 3) ? 2 : 3;
+  const paintLegend = (n) => {
+    const third = Math.floor(n / 3), twoThirds = Math.floor((2 * n) / 3);
+    const range = (a, b) => (a === b ? `${a}` : `${a}–${b}`);
+    const bands = n ? [[1, third], [third + 1, twoThirds], [twoThirds + 1, n - 1], [n, n]].map(([a, b]) => (a <= b ? range(a, b) : null))
+      : ["up to a third", "up to two thirds", "almost everyone", "everyone"];
+    $("legend").innerHTML = `<span class="sw" style="background:var(--sq)"></span><span>nobody</span>` +
+      bands.map((label, k) => label === null ? "" : `<span class="sw" style="background:var(--g${k + 1})"></span><span>${label}</span>`).join("") +
+      (n ? `<span>of ${n}</span>` : "");
+  };
+  paintLegend(0);
   const paintBoard = (board) => {
     const total = board.players;
+    paintLegend(total);
     SQUARES.forEach((n, i) => {
       const c = board.counts[n] || 0;
-      const frac = total ? c / total : 0;
       const cell = $(`hc-${i}`);
-      cell.style.setProperty("--g", `${Math.round(frac * 100)}%`);
-      cell.classList.toggle("some", c > 0);
-      // Past about 40% of the class, dark text reads better on the green than light text does.
-      cell.classList.toggle("many", frac >= 0.4);
+      const lv = level(c, total);
+      for (let k = 1; k <= 4; k++) cell.classList.toggle(`l${k}`, lv === k);
       $(`hcc-${i}`).textContent = c ? `${c}/${total}` : "0";
       cell.title = `${n}: lit by ${c} of ${total} players in the last hour`;
     });
