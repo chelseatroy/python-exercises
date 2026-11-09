@@ -335,7 +335,7 @@ fresh()
       <div class="won" id="won-${i}" hidden></div>
       <div class="res" id="res-${i}" aria-live="polite"></div>
     </div>`).join("");
-  $("sq-14").insertAdjacentHTML("beforebegin", `<div class="sq free lit" style="--r:-12deg"><span class="dab" aria-hidden="true"></span><div class="nm">Free</div><p><code>spy = Spy()</code><br>the page already did it</p></div>`);
+  $("sq-14").insertAdjacentHTML("beforebegin", `<div class="sq free lit" style="--r:-12deg"><span class="dab" aria-hidden="true"></span><div class="nm">Free</div><p><code>spy = Spy()</code><br>called <code>__new__</code>, then <code>__init__</code></p></div>`);
   $("heat").innerHTML = SQUARES.map((n, i) => `<div class="hc" id="hc-${i}"><span class="n">${esc(n)}</span><span class="c" id="hcc-${i}">0</span></div>`).join("");
   $("hc-14").insertAdjacentHTML("beforebegin", `<div class="hc free" aria-hidden="true">Free</div>`);
   $("src-view").textContent = $("spykit-src").textContent;
