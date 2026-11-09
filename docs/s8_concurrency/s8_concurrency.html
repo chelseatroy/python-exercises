@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Waiting Together, Working Together</title>
+<style>
+  :root {
+    --ground: #F6F1E7;
+    --surface: #FFFDF8;
+    --ink: #1F1B2D;
+    --muted: #6A6377;
+    --line: #E0D8C8;
+    --accent: #3B5BDB;
+    --tag: #F2C14E;
+    --tag-ink: #3A2A00;
+    --hit: #2B8A3E;
+    --clash: #D9480F;
+    --machine: #2B2540;
+    --machine-ink: #F6F1E7;
+    --machine-muted: #B9B2CC;
+    --slot: #EDE6D8;
+    --work: #E8875B;
+    --wait: #3B5BDB;
+    --display: Georgia, "Times New Roman", serif;
+    --body: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #15131C; --surface: #1E1B28; --ink: #ECE8F4; --muted: #A49DB3; --line: #34303F;
+      --accent: #7C93F5; --tag: #D9AA3A; --tag-ink: #241A00; --hit: #51CF66; --clash: #FF8A4C;
+      --machine: #0D0B14; --machine-ink: #ECE8F4; --machine-muted: #8F88A3; --slot: #2A2636; --work: #F0996E; --wait: #7C93F5;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #15131C; --surface: #1E1B28; --ink: #ECE8F4; --muted: #A49DB3; --line: #34303F;
+    --accent: #7C93F5; --tag: #D9AA3A; --tag-ink: #241A00; --hit: #51CF66; --clash: #FF8A4C;
+    --machine: #0D0B14; --machine-ink: #ECE8F4; --machine-muted: #8F88A3; --slot: #2A2636; --work: #F0996E; --wait: #7C93F5;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 16px/1.55 var(--body); }
+  .page { padding-inline: clamp(16px, 4vw, 72px); padding-block: 40px 72px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .page > * { min-width: 0; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.3rem, 7vw, 3.6rem); line-height: 1.02; }
+  h2 { font-size: 1.7rem; line-height: 1.15; }
+  h3 { font-size: 1.25rem; line-height: 1.2; }
+  p { margin: 0; }
+  a { color: var(--accent); }
+  code { font-family: var(--mono); font-size: 0.92em; }
+  .label { font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+  header { display: grid; gap: 14px; }
+  .muted { color: var(--muted); }
+  .cap { font-size: 0.82rem; color: var(--muted); max-width: 72ch; }
+  section { display: grid; gap: 16px; min-width: 0; }
+  .btn { font: 600 0.8rem var(--body); cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 4px 12px; }
+  .btn:hover { border-color: var(--muted); }
+  .btn:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .code-panel { background: var(--machine); color: var(--machine-ink); border-radius: 12px; padding: 12px 0; overflow-x: auto; }
+  .code-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; padding: 0 16px 8px; font-size: 0.82rem; color: var(--machine-muted); }
+  .code { margin: 0; font: 0.8rem/1.6 var(--mono); }
+  .code .ln { display: block; padding: 0 16px; white-space: pre; }
+  .code .ln:empty::before { content: "\200b"; }
+  .code .ln .n { color: var(--machine-muted); user-select: none; }
+  .code .ln.gap .t { color: var(--machine-muted); }
+
+  .layers { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .layer-group { margin-top: 18px; }
+  .layer { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 14px; min-width: 0; }
+  .layer-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .layer-head h3 { flex: 1 1 14em; min-width: 0; }
+  .layer-head .ctl { display: flex; gap: 6px; }
+  .num { display: inline-grid; place-items: center; min-width: 1.9em; height: 1.9em; padding: 0 4px; border-radius: 999px; background: var(--ink); color: var(--ground); font: 700 0.9rem var(--body); flex: none; }
+  .layer-body { display: grid; grid-template-columns: minmax(0, 620px) minmax(0, 1fr); gap: 18px; align-items: start; }
+  .layer-body > * { min-width: 0; }
+  .layer-side { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  @media (max-width: 1100px) { .layer-body { grid-template-columns: minmax(0, 1fr); } .tl { max-width: 680px; } }
+
+  /* timelines: one lane per worker, time running left to right */
+  .tl { width: 100%; height: auto; display: block; overflow: visible; }
+  .tl text { font-family: var(--body); }
+  .tl .lane-l { font-size: 12px; fill: var(--muted); }
+  .tl .lane-bg { fill: var(--slot); opacity: 0.5; }
+  .tl .work { fill: var(--work); }
+  .tl .wait { fill: url(#waitfill); stroke: var(--wait); stroke-width: 1.2; }
+  .tl .axis { stroke: var(--line); stroke-width: 1; }
+  .tl .tick { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+  .tl .head { stroke: var(--ink); stroke-width: 1.5; }
+  .tl .end { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 4 3; }
+  .tl .endl { font: 700 13px var(--mono); fill: var(--ink); }
+  .tl .speed { font-size: 11px; fill: var(--muted); }
+  .tl .gil { fill: var(--hit); }
+  .tl .gilt { font: 700 10px var(--body); fill: #fff; }
+  .tl .bracket { fill: none; stroke: var(--clash); stroke-width: 2; }
+  .tl .brl { font-size: 11px; font-weight: 700; fill: var(--clash); }
+  .tl .bar-l { font-size: 12px; fill: var(--ink); }
+  .tl .bar-v { font: 700 12px var(--mono); fill: var(--ink); font-variant-numeric: tabular-nums; }
+  .tl .grp { font: 700 11px var(--body); fill: var(--muted); letter-spacing: 0.08em; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.82rem; color: var(--muted); align-items: center; }
+  .sw { display: inline-block; width: 22px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+  .sw.work { background: var(--work); }
+  .sw.wait { background: repeating-linear-gradient(135deg, var(--wait) 0 2px, transparent 2px 6px); box-shadow: inset 0 0 0 1.2px var(--wait); }
+  details.full { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  details.full summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
+  details.full .code-panel { margin: 0 12px 12px; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <pattern id="waitfill" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><rect width="6" height="6" style="fill:color-mix(in oklab, var(--wait) 10%, transparent)"/><rect width="2" height="6" style="fill:var(--wait)" opacity="0.55"/></pattern>
+</defs></svg>
+<main class="page">
+  <header>
+    <div class="label">Session 8 · Concurrency, threads, and multiprocessing</div>
+    <h1>Waiting Together, Working Together</h1>
+    <p class="muted" style="max-width:72ch">Every timeline on this page is a real run, recorded on an 8-core Mac with <strong>Python 3.14.3</strong>. The last one uses the free-threaded build, <code>python3.14t</code>. Each bar is one task: when it started, when it finished, and which worker ran it. The downloads are pretend: each one waits 0.2 seconds with <code>sleep</code>, so every run waits the same amount.</p>
+    <div class="legend"><span><span class="sw wait"></span>waiting</span><span><span class="sw work"></span>working</span></div>
+  </header>
+
+  <section aria-labelledby="layers-h">
+    <h2 id="layers-h">One idea at a time</h2>
+    <p class="cap">Every timeline plays at the same slowed-down speed, so a run that takes longer to play took longer for real.</p>
+    <div class="layers" id="layers"></div>
+  </section>
+
+  <section aria-labelledby="src-h">
+    <h2 id="src-h">The script that recorded every run</h2>
+    <details class="full"><summary>timing.py</summary><div id="full-src"></div></details>
+  </section>
+</main>
+
+<script>
+const TL = {"io_serial":{"total":2434.0,"printed":"downloads, one at a time: 2.43 seconds","lanes":[{"label":"main thread","segs":[[0.0,205.1,0],[205.1,409.2,1],[409.2,610.4,2],[610.5,814.8,3],[814.8,1019.9,4],[1019.9,1223.2,5],[1223.2,1423.9,6],[1423.9,1626.2,7],[1626.2,1827.7,8],[1827.7,2029.0,9],[2029.0,2231.6,10],[2231.6,2434.0,11]]}]},"io_threads":{"total":612.3,"printed":"downloads, 4 threads: 0.61 seconds","lanes":[{"label":"thread 0","segs":[[1.2,202.3,0],[202.4,403.2,5],[403.2,607.5,8]]},{"label":"thread 1","segs":[[1.5,206.5,1],[206.6,411.0,7],[411.0,611.9,11]]},{"label":"thread 2","segs":[[1.7,202.4,2],[202.4,403.3,6],[403.3,607.8,9]]},{"label":"thread 3","segs":[[1.8,202.2,3],[202.3,405.7,4],[405.7,607.7,10]]}]},"io_async":{"total":203.8,"printed":"downloads, asyncio: 0.20 seconds","lanes":[{"label":"download 0","segs":[[1.1,202.6,0]]},{"label":"download 1","segs":[[1.1,202.6,1]]},{"label":"download 2","segs":[[1.1,202.6,2]]},{"label":"download 3","segs":[[1.1,202.6,3]]},{"label":"download 4","segs":[[1.1,202.6,4]]},{"label":"download 5","segs":[[1.1,202.6,5]]},{"label":"download 6","segs":[[1.1,202.6,6]]},{"label":"download 7","segs":[[1.1,202.7,7]]},{"label":"download 8","segs":[[1.2,202.7,8]]},{"label":"download 9","segs":[[1.2,202.7,9]]},{"label":"download 10","segs":[[1.2,202.7,10]]},{"label":"download 11","segs":[[1.2,202.7,11]]}]},"cpu_serial":{"total":1250.0,"printed":"prime counts, one at a time: 1.25 seconds","lanes":[{"label":"main thread","segs":[[0.0,2.1,0],[3.5,191.0,0],[191.0,340.4,1],[340.4,490.3,2],[490.3,640.6,3],[640.6,791.3,4],[791.3,944.4,5],[944.4,1096.4,6],[1096.4,1250.0,7]]}]},"cpu_threads":{"total":1212.0,"printed":"prime counts, 4 threads: 1.21 seconds","lanes":[{"label":"thread 0","segs":[[0.1,12.6,0],[19.0,25.1,0],[31.6,37.6,0],[56.6,62.8,0],[69.2,81.6,0],[87.9,94.0,0],[112.9,119.0,0],[138.0,144.2,0],[156.8,162.9,0],[175.6,181.7,0],[200.6,206.8,0],[225.7,231.7,0],[269.4,275.5,0],[300.7,306.8,0],[325.7,331.9,0],[350.8,356.8,0],[369.3,375.5,0],[394.4,400.5,0],[419.4,425.5,0],[438.2,444.3,0],[475.9,481.9,0],[500.9,505.7,0],[505.7,506.9,4],[544.6,550.7,4],[568.5,574.6,4],[593.5,599.5,4],[612.2,618.4,4],[631.1,637.2,4],[656.1,662.2,4],[681.2,687.3,4],[717.2,723.4,4],[729.7,735.9,4],[754.7,761.0,4],[786.1,792.2,4],[810.9,816.0,4],[834.9,840.9,4],[859.9,866.0,4],[878.7,884.7,4],[903.6,909.7,4],[928.6,933.9,4],[959.0,965.1,4],[984.1,990.1,4],[1015.4,1021.4,4],[1033.9,1040.1,4],[1052.8,1058.8,4],[1076.8,1083.0,4],[1101.7,1107.8,4],[1126.8,1129.1,4]]},{"label":"thread 1","segs":[[12.7,18.9,1],[37.8,43.9,1],[94.1,100.3,1],[119.2,125.4,1],[144.2,150.4,1],[181.8,187.9,1],[206.9,213.0,1],[244.4,250.5,1],[263.2,269.3,1],[288.2,294.3,1],[313.4,319.3,1],[338.3,344.4,1],[357.1,362.9,1],[375.6,381.6,1],[400.6,406.8,1],[413.2,419.2,1],[457.0,463.2,1],[482.1,488.1,1],[525.8,531.9,1],[550.9,555.9,1],[574.8,580.8,1],[606.0,612.2,1],[637.3,643.5,1],[668.7,674.7,1],[687.4,688.1,1],[688.1,693.4,7],[710.9,717.1,7],[736.0,742.1,7],[761.0,767.1,7],[779.8,785.9,7],[804.8,810.8,7],[828.6,834.6,7],[847.3,853.4,7],[872.4,878.5,7],[897.4,903.5,7],[916.0,922.1,7],[940.2,946.5,7],[965.3,971.4,7],[990.3,996.5,7],[1009.2,1015.2,7],[1046.5,1052.7,7],[1071.6,1076.7,7],[1108.0,1114.1,7],[1129.2,1139.1,7],[1158.0,1164.1,7],[1169.7,1181.9,7],[1188.4,1194.5,7],[1201.0,1207.0,7],[1209.9,1211.9,7]]},{"label":"thread 2","segs":[[25.3,31.4,2],[50.3,56.4,2],[81.6,87.8,2],[106.7,112.9,2],[131.7,137.8,2],[169.3,175.4,2],[194.3,200.4,2],[219.4,225.5,2],[238.2,244.3,2],[257.0,263.0,2],[282.0,288.1,2],[307.0,313.0,2],[332.0,338.1,2],[388.1,394.3,2],[432.0,438.1,2],[444.5,450.5,2],[469.4,475.6,2],[494.5,500.6,2],[519.6,525.7,2],[538.3,544.5,2],[562.3,568.4,2],[581.1,587.1,2],[599.8,605.8,2],[618.5,624.7,2],[643.6,643.6,2],[643.7,649.8,6],[662.5,668.5,6],[693.7,699.4,6],[723.5,729.6,6],[748.5,754.6,6],[773.6,779.6,6],[792.3,798.4,6],[822.2,828.4,6],[841.1,847.2,6],[866.0,872.3,6],[891.2,897.3,6],[922.4,928.4,6],[946.5,952.6,6],[971.5,977.7,6],[1002.9,1008.9,6],[1027.7,1033.8,6],[1059.0,1065.2,6],[1083.2,1089.2,6],[1095.6,1101.5,6],[1114.3,1120.4,6],[1145.6,1158.0,6],[1182.1,1188.4,6],[1194.8,1200.9,6],[1207.3,1209.9,6]]},{"label":"thread 3","segs":[[44.1,50.1,3],[62.9,69.0,3],[100.4,106.6,3],[125.5,131.6,3],[150.5,156.6,3],[163.0,169.2,3],[188.1,194.2,3],[213.2,219.2,3],[231.9,238.0,3],[250.6,256.8,3],[275.7,281.8,3],[294.6,300.5,3],[319.4,325.6,3],[344.5,350.7,3],[363.1,369.2,3],[381.8,387.9,3],[406.9,412.9,3],[425.7,431.8,3],[450.8,456.8,3],[463.2,469.4,3],[488.3,494.4,3],[507.2,519.5,3],[532.1,538.2,3],[556.1,556.7,3],[556.7,562.1,5],[587.3,593.4,5],[624.9,630.9,5],[649.9,655.9,5],[674.8,680.9,5],[699.5,710.9,5],[742.3,748.4,5],[767.4,773.3,5],[798.6,804.6,5],[816.0,822.1,5],[853.6,859.7,5],[884.9,891.0,5],[909.9,916.0,5],[934.1,940.2,5],[952.8,958.9,5],[977.8,983.9,5],[996.6,1002.8,5],[1021.7,1027.6,5],[1040.3,1046.4,5],[1065.3,1071.4,5],[1089.3,1095.5,5],[1120.6,1126.6,5],[1139.3,1145.3,5],[1164.3,1169.6,5]]}]},"cpu_processes":{"total":432.3,"printed":"prime counts, 4 processes: 0.43 seconds","lanes":[{"label":"process 1","segs":[[88.4,245.2,0],[245.4,405.0,4]]},{"label":"process 2","segs":[[88.7,247.3,1],[247.4,410.6,5]]},{"label":"process 3","segs":[[88.9,247.4,2],[247.6,407.0,6]]},{"label":"process 4","segs":[[92.6,251.9,3],[252.0,414.1,7]]}]},"cpu_threads_nogil":{"total":305.4,"printed":"prime counts, 4 threads, no GIL: 0.31 seconds","lanes":[{"label":"thread 0","segs":[[0.1,149.9,0],[149.9,171.9,5],[173.1,305.1,5]]},{"label":"thread 1","segs":[[0.2,149.7,1],[149.7,302.2,4]]},{"label":"thread 2","segs":[[0.3,150.9,2],[150.9,268.4,6],[269.4,303.8,6]]},{"label":"thread 3","segs":[[0.4,48.9,3],[50.4,151.5,3],[151.5,305.2,7]]}]}};
+const SRC = "\"\"\"Record real timelines for the concurrency page: when each task ran, on which worker.\"\"\"\nimport asyncio, json, math, os, sys, threading, time\nfrom concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor\n\nnow = time.time_ns\n\n# ---------- an IO-bound task: a pretend download that mostly waits ----------\ndef download(i):\n    start = now()\n    time.sleep(0.2)                         # waiting on the network\n    return {\"task\": i, \"worker\": threading.current_thread().name, \"wait\": [start, now()]}\n\nasync def download_async(i):\n    start = now()\n    await asyncio.sleep(0.2)                # waiting on the network, without blocking the thread\n    return {\"task\": i, \"worker\": f\"task-{i}\", \"wait\": [start, now()]}\n\n# ---------- a CPU-bound task: count primes, noting progress every 50 numbers ----------\ndef is_prime(n):\n    if n < 2: return False\n    if n % 2 == 0: return n == 2\n    r = int(math.isqrt(n))\n    for f in range(3, r + 1, 2):\n        if n % f == 0: return False\n    return True\n\ndef count_primes_near(center, window=60_000, task=0):\n    ticks = [now()]\n    count = 0\n    for k, n in enumerate(range(center - window // 2, center + window // 2)):\n        if is_prime(n): count += 1\n        if k % 50 == 49: ticks.append(now())\n    name = threading.current_thread().name\n    if name == \"MainThread\": name = f\"pid {os.getpid()}\"\n    return {\"task\": task, \"worker\": name, \"ticks\": ticks, \"count\": count}\n\nN_IO, N_CPU, WORKERS = 12, 8, 4\nCENTERS = [5_000_000 + i * 50_000 for i in range(N_CPU)]\n\nLABELS = {\"io_serial\": \"downloads, one at a time\", \"io_threads\": \"downloads, 4 threads\", \"io_async\": \"downloads, asyncio\",\n          \"cpu_serial\": \"prime counts, one at a time\", \"cpu_processes\": \"prime counts, 4 processes\",\n          \"cpu_threads\": \"prime counts, 4 threads\", \"cpu_threads_nogil\": \"prime counts, 4 threads, no GIL\"}\nOUT = {}\n\ndef timed(fn, key):\n    t0 = now(); out = fn(); t1 = now()\n    OUT[key] = f\"{LABELS[key]}: {(t1 - t0) / 1e9:.2f} seconds\"\n    print(OUT[key])\n    return {\"t0\": t0, \"t1\": t1, \"tasks\": out}\n\ndef main(which):\n    runs = {}\n    if which == \"default\":\n        runs[\"io_serial\"] = timed(lambda: [download(i) for i in range(N_IO)], \"io_serial\")\n        def io_threads():\n            with ThreadPoolExecutor(max_workers=WORKERS, thread_name_prefix=\"thread\") as ex:\n                return list(ex.map(download, range(N_IO)))\n        runs[\"io_threads\"] = timed(io_threads, \"io_threads\")\n        async def io_async():\n            return await asyncio.gather(*(download_async(i) for i in range(N_IO)))\n        runs[\"io_async\"] = timed(lambda: asyncio.run(io_async()), \"io_async\")\n        runs[\"cpu_serial\"] = timed(lambda: [count_primes_near(c, task=i) for i, c in enumerate(CENTERS)], \"cpu_serial\")\n        def cpu_procs():\n            with ProcessPoolExecutor(max_workers=WORKERS) as ex:\n                return list(ex.map(count_primes_near, CENTERS, [60_000] * N_CPU, range(N_CPU)))\n        runs[\"cpu_processes\"] = timed(cpu_procs, \"cpu_processes\")\n    def cpu_threads():\n        with ThreadPoolExecutor(max_workers=WORKERS, thread_name_prefix=\"thread\") as ex:\n            return list(ex.map(count_primes_near, CENTERS, [60_000] * N_CPU, range(N_CPU)))\n    key = \"cpu_threads\" if which == \"default\" else \"cpu_threads_nogil\"\n    runs[key] = timed(cpu_threads, key)\n    return {\"printed\": OUT, \"python\": sys.version.split()[0], \"gil\": sys._is_gil_enabled(), \"cores\": os.cpu_count(), \"runs\": runs}\n\nif __name__ == \"__main__\":\n    json.dump(main(sys.argv[1]), open(sys.argv[2], \"w\"))";
+</script>
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const host = $("layers");
+  const LINES = SRC.split("\n");
+
+  // ---------- panels ----------
+  const panel = (side, head) => {
+    side.insertAdjacentHTML("beforeend", `<div class="code-panel"><div class="code-head"><span>${head}</span></div><div class="code"></div></div>`);
+    return side.lastElementChild.querySelector(".code");
+  };
+  // Lines of timing.py, with their real line numbers; [a, b] is a range, "…" marks a gap.
+  const srcPanel = (side, ranges, head = "timing.py") => {
+    const rows = [];
+    ranges.forEach((r, k) => {
+      if (k) rows.push(`<span class="ln gap"><span class="t">   …</span></span>`);
+      for (let n = r[0]; n <= r[1]; n++) rows.push(`<span class="ln"><span class="n">${String(n).padStart(3)}</span>  ${esc(LINES[n - 1])}</span>`);
+    });
+    panel(side, head).innerHTML = rows.join("");
+  };
+  const outPanel = (side, text, head = "Output") => { panel(side, head).innerHTML = text.split("\n").map((t) => `<span class="ln">${esc(t)}</span>`).join(""); };
+
+  // ---------- timelines ----------
+  // Each picture is drawn at its container's own width, so labels stay readable on a phone.
+  const dims = (el) => { const W = Math.max(320, Math.min(620, el.clientWidth || 620)); const LX = W < 480 ? 74 : 104; return { W, LX, PW: W - LX - 46 }; };
+  // Draws one run as lanes of bars, and plays it back left to right at `speed` (data ms per screen ms).
+  const timeline = (el, run, { max, kind, lane = 18, gap = 6, ticks, speed = 0.4, from = 0, gilToken = false, bracket = null, label }) => {
+    const { W, LX, PW } = dims(el);
+    if (W < 480) ticks = ticks.filter((_, k) => k % 2 === 0);
+    const span = max - from;
+    const X = (ms) => LX + ((ms - from) / span) * PW;
+    const TOP = 26;
+    const H = TOP + 6 + run.lanes.length * (lane + gap) + 30;
+    const id = Math.random().toString(36).slice(2, 8);
+    let m = `<svg class="tl" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}"><defs><clipPath id="clip-${id}"><rect id="cr-${id}" x="0" y="0" width="${LX}" height="${H}"/></clipPath></defs>`;
+    run.lanes.forEach((ln, k) => {
+      const y = TOP + k * (lane + gap);
+      m += `<text class="lane-l" x="${LX - 8}" y="${y + lane / 2 + 4}" text-anchor="end">${esc(ln.label)}</text><rect class="lane-bg" x="${LX}" y="${y}" width="${PW}" height="${lane}" rx="3"/>`;
+    });
+    m += `<g clip-path="url(#clip-${id})">`;
+    run.lanes.forEach((ln, k) => {
+      const y = TOP + k * (lane + gap);
+      ln.segs.forEach(([a, b, task]) => {
+        if (b < from || a > max) return;
+        const x1 = X(Math.max(a, from)), x2 = X(Math.min(b, max));
+        m += `<rect class="${ln.kind || kind}" x="${x1}" y="${y}" width="${Math.max(0.8, x2 - x1)}" height="${lane}" rx="2"><title>task ${task}: ${(b - a).toFixed(1)} ms</title></rect>`;
+      });
+    });
+    m += `</g>`;
+    const axisY = TOP + run.lanes.length * (lane + gap) + 2;
+    m += `<line class="axis" x1="${LX}" y1="${axisY}" x2="${LX + PW}" y2="${axisY}"/>`;
+    ticks.forEach((t) => { m += `<text class="tick" x="${X(t)}" y="${axisY + 14}" text-anchor="middle">${t >= 1000 ? `${t / 1000} s` : `${t} ms`}</text>`; });
+    if (run.total <= max) m += `<g id="end-${id}" opacity="0"><line class="end" x1="${X(run.total)}" y1="6" x2="${X(run.total)}" y2="${axisY}"/><text class="endl" x="${X(run.total) + 5}" y="16">${(run.total / 1000).toFixed(2)} s</text></g>`;
+    if (bracket) m += `<path class="bracket" d="M${X(bracket[0])} ${axisY + 20} V${axisY + 26} H${X(bracket[1])} V${axisY + 20}"/><text class="brl" x="${(X(bracket[0]) + X(bracket[1])) / 2}" y="${axisY + 40}" text-anchor="middle">${esc(bracket[2])}</text>`;
+    m += `<line class="head" id="hd-${id}" x1="${LX}" y1="${TOP - 4}" x2="${LX}" y2="${axisY}"/>`;
+    if (gilToken) m += `<g id="gil-${id}" opacity="0"><rect class="gil" x="${Math.max(0, LX - 102)}" y="0" width="30" height="${lane}" rx="${lane / 2}"/><text class="gilt" x="${Math.max(0, LX - 102) + 15}" y="${lane / 2 + 3.5}" text-anchor="middle">GIL</text></g>`;
+    m += `<text class="speed" x="${LX + PW}" y="${axisY + 28}" text-anchor="end">playing ${Math.round(1 / speed * 10) / 10}× slower than real time</text></svg>`;
+    el.innerHTML = m;
+    const cr = $(`cr-${id}`), hd = $(`hd-${id}`), end = $(`end-${id}`), gil = $(`gil-${id}`);
+    // Which lane holds the GIL at time t: the one making progress then.
+    const holder = (t) => run.lanes.findIndex((ln) => ln.segs.some(([a, b]) => a <= t && t <= b));
+    const draw = (t) => {
+      const x = X(Math.min(Math.max(t, from), max));
+      cr.setAttribute("width", x);
+      hd.setAttribute("x1", x); hd.setAttribute("x2", x);
+      hd.setAttribute("opacity", t >= run.total || t >= max ? 0 : 1);
+      if (end) end.setAttribute("opacity", t >= run.total ? 1 : 0);
+      if (gil) { const k = holder(t); gil.setAttribute("opacity", k < 0 || t >= max ? 0 : 1); if (k >= 0) gil.setAttribute("transform", `translate(0,${TOP + k * (lane + gap)})`); }
+    };
+    return { draw, from, to: Math.min(max, run.total + span * 0.02), speed };
+  };
+
+  // Bars for every run's total time, on one scale per kind of work.
+  const totals = (el, groups) => {
+    const { W } = dims(el);
+    const BX = W < 480 ? 116 : 210, BW = W - BX - 64;
+    let y = 8, m = "";
+    const rows = [];
+    groups.forEach(([title, keys]) => {
+      m += `<text class="grp" x="0" y="${y + 10}">${esc(title.toUpperCase())}</text>`; y += 20;
+      const max = Math.max(...keys.map((k) => TL[k].total));
+      keys.forEach((k) => {
+        const w = (TL[k].total / max) * BW;
+        m += `<text class="bar-l" x="0" y="${y + 14}">${esc(TL[k].printed.split(":")[0].replace(/^(downloads|prime counts), /, ""))}</text>`;
+        m += `<rect class="${k.startsWith("io") ? "wait" : "work"}" x="${BX}" y="${y}" width="${w}" height="20" rx="3" data-bar style="transform-box:fill-box;transform-origin:0 50%;transition:transform 0.9s"/>`;
+        m += `<text class="bar-v" x="${BX + 6 + w}" y="${y + 14}">${(TL[k].total / 1000).toFixed(2)} s</text>`;
+        y += 28;
+      });
+      y += 10;
+    });
+    el.innerHTML = `<svg class="tl" viewBox="0 0 ${W} ${y}" role="img" aria-label="Total time of every run, as bars on one scale for downloads and one for prime counts.">${m}</svg>`;
+    return el.querySelectorAll("[data-bar]");
+  };
+
+  // ---------- the frames ----------
+  const IO = { max: 2500, ticks: [0, 500, 1000, 1500, 2000, 2500] };
+  const CPU = { max: 1300, ticks: [0, 250, 500, 750, 1000, 1250] };
+  const first = (run, k) => ({ total: run.lanes[0].segs[k][1], lanes: [{ label: "", segs: [run.lanes[0].segs[k]] }] });
+  const FRAMES = [
+    { group: "Waiting" },
+    {
+      title: "Some tasks spend their time waiting; others spend it working",
+      side: (s) => srcPanel(s, [[8, 11], [27, 32]]),
+      pic: (el) => timeline(el, { total: Infinity, lanes: [
+        { label: "download(0)", kind: "wait", segs: [TL.io_serial.lanes[0].segs[0]] },
+        { label: "prime count", kind: "work", segs: [((ss) => [0, Math.max(...ss.map((x) => x[1])) - ss[0][0], 0])(TL.cpu_serial.lanes[0].segs.filter((x) => x[2] === 0))] },
+      ] }, { max: 250, ticks: [0, 50, 100, 150, 200, 250], lane: 26, gap: 14, label: "Two bars on one time axis. A download is 200 milliseconds of waiting. A prime count is about 150 milliseconds of steady work." }),
+    },
+    {
+      title: "One at a time, the waits add up",
+      side: (s) => { srcPanel(s, [[54, 54]]); outPanel(s, TL.io_serial.printed); },
+      pic: (el) => timeline(el, TL.io_serial, { ...IO, kind: "wait", label: "One lane, the main thread, with twelve 0.2-second waits end to end, finishing at 2.43 seconds." }),
+    },
+    {
+      title: "Threads let the waits overlap",
+      side: (s) => { srcPanel(s, [[55, 58]]); outPanel(s, TL.io_threads.printed); },
+      pic: (el) => timeline(el, TL.io_threads, { ...IO, kind: "wait", label: "Four lanes, one per thread, each waiting on three downloads, side by side. Done at 0.61 seconds." }),
+    },
+    {
+      title: "asyncio overlaps every wait, on one thread",
+      side: (s) => { srcPanel(s, [[13, 16], [59, 61]]); outPanel(s, TL.io_async.printed); },
+      pic: (el) => timeline(el, TL.io_async, { ...IO, kind: "wait", lane: 10, gap: 4, label: "Twelve lanes, one per download, all waiting at the same moment on a single thread. Done at 0.20 seconds." }),
+    },
+    { group: "Working" },
+    {
+      title: "Working tasks take as long as their work",
+      side: (s) => { srcPanel(s, [[62, 62]]); outPanel(s, TL.cpu_serial.printed); },
+      pic: (el) => timeline(el, TL.cpu_serial, { ...CPU, kind: "work", label: "One lane with eight prime counts end to end, finishing at 1.25 seconds." }),
+    },
+    {
+      title: "Threads don't make working tasks any faster",
+      side: (s) => { srcPanel(s, [[67, 71]]); outPanel(s, TL.cpu_threads.printed); },
+      pic: (el) => timeline(el, TL.cpu_threads, { ...CPU, kind: "work", label: "Four thread lanes, each striped with short bursts of work. The run still takes 1.21 seconds, about as long as one at a time." }),
+    },
+    {
+      title: "Up close: only one thread runs Python at any moment",
+      side: (s) => { srcPanel(s, [[27, 32]], "timing.py: a tick every 50 numbers shows when a thread made progress"); outPanel(s, TL.cpu_threads.printed); },
+      pic: (el) => timeline(el, TL.cpu_threads, { max: 60, from: 0, ticks: [0, 10, 20, 30, 40, 50, 60], kind: "work", speed: 0.02, gilToken: true, label: "The first 60 milliseconds of the four-thread run. Bursts of work hop from thread to thread every few milliseconds, never overlapping, and a green GIL marker follows the one thread that is running." }),
+    },
+    {
+      title: "Each process has its own interpreter, and its own GIL",
+      side: (s) => { srcPanel(s, [[63, 66]]); outPanel(s, TL.cpu_processes.printed); },
+      pic: (el) => timeline(el, TL.cpu_processes, { ...CPU, kind: "work", bracket: [0, TL.cpu_processes.lanes[0].segs[0][0], "starting"], label: "Four process lanes, each working solidly at the same time after a short start-up gap. Done at 0.43 seconds." }),
+    },
+    {
+      title: "Python 3.14t has no GIL: threads work at the same time",
+      side: (s) => { srcPanel(s, [[67, 71]], "timing.py, run with python3.14t"); outPanel(s, TL.cpu_threads_nogil.printed); },
+      pic: (el) => timeline(el, TL.cpu_threads_nogil, { ...CPU, kind: "work", label: "Four thread lanes working solidly at the same time, with no start-up gap. Done at 0.31 seconds." }),
+    },
+    { group: "All of it" },
+    {
+      title: "Wait together for waiting; work apart for working",
+      side: (s) => outPanel(s, ["io_serial", "io_threads", "io_async", "cpu_serial", "cpu_threads", "cpu_processes", "cpu_threads_nogil"].map((k) => TL[k].printed).join("\n"), "Every run's output"),
+      bars: [["Downloads", ["io_serial", "io_threads", "io_async"]], ["Prime counts", ["cpu_serial", "cpu_threads", "cpu_processes", "cpu_threads_nogil"]]],
+    },
+  ];
+
+  const players = [];
+  let n = 0;
+  FRAMES.forEach((f) => {
+    if (f.group) { host.insertAdjacentHTML("beforeend", `<div class="label layer-group">${esc(f.group)}</div>`); return; }
+    n += 1;
+    const id = `layer-${n}`;
+    host.insertAdjacentHTML("beforeend", `<article class="layer" id="${id}" aria-labelledby="${id}-h">
+      <div class="layer-head"><span class="num">${n}</span><h3 id="${id}-h">${esc(f.title)}</h3>
+        <span class="ctl"><button class="btn" type="button">Pause</button><button class="btn" type="button">Replay</button></span></div>
+      <div class="layer-body"><div class="pic"></div><div class="layer-side"></div></div>
+    </article>`);
+    const art = host.lastElementChild;
+    f.side(art.querySelector(".layer-side"));
+    const [bPause, bReplay] = art.querySelectorAll(".layer-head .btn");
+    if (f.bars) {
+      const bars = totals(art.querySelector(".pic"), f.bars);
+      const grow = (on) => bars.forEach((b) => { b.style.transform = on ? "scaleX(1)" : "scaleX(0.001)"; });
+      grow(still);
+      bPause.hidden = true;
+      bReplay.addEventListener("click", () => { grow(false); setTimeout(() => grow(true), 60); });
+      players.push({ art, setVisible: (v) => { if (v) grow(true); } });
+      return;
+    }
+    const tl = f.pic(art.querySelector(".pic"));
+    // Playback: data time runs at tl.speed ms per screen ms, holds at the end, then starts over.
+    let t = tl.from, last = null, raf = null, visible = false, paused = still, hold = 0;
+    tl.draw(still ? tl.to : t);
+    const frame = (now) => {
+      raf = null;
+      if (paused || !visible) { last = null; return; }
+      const dt = last == null ? 0 : now - last; last = now;
+      if (t >= tl.to) { hold += dt; if (hold > 2500) { t = tl.from; hold = 0; } }
+      else t = Math.min(tl.to, t + dt * tl.speed);
+      tl.draw(t);
+      raf = requestAnimationFrame(frame);
+    };
+    const run = () => { if (!raf && !paused && visible) raf = requestAnimationFrame(frame); };
+    const label = () => { bPause.textContent = paused ? "Play" : "Pause"; };
+    bPause.addEventListener("click", () => { paused = !paused; label(); run(); });
+    bReplay.addEventListener("click", () => { t = tl.from; hold = 0; paused = false; label(); tl.draw(t); run(); });
+    label();
+    players.push({ art, setVisible: (v) => { visible = v; run(); } });
+  });
+
+  const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+    const p = players.find((x) => x.art === e.target);
+    if (p) p.setVisible(e.isIntersecting);
+  }), { threshold: 0.3 });
+  players.forEach((p) => io.observe(p.art));
+
+  $("full-src").innerHTML = `<div class="code-panel"><div class="code">${LINES.map((t, i) => `<span class="ln"><span class="n">${String(i + 1).padStart(3)}</span>  ${esc(t)}</span>`).join("")}</div></div>`;
+})();
+</script>
+</body>
+</html>

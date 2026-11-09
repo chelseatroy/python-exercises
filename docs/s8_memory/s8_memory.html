@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Where Python Keeps Your Objects</title>
+<style>
+  :root {
+    --ground: #F6F1E7;
+    --surface: #FFFDF8;
+    --ink: #1F1B2D;
+    --muted: #6A6377;
+    --line: #E0D8C8;
+    --accent: #3B5BDB;
+    --tag: #F2C14E;
+    --tag-edge: #C99A1E;
+    --tag-ink: #3A2A00;
+    --hit: #2B8A3E;
+    --clash: #D9480F;
+    --machine: #2B2540;
+    --machine-ink: #F6F1E7;
+    --machine-muted: #B9B2CC;
+    --slot: #EDE6D8;
+    --obj: #DCE4FB;
+    --obj-edge: #7B8FD6;
+    --gold: #B8860B;
+    --display: Georgia, "Times New Roman", serif;
+    --body: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #15131C; --surface: #1E1B28; --ink: #ECE8F4; --muted: #A49DB3; --line: #34303F;
+      --accent: #7C93F5; --tag: #D9AA3A; --tag-edge: #A97F1C; --tag-ink: #241A00; --hit: #51CF66; --clash: #FF8A4C;
+      --machine: #0D0B14; --machine-ink: #ECE8F4; --machine-muted: #8F88A3; --slot: #2A2636; --obj: #27304F; --obj-edge: #6F86E0; --gold: #E0B341;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #15131C; --surface: #1E1B28; --ink: #ECE8F4; --muted: #A49DB3; --line: #34303F;
+    --accent: #7C93F5; --tag: #D9AA3A; --tag-edge: #A97F1C; --tag-ink: #241A00; --hit: #51CF66; --clash: #FF8A4C;
+    --machine: #0D0B14; --machine-ink: #ECE8F4; --machine-muted: #8F88A3; --slot: #2A2636; --obj: #27304F; --obj-edge: #6F86E0; --gold: #E0B341;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 16px/1.55 var(--body); }
+  .page { padding-inline: clamp(16px, 4vw, 72px); padding-block: 40px 72px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .page > * { min-width: 0; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.3rem, 7vw, 3.6rem); line-height: 1.02; }
+  h2 { font-size: 1.7rem; line-height: 1.15; }
+  h3 { font-size: 1.25rem; line-height: 1.2; }
+  p { margin: 0; }
+  a { color: var(--accent); }
+  code { font-family: var(--mono); font-size: 0.92em; }
+  .label { font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+  header { display: grid; gap: 14px; }
+  .muted { color: var(--muted); }
+  .cap { font-size: 0.82rem; color: var(--muted); max-width: 72ch; }
+  section { display: grid; gap: 16px; min-width: 0; }
+  .btn { font: 600 0.8rem var(--body); cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 4px 12px; }
+  .btn:hover { border-color: var(--muted); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* code and output panels */
+  .code-panel { background: var(--machine); color: var(--machine-ink); border-radius: 12px; padding: 12px 0; overflow-x: auto; }
+  .code-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; padding: 0 16px 8px; font-size: 0.82rem; color: var(--machine-muted); }
+  .code { margin: 0; font: 0.8rem/1.6 var(--mono); }
+  .code .ln { display: block; padding: 0 16px; white-space: pre; border-left: 3px solid transparent; transition: opacity 0.3s; }
+  .code .ln .n { color: var(--machine-muted); user-select: none; }
+  .code .ln:empty::before { content: "\200b"; }
+  .code .ln.hot { background: color-mix(in oklab, var(--tag) 26%, transparent); border-left-color: var(--tag); }
+  .code .ln.unrun { opacity: 0.12; }
+  .code .ln.gap .t { color: var(--machine-muted); }
+  .code a.n { text-decoration: none; }
+  .code a.n:hover { color: var(--tag); text-decoration: underline; }
+
+  /* layers: one new idea per picture, new things in color, earlier ones grey */
+  .layers { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .layer-group { margin-top: 18px; }
+  .layer { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 14px; min-width: 0; }
+  .layer-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .layer-head h3 { flex: 1 1 14em; min-width: 0; }
+  .layer-head .ctl { display: flex; gap: 6px; }
+  .num { display: inline-grid; place-items: center; min-width: 1.9em; height: 1.9em; padding: 0 4px; border-radius: 999px; background: var(--ink); color: var(--ground); font: 700 0.9rem var(--body); flex: none; }
+  .layer-body { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 18px; align-items: start; }
+  .layer-body > * { min-width: 0; }
+  .layer-side { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  @media (max-width: 860px) { .layer-body { grid-template-columns: minmax(0, 1fr); } .scene { max-width: 440px; } }
+  .scene { width: 100%; height: auto; display: block; overflow: visible; transition: opacity 0.35s; }
+  .scene.fade { opacity: 0; }
+  .scene g { transform-box: fill-box; transform-origin: center; transition: transform 0.65s cubic-bezier(0.3, 0.7, 0.3, 1), opacity 0.45s; }
+  .scene.instant g, .scene g.snap { transition: none; }
+  .scene g.left { transform-origin: 0% 50%; }
+
+  /* the picture's vocabulary: names, objects, counts, arrows */
+  .scene text { font-family: var(--mono); }
+  .scene .tagbox { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+  .scene .tagbox.old { stroke: var(--line); }
+  .scene .tagt { font-size: 13px; font-weight: 700; fill: var(--ink); }
+  .scene .tagt.old { font-weight: 400; fill: var(--muted); }
+  .scene .objbox { fill: var(--obj); stroke: var(--obj-edge); stroke-width: 2; }
+  .scene .objbox.old { fill: var(--slot); stroke: var(--line); }
+  .scene .objt { font-size: 14px; font-weight: 700; fill: var(--ink); }
+  .scene .objt.old { font-weight: 400; fill: var(--muted); }
+  .scene .badge { fill: var(--tag); stroke: var(--tag-edge); stroke-width: 1.5; }
+  .scene .badge.old { fill: var(--slot); stroke: var(--muted); }
+  .scene .badget { font-size: 13px; font-weight: 700; fill: var(--tag-ink); }
+  .scene .badget.old { fill: var(--muted); }
+  .scene .ln, .scene .ln.new { fill: none; stroke: var(--accent); stroke-width: 2.2; }
+  .scene .hd, .scene .hd.new { fill: var(--accent); }
+  .scene .ln.old { stroke: var(--muted); stroke-width: 1.6; }
+  .scene .hd.old { fill: var(--muted); }
+  .scene .ln.weak { stroke-dasharray: 5 4; }
+  .scene .ln.cyc { stroke: var(--clash); }
+  .scene .hd.cyc { fill: var(--clash); }
+  .scene .stuck { fill: none; stroke: var(--clash); stroke-width: 3; stroke-dasharray: 6 4; }
+  .scene .pill { fill: var(--gold); stroke: var(--ink); stroke-width: 1.2; }
+  .scene .pillt { font-size: 11px; font-weight: 700; fill: #1A1300; }
+  .scene .note { font-family: var(--body); font-size: 12px; fill: var(--muted); }
+  .scene .notenew { font-family: var(--body); font-size: 12px; font-weight: 700; fill: var(--ink); }
+  .scene .callbox { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+  .scene .callt { font-size: 12px; font-weight: 700; fill: var(--accent); }
+  .scene .scan { fill: color-mix(in oklab, var(--hit) 22%, transparent); stroke: var(--hit); stroke-width: 2; }
+  .scene .bin { fill: none; stroke: var(--ink); stroke-width: 2; }
+  .scene .bin.old { stroke: var(--muted); stroke-width: 1.5; }
+  .scene .fill { fill: var(--tag); }
+  .scene .fill.old { fill: var(--slot); }
+  .scene .dot { fill: var(--obj-edge); }
+  .scene .slice { fill: color-mix(in oklab, var(--hit) 30%, transparent); stroke: var(--hit); stroke-width: 2; }
+  .scene .os { fill: var(--slot); stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 4 3; }
+  .scene .arena { fill: var(--obj); stroke: var(--obj-edge); stroke-width: 2; }
+  .scene .arena.old { fill: var(--slot); stroke: var(--muted); }
+  .scene .pool { stroke: var(--surface); stroke-width: 1.5; }
+  .scene .c32 { fill: #F2C14E; } .scene .c48 { fill: #E8875B; } .scene .c64 { fill: #7B8FD6; } .scene .c128 { fill: #57B07A; } .scene .cother { fill: var(--slot); }
+  .scene .blk { stroke: var(--ink); stroke-width: 1; }
+  .scene .waste { fill: url(#hatch); stroke: var(--clash); stroke-width: 1; }
+  .scene .cell { stroke: var(--ink); stroke-width: 1.2; }
+  .scene .thr { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+  .scene .lost { fill: var(--clash); }
+  .scene .lock { fill: var(--hit); stroke: var(--ink); stroke-width: 1.2; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6"><path d="M0 6 L6 0" style="stroke:var(--clash)" stroke-width="1.2"/></pattern></defs></svg>
+<main class="page">
+  <header>
+    <div class="label">Session 8 · Memory management</div>
+    <h1>Where Python Keeps Your Objects</h1>
+    <p class="muted" style="max-width:72ch">Every output on this page is real, from <strong>Python 3.14.3</strong> on a Mac. The last frames also use 3.14.3's free-threaded build, <code>python3.14t</code>, which runs without the GIL. Each snippet ran as a script in a fresh interpreter, so a REPL or notebook can print slightly different counts.</p>
+  </header>
+
+  <section aria-labelledby="layers-h">
+    <h2 id="layers-h">One idea at a time</h2>
+    <p class="cap">Each picture adds one thing, in color. What came before turns grey. Pause any picture, or step through it.</p>
+    <div class="layers" id="layers"></div>
+  </section>
+
+  <section aria-labelledby="more-h">
+    <h2 id="more-h">Go further</h2>
+    <ul class="cap" style="display:grid;gap:6px;padding-left:1.2em;margin:0">
+      <li><a href="https://docs.python.org/3.14/whatsnew/3.14.html#whatsnew314-incremental-gc">What's new in 3.14: incremental garbage collection</a></li>
+      <li><a href="https://peps.python.org/pep-0683/">PEP 683</a>: immortal objects. <a href="https://peps.python.org/pep-0703/">PEP 703</a>: making the GIL optional, and biased reference counting.</li>
+      <li><a href="https://github.com/python/cpython/blob/v3.14.3/Include/object.h">CPython 3.14.3's object header</a>, and <a href="https://github.com/python/cpython/blob/v3.14.3/Objects/obmalloc.c">its small-object allocator</a></li>
+    </ul>
+  </section>
+</main>
+
+<script>
+const MEM = {"names": {"src": "x = [1, 2, 3]\ny = x\nprint(x is y)", "out": "True\n"}, "count": {"src": "import sys\n\nx = [1, 2, 3]\nprint(sys.getrefcount(x))\ny = x\nprint(sys.getrefcount(x))\ndel y\nprint(sys.getrefcount(x))", "out": "2\n3\n2\n"}, "freed": {"src": "import weakref\n\nclass Node:\n    def __init__(self, value):\n        self.value = value\n\na = Node(1)\nweakref.finalize(a, print, \"Node(1) freed\")\n\nprint(\"about to del a\")\ndel a\nprint(\"after del a\")", "out": "about to del a\nNode(1) freed\nafter del a\n"}, "immortal": {"src": "import sys\n\nprint(sys.getrefcount(None))\nprint(sys.getrefcount(True))\nprint(sys.getrefcount(1))\nprint(sys._is_immortal(None))", "out": "3221225472\n3221225472\n3221225472\nTrue\n"}, "cycle": {"src": "import sys, ctypes\n\ncircular_list = []\ncircular_list.append(circular_list)\naddr = id(circular_list)\nprint(f\"Refcount: {sys.getrefcount(circular_list)}\")\n\ndel circular_list\nprint(f\"After del, before GC: {ctypes.c_long.from_address(addr)}\")", "out": "Refcount: 3\nAfter del, before GC: c_long(1)\n"}, "collect": {"src": "import gc, weakref\n\nclass Node:\n    def __init__(self, value):\n        self.value = value\n        self.next = None\n\na = Node(1)\nb = Node(2)\na.next = b\nb.next = a\nweakref.finalize(a, print, \"Node(1) freed\")\nweakref.finalize(b, print, \"Node(2) freed\")\n\ndel a, b\nprint(\"names deleted\")\nprint(\"collected:\", gc.collect())", "out": "names deleted\nNode(1) freed\nNode(2) freed\ncollected: 137\n"}, "generations": {"src": "import gc\n\nprint(gc.get_threshold())\nprint(gc.get_count())\njunk = [[] for _ in range(1500)]\nprint(gc.get_count())\ngc.collect()\nprint(gc.get_count())", "out": "(2000, 10, 0)\n(837, 0, 0)\n(337, 0, 0)\n(0, 0, 0)\n"}, "weak": {"src": "import weakref\n\nclass Node:\n    def __init__(self, value):\n        self.value = value\n\nd = Node(2)\npointer = weakref.ref(d)\nprint(pointer())\ndel d\nprint(pointer())", "out": "<__main__.Node object at 0x1025c1010>\nNone\n"}, "sizes": {"src": "import sys\n\nprint(sys.getsizeof(2.5))\nprint(sys.getsizeof(\"item_7\"))\nprint(sys.getsizeof({\"id\": 7}))", "out": "24\n47\n184\n"}, "race": {"src": "import sys, threading\ncounter = 0\n\ndef add_a_lot():\n    global counter\n    for _ in range(1_000_000):\n        counter += 1\n\nthreads = [threading.Thread(target=add_a_lot) for _ in range(4)]\nfor t in threads: t.start()\nfor t in threads: t.join()\n\nprint(f\"GIL enabled: {sys._is_gil_enabled()}\")\nprint(f\"expected 4,000,000, got {counter:,}\")", "gil": "GIL enabled: True\nexpected 4,000,000, got 4,000,000\n", "nogil": "GIL enabled: False\nexpected 4,000,000, got 992,632\n"}, "c_gil": [{"n": 110, "t": "struct _object {"}, {"gap": true}, {"n": 122, "t": "    union {"}, {"n": 123, "t": "#if SIZEOF_VOID_P > 4"}, {"n": 124, "t": "        PY_INT64_T ob_refcnt_full; /* This field is needed for efficient initialization with Clang on ARM */"}, {"n": 125, "t": "        struct {"}, {"n": 126, "t": "#  if PY_BIG_ENDIAN"}, {"n": 127, "t": "            uint16_t ob_flags;"}, {"n": 128, "t": "            uint16_t ob_overflow;"}, {"n": 129, "t": "            uint32_t ob_refcnt;"}, {"n": 130, "t": "#  else"}, {"n": 131, "t": "            uint32_t ob_refcnt;"}, {"n": 132, "t": "            uint16_t ob_overflow;"}, {"n": 133, "t": "            uint16_t ob_flags;"}, {"n": 134, "t": "#  endif"}, {"n": 135, "t": "        };"}, {"n": 136, "t": "#else"}, {"n": 137, "t": "        Py_ssize_t ob_refcnt;"}, {"n": 138, "t": "#endif"}, {"n": 139, "t": "    };"}, {"gap": true}, {"n": 144, "t": "    PyTypeObject *ob_type;"}, {"n": 145, "t": "};"}], "c_ft": [{"n": 152, "t": "struct _object {"}, {"n": 153, "t": "    // ob_tid stores the thread id (or zero). It is also used by the GC and the"}, {"n": 154, "t": "    // trashcan mechanism as a linked list pointer and by the GC to store the"}, {"n": 155, "t": "    // computed \"gc_refs\" refcount."}, {"n": 156, "t": "    uintptr_t ob_tid;"}, {"n": 157, "t": "    uint16_t ob_flags;"}, {"n": 158, "t": "    PyMutex ob_mutex;           // per-object lock"}, {"n": 159, "t": "    uint8_t ob_gc_bits;         // gc-related state"}, {"n": 160, "t": "    uint32_t ob_ref_local;      // local reference count"}, {"n": 161, "t": "    Py_ssize_t ob_ref_shared;   // shared (atomic) reference count"}, {"n": 162, "t": "    PyTypeObject *ob_type;"}, {"n": 163, "t": "};"}], "arenas": "Small block threshold = 512, in 32 size classes.\n\u2026\n# arenas allocated total           =                    3\n# arenas reclaimed                 =                    0\n# arenas highwater mark            =                    3\n# arenas allocated current         =                    3", "pools": "class   size   num pools   blocks in use  avail blocks\n-----   ----   ---------   -------------  ------------\n    0     16           1              53           968\n    1     32           2             796           224\n    2     48          11            3684            56\n    3     64          35            8731           194\n\u2026\n    7    128           5             510           125\n\u2026", "mallocSrc": "import sys\n\nprint(\"BASELINE MEMORY STATE\", flush=True)\nsys._debugmallocstats()\n\ndicts = []\nfor i in range(1000):\n    d = {'id': i, 'name': f'item_{i}', 'value': i * 2.5, 'active': True}\n    dicts.append(d)\nprint(\"AFTER CREATING 1000 DICTS\", flush=True)\nsys._debugmallocstats()\n\ndicts.clear()\ndel dicts\nprint(\"AFTER DELETION\", flush=True)\nsys._debugmallocstats()", "mallocOut": "BASELINE MEMORY STATE\n\u2026\n    3     64          35            8731           194\n# arenas allocated current         =                    3\nAFTER CREATING 1000 DICTS\n\u2026\n    3     64          42           10622            88\n# arenas allocated current         =                    3\nAFTER DELETION\n\u2026\n    3     64          36            8804           376\n# arenas reclaimed                 =                    0\n# arenas allocated current         =                    3", "whatsnew": ["The cycle garbage collector is now incremental.", "This means that maximum pause times are reduced", "by an order of magnitude or more for larger heaps.", "", "There are now only two generations: young and old.", "When gc.collect() is not called directly, the", "GC is invoked a little less frequently. When invoked, it", "collects the young generation and an increment of the", "old generation, instead of collecting one or more generations.", "", "The behavior of gc.collect() changes slightly:", "", "* gc.collect(1): Performs an increment of garbage collection,", "  rather than collecting generation 1.", "* Other calls to gc.collect() are unchanged."]};
+</script>
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const host = $("layers");
+
+  // ---------- panels ----------
+  const panel = (side, head, cls = "") => {
+    side.insertAdjacentHTML("beforeend", `<div class="code-panel"><div class="code-head"><span>${head}</span></div><div class="code ${cls}"></div></div>`);
+    return side.lastElementChild.querySelector(".code");
+  };
+  // Python source with line numbers; returns every line, blank ones included, so steps can light them by index.
+  const srcPanel = (side, head, text) => {
+    const el = panel(side, head);
+    el.innerHTML = text.split("\n").map((t, i) => `<span class="ln"><span class="n">${String(i + 1).padStart(2)}</span>  ${esc(t)}</span>`).join("");
+    return [...el.children];
+  };
+  // What the program printed; lines it hasn't printed yet stay faint until a step reaches them.
+  const outPanel = (side, text) => {
+    const el = panel(side, "Output");
+    el.innerHTML = text.replace(/\n$/, "").split("\n").map((t) => `<span class="ln">${esc(t)}</span>`).join("");
+    return [...el.children];
+  };
+  // C source, each line numbered and linked to CPython 3.14.3 on GitHub.
+  const cPanel = (side, head, rows, file) => {
+    const el = panel(side, head);
+    el.innerHTML = rows.map((r) => r.gap ? `<span class="ln gap"><span class="t">    …</span></span>`
+      : `<span class="ln"><a class="n" href="https://github.com/python/cpython/blob/v3.14.3/${file}#L${r.n}" target="_blank" rel="noopener">${String(r.n).padStart(3)}</a>  ${esc(r.t)}</span>`).join("");
+  };
+
+  // ---------- the picture's vocabulary ----------
+  const tw = (s) => s.length * 8.2 + 18;
+  const tag = (x, y, label, tone = "old") => `<rect class="tagbox ${tone}" x="${x}" y="${y}" width="${tw(label)}" height="28" rx="6"/><text class="tagt ${tone}" x="${x + 9}" y="${y + 19}">${esc(label)}</text>`;
+  const obj = (x, y, w, label, tone = "old", h = 44) => `<rect class="objbox ${tone}" x="${x}" y="${y}" width="${w}" height="${h}" rx="8"/><text class="objt ${tone}" x="${x + w / 2}" y="${y + h / 2 + 5}" text-anchor="middle">${esc(label)}</text>`;
+  const badge = (cx, cy, val, tone = "old") => `<circle class="badge ${tone}" cx="${cx}" cy="${cy}" r="15"/><text class="badget ${tone}" data-t x="${cx}" y="${cy + 4.5}" text-anchor="middle">${val}</text>`;
+  const head = (x2, y2, ang, cls) => {
+    const h = 10, a1 = ang - 0.42, a2 = ang + 0.42;
+    return `<path class="hd ${cls}" d="M${x2} ${y2} L${x2 - h * Math.cos(a1)} ${y2 - h * Math.sin(a1)} L${x2 - h * Math.cos(a2)} ${y2 - h * Math.sin(a2)} Z"/>`;
+  };
+  const arrow = (x1, y1, x2, y2, cls = "old") => `<path class="ln ${cls}" d="M${x1} ${y1} L${x2} ${y2}"/>${head(x2, y2, Math.atan2(y2 - y1, x2 - x1), cls)}`;
+  const curve = (x1, y1, cx, cy, x2, y2, cls = "old") => `<path class="ln ${cls}" d="M${x1} ${y1} Q${cx} ${cy} ${x2} ${y2}"/>${head(x2, y2, Math.atan2(y2 - cy, x2 - cx), cls)}`;
+  const note = (x, y, t, cls = "note", anchor = "start") => `<text class="${cls}" x="${x}" y="${y}" text-anchor="${anchor}">${esc(t)}</text>`;
+
+  // ---------- the frame engine ----------
+  const makeScene = (el, w, h, label) => {
+    el.innerHTML = `<svg class="scene" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(label)}"></svg>`;
+    const svg = el.firstElementChild;
+    const parts = {};
+    const add = (id, markup, cls = "") => { svg.insertAdjacentHTML("beforeend", `<g class="${cls}">${markup}</g>`); parts[id] = svg.lastElementChild; };
+    return { svg, parts, add };
+  };
+  const players = [];
+  const play = (art, sc, steps, src, out, rest) => {
+    const ids = Object.keys(sc.parts);
+    let cur = Object.fromEntries(ids.map((id) => [id, {}]));
+    let text = {}, line = null, shown = 0;
+    const states = steps.map((st) => {
+      cur = { ...cur };
+      Object.entries(st.set || {}).forEach(([id, s]) => { cur[id] = { ...cur[id], ...s }; });
+      text = { ...text, ...(st.text || {}) };
+      if (st.src !== undefined) line = st.src;
+      if (st.out !== undefined) shown = st.out;
+      return { cur, st, text, line, shown };
+    });
+    let i = 0, timer = null, visible = false, paused = still;
+    const show = (k, instant) => {
+      const s = states[k];
+      sc.svg.classList.toggle("instant", !!instant);
+      ids.forEach((id) => {
+        const g = sc.parts[id], p = s.cur[id];
+        g.classList.toggle("snap", !!(s.st.snap && s.st.snap.includes(id)));
+        g.style.transform = `translate(${p.x || 0}px, ${p.y || 0}px) scale(${p.sx ?? p.k ?? 1}, ${p.k ?? 1})`;
+        g.style.opacity = p.o ?? 1;
+      });
+      Object.entries(s.text).forEach(([id, t]) => { const el = sc.parts[id].querySelector("[data-t]"); if (el) el.textContent = t; });
+      if (src) src.forEach((l, j) => l.classList.toggle("hot", j === s.line));
+      if (out) out.forEach((l, j) => l.classList.toggle("unrun", j >= s.shown));
+      sc.svg.getBoundingClientRect();
+    };
+    const halt = () => { clearTimeout(timer); timer = null; };
+    const schedule = () => { halt(); if (!paused && visible) timer = setTimeout(next, states[i].st.d || 1100); };
+    function next() {
+      if (i === states.length - 1) {
+        sc.svg.classList.add("fade");
+        timer = setTimeout(() => { i = 0; show(0, true); sc.svg.classList.remove("fade"); schedule(); }, 380);
+        return;
+      }
+      i += 1; show(i); schedule();
+    }
+    i = still ? (rest ?? states.length - 1) : 0;
+    show(i, true);
+    const [btnPlay, btnStep] = art.querySelectorAll(".layer-head .btn");
+    const label = () => { btnPlay.textContent = paused ? "Play" : "Pause"; };
+    btnPlay.addEventListener("click", () => { paused = !paused; label(); schedule(); });
+    btnStep.addEventListener("click", () => { paused = true; label(); halt(); i = (i + 1) % states.length; show(i, i === 0); });
+    label();
+    players.push({ art, setVisible: (v) => { visible = v; schedule(); } });
+  };
+
+  // ---------- the frames ----------
+  const M = MEM;
+  // Shared positions: names on the left, objects on the right, a count in each object's corner.
+  const OX = 210, OY = 86, OW = 150;
+  const FRAMES = [
+    { group: "Counting references" },
+    {
+      title: "A name is an arrow to an object",
+      aria: "A name tag x has an arrow to a list object [1, 2, 3]. Then a second name tag y appears, with its own arrow to the same list.",
+      size: [400, 200],
+      side: (s) => [srcPanel(s, "Python source", M.names.src), outPanel(s, M.names.out)],
+      build: (sc) => {
+        sc.add("obj", obj(OX, OY, OW, "[1, 2, 3]", "new"));
+        sc.add("x", tag(30, 46, "x", "new") + arrow(62, 60, OX - 4, OY + 14, "new"));
+        sc.add("y", tag(30, 130, "y", "new") + arrow(62, 144, OX - 4, OY + 32, "new"));
+        return [
+          { set: { y: { o: 0 } }, src: 0, out: 0, d: 1300 },
+          { set: { y: { o: 1 } }, src: 1, d: 1300 },
+          { src: 2, out: 1, d: 2600 },
+        ];
+      },
+    },
+    {
+      title: "Each object counts the arrows pointing at it",
+      aria: "The list now has a yellow count in its corner. It reads 1 with just x. When y = x adds a second arrow, it reads 2. When del y removes that arrow, it reads 1 again.",
+      size: [400, 200],
+      side: (s) => [srcPanel(s, "Python source", "x = [1, 2, 3]\ny = x\ndel y"), null],
+      build: (sc) => {
+        sc.add("obj", obj(OX, OY, OW, "[1, 2, 3]"));
+        sc.add("x", tag(30, 46, "x") + arrow(62, 60, OX - 4, OY + 14));
+        sc.add("y", tag(30, 130, "y") + arrow(62, 144, OX - 4, OY + 32));
+        sc.add("b", badge(OX + OW, OY, "1", "new"));
+        return [
+          { set: { y: { o: 0 } }, text: { b: "1" }, src: 0, d: 1400 },
+          { set: { y: { o: 1 } }, text: { b: "2" }, src: 1, d: 1400 },
+          { set: { y: { o: 0 } }, text: { b: "1" }, src: 2, d: 2400 },
+        ];
+      },
+    },
+    {
+      title: "sys.getrefcount always counts one extra: its own argument",
+      aria: "Each time getrefcount(x) runs, a call box appears with a temporary arrow to the list, and the count goes up by one while it runs. That is why it prints 2, 3, 2 instead of 1, 2, 1.",
+      size: [400, 236],
+      side: (s) => [srcPanel(s, "Python source", M.count.src), outPanel(s, M.count.out)],
+      build: (sc) => {
+        sc.add("obj", obj(OX, OY, OW, "[1, 2, 3]"));
+        sc.add("x", tag(30, 46, "x") + arrow(62, 60, OX - 4, OY + 14));
+        sc.add("y", tag(30, 130, "y") + arrow(62, 144, OX - 4, OY + 32));
+        sc.add("call", `<rect class="callbox" x="26" y="190" width="150" height="30" rx="7"/><text class="callt" x="101" y="210" text-anchor="middle">getrefcount(x)</text>` + arrow(176, 200, OX + 40, OY + 48, "new"));
+        sc.add("b", badge(OX + OW, OY, "1"));
+        return [
+          { set: { y: { o: 0 }, call: { o: 0 } }, text: { b: "1" }, src: 2, out: 0, d: 1000 },
+          { set: { call: { o: 1 } }, text: { b: "2" }, src: 3, out: 1, d: 1400 },
+          { set: { call: { o: 0 } }, text: { b: "1" }, d: 700 },
+          { set: { y: { o: 1 } }, text: { b: "2" }, src: 4, d: 1000 },
+          { set: { call: { o: 1 } }, text: { b: "3" }, src: 5, out: 2, d: 1400 },
+          { set: { call: { o: 0 } }, text: { b: "2" }, d: 700 },
+          { set: { y: { o: 0 } }, text: { b: "1" }, src: 6, d: 1000 },
+          { set: { call: { o: 1 } }, text: { b: "2" }, src: 7, out: 3, d: 1400 },
+          { set: { call: { o: 0 } }, text: { b: "1" }, d: 2000 },
+        ];
+      },
+    },
+    {
+      title: "When the count reaches zero, the object is freed right away",
+      rest: 2,
+      aria: "A name a points at a Node object with a count of 1. At del a, the arrow disappears, the count drops to 0, and the object vanishes at once, before the next line prints.",
+      size: [400, 200],
+      side: (s) => [srcPanel(s, "Python source", M.freed.src), outPanel(s, M.freed.out)],
+      build: (sc) => {
+        sc.add("a", tag(30, 84, "a") + arrow(62, 98, OX - 4, OY + 22));
+        sc.add("obj", obj(OX, OY, OW, "Node(1)") + badge(OX + OW, OY, "1"));
+        sc.add("gone", note(OX + OW / 2, OY + 75, "freed", "notenew", "middle"));
+        return [
+          { set: { a: { o: 1 }, obj: { o: 1, k: 1 }, gone: { o: 0 } }, text: { obj: "1" }, src: 6, out: 0, d: 1100 },
+          { src: 9, out: 1, d: 1000 },
+          { set: { a: { o: 0 } }, text: { obj: "0" }, src: 10, d: 900 },
+          { set: { obj: { o: 0, k: 0.4 }, gone: { o: 1 } }, out: 2, d: 1100 },
+          { src: 11, out: 3, d: 2400 },
+        ];
+      },
+    },
+    {
+      title: "Some objects are immortal: their count never moves",
+      aria: "None, True, and 1 each carry the same giant count, 3,221,225,472. Names point at them and stop pointing at them, and the count never changes.",
+      size: [400, 210],
+      side: (s) => [srcPanel(s, "Python source", M.immortal.src), outPanel(s, M.immortal.out)],
+      build: (sc) => {
+        const ys = [20, 86, 152];
+        ["None", "True", "1"].forEach((v, k) => sc.add(`o${k}`, obj(170, ys[k], 80, v, "old", 40) +
+          `<rect class="pill" x="262" y="${ys[k] + 8}" width="110" height="24" rx="12"/><text class="pillt" x="317" y="${ys[k] + 24}" text-anchor="middle">3,221,225,472</text>`));
+        ys.forEach((y, k) => sc.add(`n${k}`, tag(26, y + 6, ["a", "b", "c"][k]) + arrow(56, y + 20, 166, y + 20)));
+        return [
+          { set: { n0: { o: 0 }, n1: { o: 0 }, n2: { o: 0 } }, src: 2, out: 0, d: 900 },
+          { set: { n0: { o: 1 } }, out: 1, d: 900 },
+          { set: { n1: { o: 1 } }, src: 3, out: 2, d: 900 },
+          { set: { n2: { o: 1 } }, src: 4, out: 3, d: 900 },
+          { set: { n0: { o: 0 }, n1: { o: 0 } }, src: 5, out: 4, d: 1100 },
+          { set: { n2: { o: 0 } }, d: 2200 },
+        ];
+      },
+    },
+    { group: "Cycles" },
+    {
+      title: "A cycle keeps its own count above zero",
+      aria: "A list holds an arrow to itself, shown as an orange loop. When del removes the name's arrow, the count drops from 2 to 1, not 0, so the list stays, outlined as stuck.",
+      size: [400, 200],
+      side: (s) => [srcPanel(s, "Python source", M.cycle.src), outPanel(s, M.cycle.out)],
+      build: (sc) => {
+        sc.add("n", tag(16, 84, "circular_list") + arrow(140, 98, OX + 6, OY + 22));
+        sc.add("obj", obj(OX + 10, OY, 120, "[ … ]"));
+        sc.add("loop", curve(OX + 108, OY + 44, OX + 190, OY + 120, OX + 34, OY + 47, "cyc"));
+        sc.add("b", badge(OX + 130, OY, "1"));
+        sc.add("stuck", `<rect class="stuck" x="${OX + 2}" y="${OY - 8}" width="136" height="60" rx="12"/>`);
+        return [
+          { set: { loop: { o: 0 }, n: { o: 1 }, stuck: { o: 0 } }, text: { b: "1" }, src: 2, out: 0, d: 1000 },
+          { set: { loop: { o: 1 } }, text: { b: "2" }, src: 3, d: 1200 },
+          { src: 5, out: 1, d: 1200 },
+          { set: { n: { o: 0 } }, text: { b: "1" }, src: 7, d: 1100 },
+          { set: { stuck: { o: 1 } }, src: 8, out: 2, d: 2600 },
+        ];
+      },
+    },
+    {
+      title: "The garbage collector frees cycles nobody can reach",
+      rest: 4,
+      aria: "Two nodes point at each other. After del a, b, nothing outside points at them, but each still has a count of 1. When gc.collect() runs, a green sweep passes over them and both vanish.",
+      size: [400, 210],
+      side: (s) => [srcPanel(s, "Python source", M.collect.src), outPanel(s, M.collect.out)],
+      build: (sc) => {
+        sc.add("na", tag(20, 40, "a") + arrow(52, 54, 196, 54));
+        sc.add("nb", tag(20, 140, "b") + arrow(52, 154, 196, 154));
+        sc.add("A", obj(200, 32, 110, "Node(1)") + badge(310, 32, "1"));
+        sc.add("B", obj(200, 132, 110, "Node(2)") + badge(310, 132, "1"));
+        sc.add("ab", curve(300, 76, 360, 104, 296, 132, "cyc"));
+        sc.add("ba", curve(214, 132, 160, 104, 218, 76, "cyc"));
+        sc.add("scan", `<rect class="scan" x="140" y="10" width="14" height="190" rx="5"/>`);
+        return [
+          { set: { ab: { o: 0 }, ba: { o: 0 }, na: { o: 1 }, nb: { o: 1 }, A: { o: 1 }, B: { o: 1 }, scan: { o: 0, x: 0 } }, text: { A: "1", B: "1" }, src: 8, out: 0, d: 1000 },
+          { set: { ab: { o: 1 } }, text: { B: "2" }, src: 9, d: 900 },
+          { set: { ba: { o: 1 } }, text: { A: "2" }, src: 10, d: 1000 },
+          { set: { na: { o: 0 }, nb: { o: 0 } }, text: { A: "1", B: "1" }, src: 14, d: 1100 },
+          { src: 15, out: 1, d: 1100 },
+          { set: { scan: { o: 1, x: 0 } }, src: 16, d: 300, snap: ["scan"] },
+          { set: { scan: { x: 230 } }, d: 700 },
+          { set: { A: { o: 0, k: 0.5 }, B: { o: 0, k: 0.5 }, ab: { o: 0 }, ba: { o: 0 }, scan: { o: 0 } }, out: 3, d: 1100 },
+          { out: 4, d: 2400 },
+        ];
+      },
+    },
+    {
+      title: "New objects are checked once 2,000 of them pile up",
+      aria: "A bin labeled young fills as objects are made: 837, then up to 2,000. At 2,000 a collection runs and empties it, and it keeps filling, to 337. gc.collect() empties it again.",
+      size: [400, 200],
+      side: (s) => [srcPanel(s, "Python source", M.generations.src), outPanel(s, M.generations.out)],
+      build: (sc) => {
+        sc.add("bin", `<rect class="bin" x="40" y="70" width="300" height="56" rx="10"/>` + note(40, 60, "young", "notenew") + note(340, 150, "2,000: time to check", "note", "end"));
+        sc.add("fill", `<rect class="fill" x="43" y="73" width="294" height="50" rx="8"/>`, "left");
+        sc.add("count", `<text class="objt" data-t x="190" y="104" text-anchor="middle">0</text>`);
+        sc.add("scan", `<rect class="scan" x="40" y="66" width="300" height="64" rx="10"/>`);
+        const f = (n) => ({ sx: Math.max(0.001, n / 2000) });
+        return [
+          { set: { fill: f(0), scan: { o: 0 } }, text: { count: "" }, src: 2, out: 0, d: 900 },
+          { out: 1, d: 1000 },
+          { set: { fill: f(837) }, text: { count: "837" }, src: 3, out: 2, d: 1100 },
+          { set: { fill: f(2000) }, text: { count: "2,000" }, src: 4, d: 1100 },
+          { set: { scan: { o: 1 }, fill: f(0) }, text: { count: "0" }, d: 800 },
+          { set: { scan: { o: 0 }, fill: f(337) }, text: { count: "337" }, d: 900 },
+          { src: 5, out: 3, d: 1100 },
+          { set: { scan: { o: 1 }, fill: f(0) }, text: { count: "0" }, src: 6, d: 800 },
+          { set: { scan: { o: 0 } }, src: 7, out: 4, d: 2400 },
+        ];
+      },
+    },
+    {
+      title: "Survivors move to the old generation, which is checked a slice at a time",
+      aria: "After each check of the young bin, the objects that survived slide into a bigger old bin. Each check also sweeps one slice of the old bin, moving left to right, instead of all of it at once.",
+      size: [400, 200],
+      side: (s) => {
+        const el = panel(s, "From What's New in Python 3.14");
+        el.innerHTML = M.whatsnew.map((t) => `<span class="ln">${esc(t)}</span>`).join("");
+        return [null, null];
+      },
+      build: (sc) => {
+        sc.add("young", `<rect class="bin old" x="20" y="60" width="90" height="70" rx="10"/>` + note(20, 50, "young"));
+        sc.add("old", `<rect class="bin" x="150" y="40" width="230" height="110" rx="12"/>` + note(150, 30, "old", "notenew") +
+          [1, 2, 3].map((k) => `<line x1="${150 + k * 57.5}" y1="44" x2="${150 + k * 57.5}" y2="146" stroke="currentColor" stroke-dasharray="3 4" opacity="0.4"/>`).join(""));
+        const dots = (cx, cy) => [[-12, -10], [10, -6], [-4, 10], [14, 12]].map(([dx, dy]) => `<circle class="dot" cx="${cx + dx}" cy="${cy + dy}" r="5"/>`).join("");
+        sc.add("surv", dots(65, 95));
+        sc.add("slice", `<rect class="slice" x="153" y="43" width="54" height="104" rx="8"/>`);
+        return [
+          { set: { surv: { x: 0, o: 1 }, slice: { x: 0, o: 0 } }, d: 900 },
+          { set: { surv: { x: 120, y: -6 } }, d: 1000 },
+          { set: { slice: { o: 1, x: 0 } }, d: 1000 },
+          { set: { surv: { x: 0, y: 0, o: 1 }, slice: { o: 0 } }, snap: ["surv"], d: 600 },
+          { set: { surv: { x: 170, y: 8 } }, d: 1000 },
+          { set: { slice: { o: 1, x: 57.5 } }, snap: ["slice"], d: 1000 },
+          { set: { slice: { o: 0 } }, d: 400 },
+          { set: { slice: { o: 1, x: 115 } }, snap: ["slice"], d: 2000 },
+        ];
+      },
+    },
+    {
+      title: "A weak reference points without counting",
+      aria: "A dashed arrow named pointer points at a Node, and the Node's count stays 1. After del d, the count hits 0, the Node is freed, and the dashed arrow now leads to None.",
+      size: [400, 210],
+      side: (s) => [srcPanel(s, "Python source", M.weak.src), outPanel(s, M.weak.out)],
+      build: (sc) => {
+        sc.add("d", tag(30, 40, "d") + arrow(62, 54, OX - 4, OY + 14));
+        sc.add("obj", obj(OX, OY, OW, "Node(2)") + badge(OX + OW, OY, "1"));
+        sc.add("p", tag(20, 150, "pointer", "new"));
+        sc.add("pa", `<path class="ln new weak" d="M86 158 Q150 150 ${OX - 4} ${OY + 34}"/>` + head(OX - 4, OY + 34, Math.atan2(OY + 34 - 150, OX - 4 - 150), "new"));
+        sc.add("none", obj(OX + 40, 160, 70, "None", "old", 34));
+        sc.add("pn", `<path class="ln new weak" d="M86 166 L${OX + 36} 176"/>` + head(OX + 36, 176, Math.atan2(10, OX + 36 - 86), "new"));
+        return [
+          { set: { p: { o: 0 }, pa: { o: 0 }, none: { o: 0 }, pn: { o: 0 }, obj: { o: 1, k: 1 }, d: { o: 1 } }, text: { obj: "1" }, src: 6, out: 0, d: 1000 },
+          { set: { p: { o: 1 }, pa: { o: 1 } }, src: 7, d: 1300 },
+          { src: 8, out: 1, d: 1100 },
+          { set: { d: { o: 0 } }, text: { obj: "0" }, src: 9, d: 800 },
+          { set: { obj: { o: 0, k: 0.4 }, pa: { o: 0 }, none: { o: 1 }, pn: { o: 1 } }, d: 1100 },
+          { src: 10, out: 2, d: 2400 },
+        ];
+      },
+    },
+    { group: "Where the memory comes from" },
+    {
+      title: "Python gets memory from the operating system in 1 MiB arenas",
+      aria: "A dashed region for the operating system hands three blocks, each labeled 1 MiB arena, across to Python.",
+      size: [400, 200],
+      side: (s) => [srcPanel(s, "Python source", "import sys\nsys._debugmallocstats()"), outPanel(s, M.arenas)],
+      build: (sc) => {
+        sc.add("os", `<rect class="os" x="10" y="20" width="120" height="160" rx="12"/>` + note(70, 196, "operating system", "note", "middle"));
+        sc.add("py", `<rect class="bin" x="200" y="20" width="190" height="160" rx="12"/>` + note(295, 196, "Python", "notenew", "middle"));
+        [0, 1, 2].forEach((k) => sc.add(`a${k}`, `<rect class="arena" x="${220}" y="${34 + k * 48}" width="150" height="38" rx="6"/><text class="objt" x="295" y="${58 + k * 48}" text-anchor="middle">1 MiB arena</text>`));
+        return [
+          { set: { a0: { x: -190, o: 0 }, a1: { x: -190, o: 0 }, a2: { x: -190, o: 0 } }, out: 0, d: 900 },
+          { set: { a0: { x: 0, o: 1 } }, d: 700 },
+          { set: { a1: { x: 0, o: 1 } }, d: 700 },
+          { set: { a2: { x: 0, o: 1 } }, out: 6, d: 2600 },
+        ];
+      },
+    },
+    {
+      title: "Each arena is cut into 16 KiB pools, and each pool holds one size of block",
+      aria: "One arena opens into an 8 by 8 grid of 64 pools, colored by the block size each holds. Then one 64-byte pool opens into its 256 equal blocks.",
+      size: [400, 240],
+      side: (s) => [srcPanel(s, "Python source", "import sys\nsys._debugmallocstats()"), outPanel(s, M.pools)],
+      build: (sc) => {
+        // An illustration of one arena's 64 pools, each colored by the one block size it holds; the rest are still empty.
+        const plan = "c64,c64,c64,c64,c64,c64,c64,c64,c64,c64,c64,c64,c64,c64,c64,c64,c64,c64,c48,c48,c48,c48,c48,c48,c48,c48,c48,c48,c48,c32,c32,c128,c128,c128,c128,c128".split(",");
+        let m = `<rect class="arena old" x="10" y="12" width="186" height="186" rx="8"/>`;
+        for (let k = 0; k < 64; k++) m += `<rect class="pool ${plan[k] || "cother"}" x="${16 + (k % 8) * 22}" y="${18 + Math.floor(k / 8) * 22}" width="21" height="21" rx="3"/>`;
+        sc.add("arena", m + note(103, 210, "one arena: 64 pools", "note", "middle"));
+        sc.add("hl", `<rect fill="none" stroke="currentColor" stroke-width="3" x="${16 + 3 * 22}" y="${18 + 22}" width="21" height="21" rx="3"/>`);
+        let z = `<rect class="arena" x="220" y="12" width="170" height="170" rx="8"/>`;
+        for (let k = 0; k < 256; k++) z += `<rect class="c64 blk" x="${226 + (k % 16) * 9.9}" y="${18 + Math.floor(k / 16) * 9.9}" width="8.4" height="8.4" rx="1.5"/>`;
+        sc.add("zoom", z + note(305, 200, "one pool: 256 blocks of 64 bytes", "notenew", "middle"));
+        sc.add("key", [["c32", "32"], ["c48", "48"], ["c64", "64"], ["c128", "128"]].map(([c, t], k) => `<rect class="${c}" x="${10 + k * 88}" y="222" width="12" height="12" rx="2"/><text class="note" x="${26 + k * 88}" y="232">${t} bytes</text>`).join(""));
+        return [
+          { set: { hl: { o: 0 }, zoom: { o: 0, k: 0.3, x: -150 } }, out: 0, d: 1100 },
+          { out: 9, d: 1200 },
+          { set: { hl: { o: 1 } }, d: 900 },
+          { set: { zoom: { o: 1, k: 1, x: 0 } }, d: 2600 },
+        ];
+      },
+    },
+    {
+      title: "Every object gets the smallest block it fits in",
+      aria: "A 24-byte float goes into a 32-byte block, leaving 8 bytes hatched as wasted. A 47-byte string goes into a 48-byte block. A dict is two pieces: its 64-byte object fills a 64-byte block, and its 120-byte table goes into a 128-byte block.",
+      size: [400, 210],
+      side: (s) => [srcPanel(s, "Python source", M.sizes.src), outPanel(s, M.sizes.out)],
+      build: (sc) => {
+        const rows = [["2.5", 24, 32, "c32"], ['"item_7"', 47, 48, "c48"], ["dict object", 64, 64, "c64"], ["dict's table", 120, 128, "c128"]];
+        const X = 120, S = 1.4;
+        rows.forEach(([label, size, block, c], k) => {
+          const y = 18 + k * 48;
+          sc.add(`blk${k}`, `<rect class="waste" x="${X}" y="${y}" width="${block * S}" height="30" rx="4"/>` + note(X + block * S + 6, y + 20, `${block} B block`));
+          sc.add(`obj${k}`, `<rect class="${c} blk" x="${X}" y="${y}" width="${size * S}" height="30" rx="4"/>` + note(X + 6, y + 20, `${size} B`, "notenew") + note(X - 8, y + 20, label, "note", "end"));
+        });
+        const set0 = {}, set1 = {};
+        rows.forEach((_, k) => { set0[`obj${k}`] = { x: -110, o: 0 }; set0[`blk${k}`] = { o: 0.35 }; set1[`obj${k}`] = { x: 0, o: 1 }; set1[`blk${k}`] = { o: 1 }; });
+        return [
+          { set: set0, out: 0, d: 900 },
+          { set: { obj0: set1.obj0, blk0: set1.blk0 }, out: 1, d: 1100 },
+          { set: { obj1: set1.obj1, blk1: set1.blk1 }, out: 2, d: 1100 },
+          { set: { obj2: set1.obj2, blk2: set1.blk2, obj3: set1.obj3, blk3: set1.blk3 }, out: 3, d: 2600 },
+        ];
+      },
+    },
+    {
+      title: "Freed blocks go back to Python's pools, not to the operating system",
+      aria: "A pool of 64-byte blocks fills as 1,000 dicts are made. When they are deleted, the blocks empty out, but the three arenas stay, and the count of arenas given back stays 0.",
+      size: [400, 210],
+      side: (s) => [srcPanel(s, "Python source", M.mallocSrc), outPanel(s, M.mallocOut)],
+      build: (sc) => {
+        let used = "", full = "";
+        for (let k = 0; k < 96; k++) {
+          const x = 30 + (k % 16) * 13, y = 40 + Math.floor(k / 16) * 13;
+          used += `<rect class="${k < 52 ? "c64" : "cother"} blk" x="${x}" y="${y}" width="11" height="11" rx="2"/>`;
+          full += k >= 52 ? `<rect class="c64 blk" x="${x}" y="${y}" width="11" height="11" rx="2"/>` : "";
+        }
+        sc.add("pool", `<rect class="arena old" x="22" y="32" width="216" height="86" rx="8"/>` + used + note(130, 136, "64-byte blocks", "note", "middle"));
+        sc.add("full", full);
+        sc.add("arenas", [0, 1, 2].map((k) => `<rect class="arena" x="270" y="${32 + k * 34}" width="110" height="26" rx="5"/><text class="note" x="325" y="${50 + k * 34}" text-anchor="middle">arena ${k + 1}</text>`).join("") + note(325, 150, "arenas given back: 0", "notenew", "middle"));
+        return [
+          { set: { full: { o: 0 } }, out: 4, d: 1300 },
+          { set: { full: { o: 1 } }, out: 8, d: 1500 },
+          { set: { full: { o: 0 } }, out: 13, d: 2800 },
+        ];
+      },
+    },
+    { group: "Counts and threads" },
+    {
+      title: "The count lives in the object's header",
+      aria: "An object drawn as a strip of memory. Its first field, ob_refcnt, is the count from the earlier pictures; the yellow count badge slides into it. Next come ob_overflow, ob_flags, and ob_type, then the object's own data.",
+      size: [400, 190],
+      side: (s) => { cPanel(s, "CPython 3.14.3, Include/object.h", M.c_gil, "Include/object.h"); return [null, null]; },
+      build: (sc) => {
+        const cells = [["ob_refcnt", 70, "c32"], ["flags", 70, "cother"], ["ob_type", 140, "cother"], ["list …", 100, "cother"]];
+        let x = 10, m = "";
+        cells.forEach(([t, w, c]) => { m += `<rect class="${c} cell" x="${x}" y="96" width="${w}" height="40"/><text class="note" x="${x + w / 2}" y="154" text-anchor="middle">${t}</text>`; x += w; });
+        m += note(45, 172, "4 bytes", "note", "middle") + note(115, 172, "4 bytes", "note", "middle") + note(220, 172, "8 bytes", "note", "middle");
+        sc.add("strip", m);
+        sc.add("b", badge(45, 30, "1", "new"));
+        return [
+          { set: { b: { y: 0, k: 1 } }, d: 1400 },
+          { set: { b: { y: 86 } }, d: 2600 },
+        ];
+      },
+    },
+    {
+      title: "Two threads updating one number can lose updates",
+      aria: "A counter reads 5. Thread A reads 5 and thread B reads 5. A writes 6, then B also writes 6, overwriting it: one update is lost.",
+      size: [400, 200],
+      side: (s) => [srcPanel(s, "Python source", M.race.src), outPanel(s, M.race.nogil)],
+      build: (sc) => {
+        sc.add("ctr", obj(160, 76, 80, "", "old", 44));
+        sc.add("v5", `<text class="objt" x="200" y="104" text-anchor="middle">5</text>`);
+        sc.add("v6", `<text class="objt" x="200" y="104" text-anchor="middle">6</text>`);
+        sc.add("ta", `<rect class="thr" x="14" y="76" width="96" height="44" rx="8"/>` + note(62, 68, "thread A", "note", "middle"));
+        sc.add("tb", `<rect class="thr" x="290" y="76" width="96" height="44" rx="8"/>` + note(338, 68, "thread B", "note", "middle"));
+        sc.add("ra", `<text class="objt" x="62" y="104" text-anchor="middle">5</text>`);
+        sc.add("rb", `<text class="objt" x="338" y="104" text-anchor="middle">5</text>`);
+        sc.add("wa", `<text class="objt" x="62" y="104" text-anchor="middle" style="fill:var(--accent)">6</text>`);
+        sc.add("wb", `<text class="objt" x="338" y="104" text-anchor="middle" style="fill:var(--accent)">6</text>`);
+        sc.add("lost", `<rect class="lost" x="140" y="140" width="120" height="28" rx="14"/><text x="200" y="159" text-anchor="middle" style="fill:#fff;font:700 12px var(--body)">1 update lost</text>`);
+        return [
+          { set: { v5: { o: 1 }, v6: { o: 0 }, ra: { o: 0, x: 138 }, rb: { o: 0, x: -138 }, wa: { o: 0 }, wb: { o: 0 }, lost: { o: 0 } }, out: 0, d: 900 },
+          { set: { ra: { o: 1, x: 0 } }, d: 900 },
+          { set: { rb: { o: 1, x: 0 } }, d: 900 },
+          { set: { ra: { o: 0 }, wa: { o: 1, x: 0 } }, d: 500, snap: ["wa"] },
+          { set: { wa: { x: 138 }, v5: { o: 0 }, v6: { o: 1 } }, d: 900 },
+          { set: { rb: { o: 0 }, wb: { o: 1, x: 0 }, wa: { o: 0 } }, d: 500, snap: ["wb"] },
+          { set: { wb: { x: -138 } }, d: 900 },
+          { set: { wb: { o: 0 }, lost: { o: 1 } }, out: 2, d: 2600 },
+        ];
+      },
+    },
+    {
+      title: "The GIL lets one thread run Python at a time",
+      aria: "The same counter and two threads, now with a green lock token. Only the thread holding the token reads and writes: A takes 5 to 6 and passes the token, then B takes 6 to 7. Nothing is lost.",
+      size: [400, 200],
+      side: (s) => [srcPanel(s, "Python source", M.race.src), outPanel(s, M.race.gil)],
+      build: (sc) => {
+        sc.add("ctr", obj(160, 76, 80, "", "old", 44));
+        ["5", "6", "7"].forEach((v) => sc.add(`v${v}`, `<text class="objt" x="200" y="104" text-anchor="middle">${v}</text>`));
+        sc.add("ta", `<rect class="thr" x="14" y="76" width="96" height="44" rx="8" style="stroke:var(--muted)"/>` + note(62, 68, "thread A", "note", "middle"));
+        sc.add("tb", `<rect class="thr" x="290" y="76" width="96" height="44" rx="8" style="stroke:var(--muted)"/>` + note(338, 68, "thread B", "note", "middle"));
+        sc.add("gil", `<rect class="lock" x="36" y="140" width="52" height="26" rx="13"/><text x="62" y="158" text-anchor="middle" style="fill:#fff;font:700 12px var(--body)">GIL</text>`);
+        return [
+          { set: { v5: { o: 1 }, v6: { o: 0 }, v7: { o: 0 }, gil: { x: 0 } }, out: 0, d: 1000 },
+          { set: { v5: { o: 0 }, v6: { o: 1 } }, d: 1000 },
+          { set: { gil: { x: 276 } }, d: 1000 },
+          { set: { v6: { o: 0 }, v7: { o: 1 } }, d: 1000 },
+          { out: 2, d: 2600 },
+        ];
+      },
+    },
+    {
+      title: "Without the GIL, each object keeps two counts",
+      aria: "In the free-threaded build, an object knows which thread owns it. The owner updates a fast local count; any other thread updates a separate shared count with an atomic operation. The two together are the real count.",
+      size: [400, 200],
+      side: (s) => { cPanel(s, "CPython 3.14.3, Include/object.h (free-threaded build)", M.c_ft, "Include/object.h"); return [null, null]; },
+      build: (sc) => {
+        sc.add("obj", `<rect class="objbox old" x="130" y="60" width="140" height="80" rx="8"/>` + note(200, 82, "an object", "note", "middle") + note(200, 54, "owned by thread A", "note", "middle"));
+        sc.add("loc", `<rect class="c32 cell" x="140" y="96" width="56" height="34" rx="6"/><text class="objt" data-t x="168" y="118" text-anchor="middle">1</text>` + note(168, 150, "ob_ref_local", "notenew", "middle"));
+        sc.add("sh", `<rect class="c128 cell" x="204" y="96" width="56" height="34" rx="6"/><text class="objt" data-t x="232" y="118" text-anchor="middle">0</text>` + note(232, 168, "ob_ref_shared", "notenew", "middle"));
+        sc.add("ta", `<rect class="thr" x="10" y="80" width="80" height="40" rx="8"/>` + note(50, 105, "thread A", "note", "middle"));
+        sc.add("tb", `<rect class="thr" x="310" y="80" width="80" height="40" rx="8"/>` + note(350, 105, "thread B", "note", "middle"));
+        sc.add("pa", arrow(92, 100, 136, 112, "new"));
+        sc.add("pb", arrow(308, 100, 264, 112, "new") + note(286, 80, "atomic", "notenew", "middle"));
+        return [
+          { set: { pa: { o: 0 }, pb: { o: 0 } }, text: { loc: "1", sh: "0" }, d: 1000 },
+          { set: { pa: { o: 1 } }, text: { loc: "2" }, d: 1000 },
+          { set: { pa: { o: 0 }, pb: { o: 1 } }, text: { sh: "1" }, d: 1200 },
+          { set: { pb: { o: 0 }, pa: { o: 1 } }, text: { loc: "3" }, d: 1000 },
+          { set: { pa: { o: 0 } }, d: 2200 },
+        ];
+      },
+    },
+  ];
+
+  let n = 0;
+  FRAMES.forEach((f) => {
+    if (f.group) { host.insertAdjacentHTML("beforeend", `<div class="label layer-group">${esc(f.group)}</div>`); return; }
+    n += 1;
+    const id = `layer-${n}`;
+    host.insertAdjacentHTML("beforeend", `<article class="layer" id="${id}" aria-labelledby="${id}-h">
+      <div class="layer-head"><span class="num">${n}</span><h3 id="${id}-h">${esc(f.title)}</h3>
+        <span class="ctl"><button class="btn" type="button" aria-label="Pause or play picture ${n}">Pause</button><button class="btn" type="button" aria-label="Next step of picture ${n}">Step</button></span></div>
+      <div class="layer-body"><div class="pic"></div><div class="layer-side"></div></div>
+    </article>`);
+    const art = host.lastElementChild;
+    const [src, out] = f.side(art.querySelector(".layer-side"));
+    const sc = makeScene(art.querySelector(".pic"), f.size[0], f.size[1], f.aria);
+    play(art, sc, f.build(sc), src, out, f.rest);
+  });
+
+  const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+    const p = players.find((x) => x.art === e.target);
+    if (p) p.setVisible(e.isIntersecting);
+  }), { threshold: 0.35 });
+  players.forEach((p) => io.observe(p.art));
+})();
+</script>
+</body>
+</html>
