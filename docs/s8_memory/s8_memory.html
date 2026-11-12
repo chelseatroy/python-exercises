@@ -274,6 +274,15 @@ const MEM = {"names": {"src": "x = [1, 2, 3]\ny = x\nprint(x is y)", "out": "Tru
 
   // ---------- the frames ----------
   const M = MEM;
+  // Real Python 3.14.3 runs, each as a script in a fresh interpreter; "…" marks lines left out of _debugmallocstats().
+  const GIVEBACK = {
+    src: "import sys\n\nprint(\"BASELINE MEMORY STATE\", flush=True)\nsys._debugmallocstats()\n\njunk = [{'id': i} for i in range(200_000)]\nprint(\"AFTER CREATING 200,000 DICTS\", flush=True)\nsys._debugmallocstats()\n\ndel junk\nprint(\"AFTER DELETION\", flush=True)\nsys._debugmallocstats()",
+    out: "BASELINE MEMORY STATE\n…\n# arenas reclaimed                 =                    0\n# arenas allocated current         =                    3\nAFTER CREATING 200,000 DICTS\n…\n# arenas reclaimed                 =                    0\n# arenas allocated current         =                   46\nAFTER DELETION\n…\n# arenas reclaimed                 =                   41\n# arenas allocated current         =                    5",
+  };
+  const BIG = {
+    src: "import sys\n\nprint(sys.getsizeof(bytes(1000)))\nprint(\"BASELINE MEMORY STATE\", flush=True)\nsys._debugmallocstats()\n\nbig = [bytes(1000) for _ in range(10_000)]\nprint(\"AFTER CREATING 10,000 BIG OBJECTS\", flush=True)\nsys._debugmallocstats()\nprint(f\"{sum(sys.getsizeof(b) for b in big):,}\")",
+    out: "1033\nBASELINE MEMORY STATE\n…\n# arenas allocated current         =                    3\n# bytes in allocated blocks        =            2,216,080\nAFTER CREATING 10,000 BIG OBJECTS\n…\n# arenas allocated current         =                    3\n# bytes in allocated blocks        =            2,216,080\n10,330,000",
+  };
   // Shared positions: names on the left, objects on the right, a count in each object's corner.
   const OX = 210, OY = 86, OW = 150;
   const FRAMES = [
@@ -562,7 +571,7 @@ const MEM = {"names": {"src": "x = [1, 2, 3]\ny = x\nprint(x is y)", "out": "Tru
       },
     },
     {
-      title: "Freed blocks go back to Python's pools, not to the operating system",
+      title: "Freed blocks go back to their pools",
       aria: "A pool of 64-byte blocks fills as 1,000 dicts are made. When they are deleted, the blocks empty out, but the three arenas stay, and the count of arenas given back stays 0.",
       size: [400, 210],
       side: (s) => [srcPanel(s, "Python source", M.mallocSrc), outPanel(s, M.mallocOut)],
@@ -580,6 +589,62 @@ const MEM = {"names": {"src": "x = [1, 2, 3]\ny = x\nprint(x is y)", "out": "Tru
           { set: { full: { o: 0 } }, out: 4, d: 1300 },
           { set: { full: { o: 1 } }, out: 8, d: 1500 },
           { set: { full: { o: 0 } }, out: 13, d: 2800 },
+        ];
+      },
+    },
+    {
+      title: "An arena goes back to the operating system only once it is completely empty",
+      aria: "Python holds 3 arenas. Making 200,000 dicts grows that to 46. After they are deleted, 41 arenas that emptied out completely move back to the operating system, and Python keeps 5.",
+      size: [400, 210],
+      side: (s) => [srcPanel(s, "Python source", GIVEBACK.src), outPanel(s, GIVEBACK.out)],
+      build: (sc) => {
+        // 46 arenas in Python's box; the 5 that stay are the first 3 plus two still holding a live block.
+        const keep = new Set([0, 1, 2, 17, 33]);
+        sc.add("os", `<rect class="os" x="10" y="20" width="130" height="160" rx="12"/>` + note(75, 196, "operating system", "note", "middle"));
+        sc.add("py", `<rect class="bin" x="200" y="20" width="190" height="160" rx="12"/>` + note(295, 196, "Python", "notenew", "middle"));
+        sc.add("held", `<text class="notenew" data-t x="295" y="170" text-anchor="middle">arenas held: 3</text>`);
+        sc.add("back", `<text class="notenew" data-t x="75" y="170" text-anchor="middle">given back: 0</text>`);
+        const grow = {}, ret = {};
+        let g = 0;
+        for (let k = 0; k < 46; k++) {
+          const x = 212 + (k % 8) * 21, y = 30 + Math.floor(k / 8) * 21;
+          sc.add(`a${k}`, `<rect class="arena${k < 3 ? " old" : ""}" x="${x}" y="${y}" width="18" height="18" rx="3"/>`);
+          if (k >= 3) grow[`a${k}`] = { o: 1 };
+          if (!keep.has(k)) {
+            const tx = 16 + (g % 7) * 17, ty = 30 + Math.floor(g / 7) * 17;
+            ret[`a${k}`] = { x: tx - x, y: ty - y, k: 0.7 };
+            g += 1;
+          }
+        }
+        const start = {};
+        for (let k = 3; k < 46; k++) start[`a${k}`] = { o: 0, x: 0, y: 0, k: 1 };
+        return [
+          { set: start, text: { held: "arenas held: 3", back: "given back: 0" }, src: 3, out: 4, d: 1300 },
+          { set: grow, text: { held: "arenas held: 46" }, src: 5, out: 8, d: 1700 },
+          { set: ret, text: { held: "arenas held: 5", back: "given back: 41" }, src: 9, out: 12, d: 3000 },
+        ];
+      },
+    },
+    {
+      title: "Objects over 512 bytes skip the arenas and come straight from the system's malloc",
+      aria: "A 1,033-byte bytes object is too big for a pool block. 10,000 of them, 10 MB in all, pile up in a separate box labeled system malloc, while Python's 3 arenas stay exactly as they were.",
+      size: [400, 210],
+      side: (s) => [srcPanel(s, "Python source", BIG.src), outPanel(s, BIG.out)],
+      build: (sc) => {
+        sc.add("src", obj(10, 82, 120, "bytes(1000)", "new", 40) + note(70, 140, "1,033 bytes each", "notenew", "middle"));
+        sc.add("arenas", [0, 1, 2].map((k) => `<rect class="arena old" x="${250 + k * 48}" y="20" width="42" height="34" rx="5"/>`).join("") + note(320, 72, "Python's arenas: still 3", "note", "middle"));
+        sc.add("gate", curve(132, 92, 190, 40, 244, 37) + note(178, 34, "≤ 512 B", "note", "middle"));
+        sc.add("mall", `<rect class="os" x="250" y="100" width="140" height="80" rx="10"/>` + note(320, 198, "system malloc", "notenew", "middle"));
+        sc.add("path", curve(132, 112, 190, 150, 244, 140, "new") + note(190, 170, "> 512 B", "notenew", "middle"));
+        let pile = "";
+        for (let k = 0; k < 24; k++) pile += `<rect class="c128 blk" x="${260 + (k % 6) * 21}" y="${108 + Math.floor(k / 6) * 17}" width="18" height="13" rx="2"/>`;
+        sc.add("pile", pile);
+        return [
+          { set: { path: { o: 0 }, pile: { o: 0, k: 0.4 } }, src: 2, out: 1, d: 1200 },
+          { src: 4, out: 5, d: 1200 },
+          { set: { path: { o: 1 } }, src: 6, d: 900 },
+          { set: { pile: { o: 1, k: 1 } }, src: 8, out: 9, d: 1400 },
+          { src: 9, out: 10, d: 3000 },
         ];
       },
     },
@@ -652,6 +717,7 @@ const MEM = {"names": {"src": "x = [1, 2, 3]\ny = x\nprint(x is y)", "out": "Tru
     },
     {
       title: "Without the GIL, each object keeps two counts",
+      cap: "The free-threaded build also swaps in a different allocator, mimalloc, so it has no arenas or pools like the ones above.",
       aria: "In the free-threaded build, an object knows which thread owns it. The owner updates a fast local count; any other thread updates a separate shared count with an atomic operation. The two together are the real count.",
       size: [400, 200],
       side: (s) => { cPanel(s, "CPython 3.14.3, Include/object.h (free-threaded build)", M.c_ft, "Include/object.h"); return [null, null]; },
@@ -682,7 +748,8 @@ const MEM = {"names": {"src": "x = [1, 2, 3]\ny = x\nprint(x is y)", "out": "Tru
     host.insertAdjacentHTML("beforeend", `<article class="layer" id="${id}" aria-labelledby="${id}-h">
       <div class="layer-head"><span class="num">${n}</span><h3 id="${id}-h">${esc(f.title)}</h3>
         <span class="ctl"><button class="btn" type="button" aria-label="Pause or play picture ${n}">Pause</button><button class="btn" type="button" aria-label="Next step of picture ${n}">Step</button></span></div>
-      <div class="layer-body"><div class="pic"></div><div class="layer-side"></div></div>
+      <div class="layer-body"><div class="pic"></div><div class="layer-side"></div></div>${f.cap ? `
+      <p class="cap">${esc(f.cap)}</p>` : ""}
     </article>`);
     const art = host.lastElementChild;
     const [src, out] = f.side(art.querySelector(".layer-side"));
