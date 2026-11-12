@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lost Updates</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect x=%221%22 y=%223%22 width=%2214%22 height=%2210%22 rx=%222%22 fill=%22none%22 stroke=%22%2316181F%22 stroke-width=%222%22/%3E%3Crect x=%225%22 y=%226%22 width=%226%22 height=%224%22 fill=%22%23D9480F%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bowlby+One+SC&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+  /* Layout: the shared counter and the class's taps on top, your own tap in the middle, past rounds below. */
+  :root {
+    --paper: #F1F2EC;
+    --card: #FFFFFF;
+    --ink: #16181F;
+    --muted: #5C6270;
+    --rule: #D3D6CC;
+    --kept: #2C7A4B;
+    --lost: #D9480F;
+    --lock: #3B5BDB;
+    --hot: #F2C14E;
+    --code-bg: #1C1F29;
+    --code-ink: #E9EAF0;
+    --code-muted: #9AA0B2;
+    --display: "Bowlby One SC", "Arial Black", Impact, sans-serif;
+    --body: "IBM Plex Sans", -apple-system, system-ui, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #101217; --card: #181B23; --ink: #ECEDF2; --muted: #9AA0AF; --rule: #2B2F3D;
+      --kept: #5CC48A; --lost: #FF8A4C; --lock: #7C93F5; --hot: #D9AA3A;
+      --code-bg: #0A0C11; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #101217; --card: #181B23; --ink: #ECEDF2; --muted: #9AA0AF; --rule: #2B2F3D;
+    --kept: #5CC48A; --lost: #FF8A4C; --lock: #7C93F5; --hot: #D9AA3A;
+    --code-bg: #0A0C11; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--body); }
+  .page {
+    max-width: 1080px; margin: 0 auto; display: grid; gap: 28px;
+    padding-block: 28px 56px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .page > * { min-width: 0; }
+  h1 { font: 400 clamp(2.2rem, 7vw, 3.6rem)/0.95 var(--display); margin: 0; letter-spacing: 0.01em; }
+  h2 { font: 600 0.78rem var(--body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0; }
+  p { margin: 0; }
+  code { font-family: var(--mono); }
+  .head { display: grid; gap: 12px; }
+  .rule { font-size: 1.05rem; max-width: 62ch; text-wrap: balance; }
+  .status { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.85rem; color: var(--muted); }
+  .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--rule); background: var(--card); border-radius: 999px; padding: 3px 10px; }
+  .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .pill.on i { background: var(--kept); }
+  .pill.bad i { background: var(--lost); }
+  .btn { font: 600 0.85rem var(--body); color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+  .btn:hover { border-color: var(--muted); }
+  .btn:focus-visible, .tap:focus-visible { outline: 3px solid var(--lock); outline-offset: 2px; }
+
+  /* the round: its mode and how long is left */
+  .round { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+  .mode { font: 400 1.15rem var(--display); padding: 4px 12px; border-radius: 8px; background: var(--ink); color: var(--paper); }
+  .mode.lock { background: var(--lock); color: #fff; }
+  .clock { font: 600 1.05rem var(--mono); font-variant-numeric: tabular-nums; }
+  .host { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+  .host[hidden] { display: none; }
+
+  /* the scoreboard: taps that happened vs. what the counter says */
+  .score { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .stat { background: var(--card); border: 1px solid var(--rule); border-radius: 14px; padding: 12px 16px; display: grid; gap: 2px; min-width: 0; }
+  .stat b { font: 400 clamp(2rem, 8vw, 3.4rem)/1 var(--display); font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 0.82rem; color: var(--muted); }
+  .stat.counter b { color: var(--kept); }
+  .stat.lost b { color: var(--lost); }
+
+  /* the class's taps, in order: green if nobody wrote in between, orange if someone did */
+  .strip { display: flex; flex-wrap: wrap; gap: 4px; min-height: 26px; }
+  .t { width: 22px; height: 22px; border-radius: 5px; background: var(--kept); }
+  .t.clash { background: var(--lost); }
+  .t.mine { box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--ink); }
+  .key { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8rem; color: var(--muted); align-items: center; }
+  .key .t { width: 14px; height: 14px; display: inline-block; vertical-align: -2px; margin-right: 6px; }
+  .key .t.mine { margin-left: 4px; margin-right: 10px; }
+
+  /* your tap: the button, and the bytecode it walks through */
+  .you { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 720px) { .you { grid-template-columns: minmax(0, 1fr); } }
+  .tap { width: 100%; font: 600 1.25rem var(--mono); color: #fff; background: var(--ink); border: 0; border-radius: 16px; padding: 26px 12px; cursor: pointer; }
+  :root .tap { color: var(--paper); }
+  .tap:disabled { opacity: 0.4; cursor: default; }
+  .mine-stats { font-size: 0.85rem; color: var(--muted); margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .code { background: var(--code-bg); color: var(--code-ink); border-radius: 12px; padding: 12px 0; display: grid; gap: 8px; min-width: 0; }
+  .code .h { padding: 0 16px; font-size: 0.8rem; color: var(--code-muted); }
+  .code pre { margin: 0; font: 0.84rem/1.7 var(--mono); overflow-x: auto; }
+  .ln { display: block; padding: 0 16px; white-space: pre; border-left: 3px solid transparent; }
+  .ln .v { color: var(--hot); font-weight: 600; }
+  .ln.hot { background: color-mix(in oklab, var(--hot) 26%, transparent); border-left-color: var(--hot); }
+  .ln.dim { color: var(--code-muted); }
+  .ln[hidden] { display: none; }
+  .verdict { padding: 0 16px; font: 0.9rem/1.45 var(--body); min-height: 2.9em; }
+  .verdict.clash { color: #FFB089; }
+  .verdict.ok { color: #8BE0A8; }
+
+  /* past rounds: one bar per round, green for taps the counter kept, orange for taps it lost */
+  .rounds { display: grid; gap: 12px; }
+  .rd { display: grid; gap: 4px; }
+  .rd .lbl { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; font-size: 0.85rem; }
+  .rd .lbl .m { font-weight: 600; }
+  .rd .lbl .n { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .bar { display: flex; height: 22px; border-radius: 6px; overflow: hidden; background: var(--rule); }
+  .bar .k { background: var(--kept); }
+  .bar .x { background: var(--lost); }
+  .empty { color: var(--muted); font-size: 0.9rem; }
+  @media (prefers-reduced-motion: reduce) { *, *::before { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="head">
+    <h1>Lost Updates</h1>
+    <p class="rule">The whole class shares one counter. Every tap adds 1 the way <code>counter += 1</code> does: <b>read</b> the counter, <b>add 1</b>, <b>write</b> it back. Tap as often as you like during a round, then compare the taps with the counter.</p>
+    <div class="status">
+      <span class="pill" id="room-pill"><i></i><span id="room-text">Connecting to the class board…</span></span>
+    </div>
+  </header>
+
+  <section class="round" aria-label="This round">
+    <span class="mode" id="mode">Waiting</span>
+    <span class="clock" id="clock" aria-live="polite">Waiting for the first round</span>
+    <div class="host" id="host" hidden>
+      <button class="btn" type="button" data-mode="race">Start a race round (30 s)</button>
+      <button class="btn" type="button" data-mode="lock">Start a lock round (30 s)</button>
+    </div>
+  </section>
+
+  <section class="score" aria-label="Taps and the counter">
+    <div class="stat"><b id="taps">0</b><span>taps by the class</span></div>
+    <div class="stat counter"><b id="counter">0</b><span>what the counter says</span></div>
+    <div class="stat lost"><b id="lost">0</b><span>taps lost</span></div>
+  </section>
+
+  <section style="display:grid;gap:10px" aria-labelledby="strip-h">
+    <h2 id="strip-h">This round's taps, oldest first</h2>
+    <div class="strip" id="strip" aria-label="Each tap this round"></div>
+    <div class="key">
+      <span><i class="t"></i>nobody wrote while it was adding</span>
+      <span><i class="t clash"></i>someone wrote first, and this tap wrote over them</span>
+      <span><i class="t mine"></i>yours</span>
+    </div>
+  </section>
+
+  <section class="you" aria-labelledby="you-h">
+    <div>
+      <h2 id="you-h" style="margin-bottom:10px">Your tap</h2>
+      <button class="tap" id="tap" type="button" disabled>counter += 1</button>
+      <p class="mine-stats" id="mine"></p>
+    </div>
+    <div class="code" aria-live="polite">
+      <div class="h">What <code>counter += 1</code> is, in Python 3.14's bytecode</div>
+      <pre id="steps"><span class="ln dim" id="s-acq" hidden>with lock:                       <span class="v" id="v-acq"></span></span><span class="ln" id="s-load">LOAD_GLOBAL      counter         <span class="v" id="v-load"></span></span><span class="ln" id="s-one">LOAD_SMALL_INT   1</span><span class="ln" id="s-add">BINARY_OP        +=              <span class="v" id="v-add"></span></span><span class="ln" id="s-store">STORE_GLOBAL     counter         <span class="v" id="v-store"></span></span><span class="ln dim" id="s-rel" hidden>(leave the with: release the lock)</span></pre>
+      <p class="verdict" id="verdict">Tap the button to walk through it.</p>
+    </div>
+  </section>
+
+  <section class="rounds" aria-labelledby="rounds-h">
+    <h2 id="rounds-h">Rounds so far</h2>
+    <div id="rounds"><p class="empty">No rounds yet.</p></div>
+    <div class="key"><span><i class="t"></i>taps the counter kept</span><span><i class="t clash"></i>taps it lost</span></div>
+  </section>
+</main>
+
+<script>
+(() => {
+  "use strict";
+  // The class board: the same Cloudflare Worker as the polls and Dunder Bingo (backend/ in the repo).
+  const BOARD_URL = "https://python-exercises-backend.chelseatroy.workers.dev/race";
+  const REFRESH_MS = 1000;
+  // How long a tap spends "adding 1" between its read and its write. Python does this in
+  // nanoseconds; a class needs about a second to have something to collide with.
+  const ADD_MS = 900;
+  const LOCK_RETRY_MS = 250;
+  const KEY = "lost-updates-v1";
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // ---------- who this browser is ----------
+  let me = { taps: 0, clashes: 0, round: null };
+  try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s && s.player) me = s; } catch (e) { /* storage off: a new player each load */ }
+  if (!me.player) me.player = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now());
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(me)); } catch (e) { /* fine */ } };
+  save();
+  const short = me.player.slice(0, 8);
+  if (new URLSearchParams(location.search).has("host")) $("host").hidden = false;
+
+  // ---------- talking to the board ----------
+  async function call(options) {
+    const response = await fetch(BOARD_URL, options);
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    return data;
+  }
+  // A plain-string body goes out as text/plain, which skips the CORS preflight.
+  const post = (body) => call({ method: "POST", body: JSON.stringify(body) });
+  const setPill = (cls, text) => { $("room-pill").className = `pill ${cls}`; $("room-text").textContent = text; };
+
+  let board = null, skew = 0, busy = false;
+  const serverNow = () => Date.now() + skew;
+  const live = () => board && board.round > 0 && serverNow() < board.ends;
+
+  // ---------- painting ----------
+  const paintClock = () => {
+    if (!board || board.round === 0) { $("clock").textContent = "Waiting for the first round"; return; }
+    const left = Math.max(0, Math.ceil((board.ends - serverNow()) / 1000));
+    $("clock").textContent = left > 0 ? `${left} s left in round ${board.round}` : `Round ${board.round} is over`;
+    $("tap").disabled = busy || left === 0;
+  };
+  const paint = () => {
+    const b = board;
+    $("mode").textContent = b.round === 0 ? "Waiting" : b.mode === "lock" ? "Lock round" : "Race round";
+    $("mode").className = `mode ${b.mode === "lock" && b.round ? "lock" : ""}`;
+    const cur = b.rounds.find((r) => r.round === b.round);
+    const taps = cur ? cur.taps : 0;
+    $("taps").textContent = taps;
+    $("counter").textContent = b.counter;
+    $("lost").textContent = Math.max(0, taps - b.counter);
+    $("strip").innerHTML = b.recent.slice().reverse().map((t) =>
+      `<i class="t${t.before !== t.read ? " clash" : ""}${t.p === short ? " mine" : ""}" title="read ${t.read}, counter held ${t.before} at the write, wrote ${t.read + 1}"></i>`).join("");
+    const shown = b.rounds.slice().reverse();
+    const most = Math.max(1, ...shown.map((r) => r.taps));
+    $("rounds").innerHTML = shown.length ? shown.map((r) => {
+      const secs = Math.max(1, (r.last - r.first) / 1000);
+      const lost = r.taps - r.counter;
+      return `<div class="rd"><div class="lbl"><span class="m">Round ${r.round} · ${r.mode === "lock" ? "lock" : "race"} · ${r.players} ${r.players === 1 ? "player" : "players"}</span>
+        <span class="n">${r.taps} ${r.taps === 1 ? "tap" : "taps"} → counter ${r.counter} · ${lost} lost · ${(r.taps / secs).toFixed(1)} taps/s</span></div>
+        <div class="bar" style="width:${(100 * r.taps) / most}%"><span class="k" style="flex:${r.counter}"></span><span class="x" style="flex:${lost}"></span></div></div>`;
+    }).join("") : `<p class="empty">No rounds yet.</p>`;
+    if (me.round !== b.round) { me.round = b.round; me.taps = 0; me.clashes = 0; save(); }
+    $("mine").textContent = me.taps ? `You: ${me.taps} ${me.taps === 1 ? "tap" : "taps"} this round, ${me.clashes} wrote over someone` : "";
+    const lockMode = b.mode === "lock";
+    $("s-acq").hidden = !lockMode;
+    $("s-rel").hidden = !lockMode;
+    paintClock();
+  };
+  const take = (data) => {
+    skew = data.now - Date.now();
+    board = data;
+    setPill("on", "Live with the class");
+    paint();
+  };
+  const down = () => setPill("bad", "Can't reach the class board right now.");
+
+  // ---------- one tap: read, add 1, write ----------
+  const hot = (id) => ["s-acq", "s-load", "s-one", "s-add", "s-store", "s-rel"].forEach((s) => $(s).classList.toggle("hot", s === id));
+  const show = (id, text) => { $(id).textContent = text; };
+  const verdict = (cls, html) => { $("verdict").className = `verdict ${cls}`; $("verdict").innerHTML = html; };
+
+  async function tap() {
+    if (busy || !live()) return;
+    busy = true;
+    paintClock();
+    ["v-acq", "v-load", "v-add", "v-store"].forEach((id) => show(id, ""));
+    verdict("", "");
+    try {
+      const round = board.round;
+      if (board.mode === "lock") {
+        hot("s-acq");
+        show("v-acq", "waiting for the lock…");
+        for (;;) {
+          if (!live() || board.round !== round) throw new Error("over");
+          const a = await post({ action: "acquire", player: me.player });
+          if (a.acquired) break;
+          await wait(LOCK_RETRY_MS);
+        }
+        show("v-acq", "you hold it");
+      }
+      hot("s-load");
+      const r = await post({ action: "read", player: me.player });
+      if (!r.allowed) throw new Error("over");
+      show("v-load", `→ ${r.value}`);
+      await wait(250);
+      hot("s-one");
+      await wait(200);
+      hot("s-add");
+      show("v-add", `→ ${r.value + 1}   (adding…)`);
+      await wait(ADD_MS);
+      show("v-add", `→ ${r.value + 1}`);
+      hot("s-store");
+      const w = await post({ action: "write", player: me.player, round: r.round, read: r.value });
+      if (!w.written) throw new Error("over");
+      show("v-store", `wrote ${r.value + 1}`);
+      me.taps += 1;
+      if (w.before === r.value) {
+        verdict("ok", `Kept. Nobody wrote while you were adding, so the counter went ${r.value} → ${r.value + 1}.`);
+      } else {
+        me.clashes += 1;
+        verdict("clash", `While you were adding, someone else wrote: the counter held <b>${w.before}</b>, not ${r.value}. You wrote ${r.value + 1} over it.`);
+      }
+      save();
+      if (board.mode === "lock") { hot("s-rel"); await wait(300); }
+      take(w);
+    } catch (e) {
+      if (e.message === "over") verdict("", "The round ended before your tap finished.");
+      else { down(); verdict("", "That tap didn't reach the board."); }
+    } finally {
+      hot(null);
+      busy = false;
+      paintClock();
+    }
+  }
+  $("tap").addEventListener("click", tap);
+  $("host").addEventListener("click", (e) => {
+    const mode = e.target.dataset && e.target.dataset.mode;
+    if (mode) post({ action: "start", mode }).then(take, down);
+  });
+
+  // ---------- keep the board fresh ----------
+  const refresh = () => call({ cache: "no-store" }).then(take, down);
+  let timer = null;
+  const start = () => { if (!timer) { refresh(); timer = setInterval(refresh, REFRESH_MS); } };
+  const stop = () => { clearInterval(timer); timer = null; };
+  document.addEventListener("visibilitychange", () => (document.hidden ? stop() : start()));
+  setInterval(() => board && paintClock(), 250);
+  start();
+})();
+</script>
+</body>
+</html>
