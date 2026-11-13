@@ -105,6 +105,29 @@
   .sw { display: inline-block; width: 22px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
   .sw.work { background: var(--work); }
   .sw.wait { background: repeating-linear-gradient(135deg, var(--wait) 0 2px, transparent 2px 6px); box-shadow: inset 0 0 0 1.2px var(--wait); }
+  .code .ln.on { background: color-mix(in oklab, var(--tag) 30%, transparent); box-shadow: inset 3px 0 0 var(--tag); }
+
+  /* the event loop, step by step: one column per download, one row per state */
+  .loop-status { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; align-items: start; background: var(--ground); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; min-height: 4.4em; }
+  .loop-status .clock { font: 700 0.95rem var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .loop-status .clock small { display: block; font: 600 0.68rem var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .loop-status .what { font-size: 0.9rem; }
+  .tl .row-bg { fill: var(--slot); opacity: 0.5; }
+  .tl .row-run { fill: color-mix(in oklab, var(--work) 22%, transparent); stroke: var(--work); stroke-width: 1; }
+  .tl .row-l { font-size: 12px; fill: var(--ink); font-weight: 600; }
+  .tl .row-sub { font-size: 10px; fill: var(--muted); }
+  .tl .chip { transition: transform 0.18s; }
+  .tl .chip rect.c { stroke-width: 1.2; }
+  .tl .chip text { font: 700 10px var(--body); text-anchor: middle; }
+  .tl .chip.s0 rect.c { fill: var(--surface); stroke: var(--muted); } .tl .chip.s0 text { fill: var(--ink); }
+  .tl .chip.s1 rect.c { fill: var(--work); stroke: var(--work); } .tl .chip.s1 text { fill: var(--machine); }
+  .tl .chip.s2 rect.c { fill: url(#waitfill); stroke: var(--wait); } .tl .chip.s2 text { fill: var(--ink); }
+  .tl .chip.s3 rect.c { fill: var(--slot); stroke: var(--line); } .tl .chip.s3 text { fill: var(--muted); }
+  .tl .chip .timer { fill: var(--wait); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(13em, 1fr)); gap: 10px; }
+  .card { background: var(--ground); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; font-size: 0.88rem; }
+  .card .card-h { font-weight: 700; }
+  .card.ok { border-left: 4px solid var(--hit); } .card.bad { border-left: 4px solid var(--clash); }
   details.full { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
   details.full summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
   details.full .code-panel { margin: 0 12px 12px; }
@@ -136,8 +159,8 @@
 </main>
 
 <script>
-const TL = {"io_serial":{"total":2434.0,"printed":"downloads, one at a time: 2.43 seconds","lanes":[{"label":"main thread","segs":[[0.0,205.1,0],[205.1,409.2,1],[409.2,610.4,2],[610.5,814.8,3],[814.8,1019.9,4],[1019.9,1223.2,5],[1223.2,1423.9,6],[1423.9,1626.2,7],[1626.2,1827.7,8],[1827.7,2029.0,9],[2029.0,2231.6,10],[2231.6,2434.0,11]]}]},"io_threads":{"total":612.3,"printed":"downloads, 4 threads: 0.61 seconds","lanes":[{"label":"thread 0","segs":[[1.2,202.3,0],[202.4,403.2,5],[403.2,607.5,8]]},{"label":"thread 1","segs":[[1.5,206.5,1],[206.6,411.0,7],[411.0,611.9,11]]},{"label":"thread 2","segs":[[1.7,202.4,2],[202.4,403.3,6],[403.3,607.8,9]]},{"label":"thread 3","segs":[[1.8,202.2,3],[202.3,405.7,4],[405.7,607.7,10]]}]},"io_async":{"total":203.8,"printed":"downloads, asyncio: 0.20 seconds","lanes":[{"label":"download 0","segs":[[1.1,202.6,0]]},{"label":"download 1","segs":[[1.1,202.6,1]]},{"label":"download 2","segs":[[1.1,202.6,2]]},{"label":"download 3","segs":[[1.1,202.6,3]]},{"label":"download 4","segs":[[1.1,202.6,4]]},{"label":"download 5","segs":[[1.1,202.6,5]]},{"label":"download 6","segs":[[1.1,202.6,6]]},{"label":"download 7","segs":[[1.1,202.7,7]]},{"label":"download 8","segs":[[1.2,202.7,8]]},{"label":"download 9","segs":[[1.2,202.7,9]]},{"label":"download 10","segs":[[1.2,202.7,10]]},{"label":"download 11","segs":[[1.2,202.7,11]]}]},"cpu_serial":{"total":1250.0,"printed":"prime counts, one at a time: 1.25 seconds","lanes":[{"label":"main thread","segs":[[0.0,2.1,0],[3.5,191.0,0],[191.0,340.4,1],[340.4,490.3,2],[490.3,640.6,3],[640.6,791.3,4],[791.3,944.4,5],[944.4,1096.4,6],[1096.4,1250.0,7]]}]},"cpu_threads":{"total":1212.0,"printed":"prime counts, 4 threads: 1.21 seconds","lanes":[{"label":"thread 0","segs":[[0.1,12.6,0],[19.0,25.1,0],[31.6,37.6,0],[56.6,62.8,0],[69.2,81.6,0],[87.9,94.0,0],[112.9,119.0,0],[138.0,144.2,0],[156.8,162.9,0],[175.6,181.7,0],[200.6,206.8,0],[225.7,231.7,0],[269.4,275.5,0],[300.7,306.8,0],[325.7,331.9,0],[350.8,356.8,0],[369.3,375.5,0],[394.4,400.5,0],[419.4,425.5,0],[438.2,444.3,0],[475.9,481.9,0],[500.9,505.7,0],[505.7,506.9,4],[544.6,550.7,4],[568.5,574.6,4],[593.5,599.5,4],[612.2,618.4,4],[631.1,637.2,4],[656.1,662.2,4],[681.2,687.3,4],[717.2,723.4,4],[729.7,735.9,4],[754.7,761.0,4],[786.1,792.2,4],[810.9,816.0,4],[834.9,840.9,4],[859.9,866.0,4],[878.7,884.7,4],[903.6,909.7,4],[928.6,933.9,4],[959.0,965.1,4],[984.1,990.1,4],[1015.4,1021.4,4],[1033.9,1040.1,4],[1052.8,1058.8,4],[1076.8,1083.0,4],[1101.7,1107.8,4],[1126.8,1129.1,4]]},{"label":"thread 1","segs":[[12.7,18.9,1],[37.8,43.9,1],[94.1,100.3,1],[119.2,125.4,1],[144.2,150.4,1],[181.8,187.9,1],[206.9,213.0,1],[244.4,250.5,1],[263.2,269.3,1],[288.2,294.3,1],[313.4,319.3,1],[338.3,344.4,1],[357.1,362.9,1],[375.6,381.6,1],[400.6,406.8,1],[413.2,419.2,1],[457.0,463.2,1],[482.1,488.1,1],[525.8,531.9,1],[550.9,555.9,1],[574.8,580.8,1],[606.0,612.2,1],[637.3,643.5,1],[668.7,674.7,1],[687.4,688.1,1],[688.1,693.4,7],[710.9,717.1,7],[736.0,742.1,7],[761.0,767.1,7],[779.8,785.9,7],[804.8,810.8,7],[828.6,834.6,7],[847.3,853.4,7],[872.4,878.5,7],[897.4,903.5,7],[916.0,922.1,7],[940.2,946.5,7],[965.3,971.4,7],[990.3,996.5,7],[1009.2,1015.2,7],[1046.5,1052.7,7],[1071.6,1076.7,7],[1108.0,1114.1,7],[1129.2,1139.1,7],[1158.0,1164.1,7],[1169.7,1181.9,7],[1188.4,1194.5,7],[1201.0,1207.0,7],[1209.9,1211.9,7]]},{"label":"thread 2","segs":[[25.3,31.4,2],[50.3,56.4,2],[81.6,87.8,2],[106.7,112.9,2],[131.7,137.8,2],[169.3,175.4,2],[194.3,200.4,2],[219.4,225.5,2],[238.2,244.3,2],[257.0,263.0,2],[282.0,288.1,2],[307.0,313.0,2],[332.0,338.1,2],[388.1,394.3,2],[432.0,438.1,2],[444.5,450.5,2],[469.4,475.6,2],[494.5,500.6,2],[519.6,525.7,2],[538.3,544.5,2],[562.3,568.4,2],[581.1,587.1,2],[599.8,605.8,2],[618.5,624.7,2],[643.6,643.6,2],[643.7,649.8,6],[662.5,668.5,6],[693.7,699.4,6],[723.5,729.6,6],[748.5,754.6,6],[773.6,779.6,6],[792.3,798.4,6],[822.2,828.4,6],[841.1,847.2,6],[866.0,872.3,6],[891.2,897.3,6],[922.4,928.4,6],[946.5,952.6,6],[971.5,977.7,6],[1002.9,1008.9,6],[1027.7,1033.8,6],[1059.0,1065.2,6],[1083.2,1089.2,6],[1095.6,1101.5,6],[1114.3,1120.4,6],[1145.6,1158.0,6],[1182.1,1188.4,6],[1194.8,1200.9,6],[1207.3,1209.9,6]]},{"label":"thread 3","segs":[[44.1,50.1,3],[62.9,69.0,3],[100.4,106.6,3],[125.5,131.6,3],[150.5,156.6,3],[163.0,169.2,3],[188.1,194.2,3],[213.2,219.2,3],[231.9,238.0,3],[250.6,256.8,3],[275.7,281.8,3],[294.6,300.5,3],[319.4,325.6,3],[344.5,350.7,3],[363.1,369.2,3],[381.8,387.9,3],[406.9,412.9,3],[425.7,431.8,3],[450.8,456.8,3],[463.2,469.4,3],[488.3,494.4,3],[507.2,519.5,3],[532.1,538.2,3],[556.1,556.7,3],[556.7,562.1,5],[587.3,593.4,5],[624.9,630.9,5],[649.9,655.9,5],[674.8,680.9,5],[699.5,710.9,5],[742.3,748.4,5],[767.4,773.3,5],[798.6,804.6,5],[816.0,822.1,5],[853.6,859.7,5],[884.9,891.0,5],[909.9,916.0,5],[934.1,940.2,5],[952.8,958.9,5],[977.8,983.9,5],[996.6,1002.8,5],[1021.7,1027.6,5],[1040.3,1046.4,5],[1065.3,1071.4,5],[1089.3,1095.5,5],[1120.6,1126.6,5],[1139.3,1145.3,5],[1164.3,1169.6,5]]}]},"cpu_processes":{"total":432.3,"printed":"prime counts, 4 processes: 0.43 seconds","lanes":[{"label":"process 1","segs":[[88.4,245.2,0],[245.4,405.0,4]]},{"label":"process 2","segs":[[88.7,247.3,1],[247.4,410.6,5]]},{"label":"process 3","segs":[[88.9,247.4,2],[247.6,407.0,6]]},{"label":"process 4","segs":[[92.6,251.9,3],[252.0,414.1,7]]}]},"cpu_threads_nogil":{"total":305.4,"printed":"prime counts, 4 threads, no GIL: 0.31 seconds","lanes":[{"label":"thread 0","segs":[[0.1,149.9,0],[149.9,171.9,5],[173.1,305.1,5]]},{"label":"thread 1","segs":[[0.2,149.7,1],[149.7,302.2,4]]},{"label":"thread 2","segs":[[0.3,150.9,2],[150.9,268.4,6],[269.4,303.8,6]]},{"label":"thread 3","segs":[[0.4,48.9,3],[50.4,151.5,3],[151.5,305.2,7]]}]}};
-const SRC = "\"\"\"Record real timelines for the concurrency page: when each task ran, on which worker.\"\"\"\nimport asyncio, json, math, os, sys, threading, time\nfrom concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor\n\nnow = time.time_ns\n\n# ---------- an IO-bound task: a pretend download that mostly waits ----------\ndef download(i):\n    start = now()\n    time.sleep(0.2)                         # waiting on the network\n    return {\"task\": i, \"worker\": threading.current_thread().name, \"wait\": [start, now()]}\n\nasync def download_async(i):\n    start = now()\n    await asyncio.sleep(0.2)                # waiting on the network, without blocking the thread\n    return {\"task\": i, \"worker\": f\"task-{i}\", \"wait\": [start, now()]}\n\n# ---------- a CPU-bound task: count primes, noting progress every 50 numbers ----------\ndef is_prime(n):\n    if n < 2: return False\n    if n % 2 == 0: return n == 2\n    r = int(math.isqrt(n))\n    for f in range(3, r + 1, 2):\n        if n % f == 0: return False\n    return True\n\ndef count_primes_near(center, window=60_000, task=0):\n    ticks = [now()]\n    count = 0\n    for k, n in enumerate(range(center - window // 2, center + window // 2)):\n        if is_prime(n): count += 1\n        if k % 50 == 49: ticks.append(now())\n    name = threading.current_thread().name\n    if name == \"MainThread\": name = f\"pid {os.getpid()}\"\n    return {\"task\": task, \"worker\": name, \"ticks\": ticks, \"count\": count}\n\nN_IO, N_CPU, WORKERS = 12, 8, 4\nCENTERS = [5_000_000 + i * 50_000 for i in range(N_CPU)]\n\nLABELS = {\"io_serial\": \"downloads, one at a time\", \"io_threads\": \"downloads, 4 threads\", \"io_async\": \"downloads, asyncio\",\n          \"cpu_serial\": \"prime counts, one at a time\", \"cpu_processes\": \"prime counts, 4 processes\",\n          \"cpu_threads\": \"prime counts, 4 threads\", \"cpu_threads_nogil\": \"prime counts, 4 threads, no GIL\"}\nOUT = {}\n\ndef timed(fn, key):\n    t0 = now(); out = fn(); t1 = now()\n    OUT[key] = f\"{LABELS[key]}: {(t1 - t0) / 1e9:.2f} seconds\"\n    print(OUT[key])\n    return {\"t0\": t0, \"t1\": t1, \"tasks\": out}\n\ndef main(which):\n    runs = {}\n    if which == \"default\":\n        runs[\"io_serial\"] = timed(lambda: [download(i) for i in range(N_IO)], \"io_serial\")\n        def io_threads():\n            with ThreadPoolExecutor(max_workers=WORKERS, thread_name_prefix=\"thread\") as ex:\n                return list(ex.map(download, range(N_IO)))\n        runs[\"io_threads\"] = timed(io_threads, \"io_threads\")\n        async def io_async():\n            return await asyncio.gather(*(download_async(i) for i in range(N_IO)))\n        runs[\"io_async\"] = timed(lambda: asyncio.run(io_async()), \"io_async\")\n        runs[\"cpu_serial\"] = timed(lambda: [count_primes_near(c, task=i) for i, c in enumerate(CENTERS)], \"cpu_serial\")\n        def cpu_procs():\n            with ProcessPoolExecutor(max_workers=WORKERS) as ex:\n                return list(ex.map(count_primes_near, CENTERS, [60_000] * N_CPU, range(N_CPU)))\n        runs[\"cpu_processes\"] = timed(cpu_procs, \"cpu_processes\")\n    def cpu_threads():\n        with ThreadPoolExecutor(max_workers=WORKERS, thread_name_prefix=\"thread\") as ex:\n            return list(ex.map(count_primes_near, CENTERS, [60_000] * N_CPU, range(N_CPU)))\n    key = \"cpu_threads\" if which == \"default\" else \"cpu_threads_nogil\"\n    runs[key] = timed(cpu_threads, key)\n    return {\"printed\": OUT, \"python\": sys.version.split()[0], \"gil\": sys._is_gil_enabled(), \"cores\": os.cpu_count(), \"runs\": runs}\n\nif __name__ == \"__main__\":\n    json.dump(main(sys.argv[1]), open(sys.argv[2], \"w\"))";
+const TL = {"io_serial":{"total":2434.0,"printed":"downloads, one at a time: 2.43 seconds","lanes":[{"label":"main thread","segs":[[0.0,205.1,0],[205.1,409.2,1],[409.2,610.4,2],[610.5,814.8,3],[814.8,1019.9,4],[1019.9,1223.2,5],[1223.2,1423.9,6],[1423.9,1626.2,7],[1626.2,1827.7,8],[1827.7,2029.0,9],[2029.0,2231.6,10],[2231.6,2434.0,11]]}]},"io_threads":{"total":612.3,"printed":"downloads, 4 threads: 0.61 seconds","lanes":[{"label":"thread 0","segs":[[1.2,202.3,0],[202.4,403.2,5],[403.2,607.5,8]]},{"label":"thread 1","segs":[[1.5,206.5,1],[206.6,411.0,7],[411.0,611.9,11]]},{"label":"thread 2","segs":[[1.7,202.4,2],[202.4,403.3,6],[403.3,607.8,9]]},{"label":"thread 3","segs":[[1.8,202.2,3],[202.3,405.7,4],[405.7,607.7,10]]}]},"io_async":{"total":203.8,"printed":"downloads, asyncio: 0.20 seconds","lanes":[{"label":"download 0","segs":[[1.1,202.6,0]]},{"label":"download 1","segs":[[1.1,202.6,1]]},{"label":"download 2","segs":[[1.1,202.6,2]]},{"label":"download 3","segs":[[1.1,202.6,3]]},{"label":"download 4","segs":[[1.1,202.6,4]]},{"label":"download 5","segs":[[1.1,202.6,5]]},{"label":"download 6","segs":[[1.1,202.6,6]]},{"label":"download 7","segs":[[1.1,202.7,7]]},{"label":"download 8","segs":[[1.2,202.7,8]]},{"label":"download 9","segs":[[1.2,202.7,9]]},{"label":"download 10","segs":[[1.2,202.7,10]]},{"label":"download 11","segs":[[1.2,202.7,11]]}]},"cpu_serial":{"total":1250.0,"printed":"prime counts, one at a time: 1.25 seconds","lanes":[{"label":"main thread","segs":[[0.0,2.1,0],[3.5,191.0,0],[191.0,340.4,1],[340.4,490.3,2],[490.3,640.6,3],[640.6,791.3,4],[791.3,944.4,5],[944.4,1096.4,6],[1096.4,1250.0,7]]}]},"cpu_threads":{"total":1212.0,"printed":"prime counts, 4 threads: 1.21 seconds","lanes":[{"label":"thread 0","segs":[[0.1,12.6,0],[19.0,25.1,0],[31.6,37.6,0],[56.6,62.8,0],[69.2,81.6,0],[87.9,94.0,0],[112.9,119.0,0],[138.0,144.2,0],[156.8,162.9,0],[175.6,181.7,0],[200.6,206.8,0],[225.7,231.7,0],[269.4,275.5,0],[300.7,306.8,0],[325.7,331.9,0],[350.8,356.8,0],[369.3,375.5,0],[394.4,400.5,0],[419.4,425.5,0],[438.2,444.3,0],[475.9,481.9,0],[500.9,505.7,0],[505.7,506.9,4],[544.6,550.7,4],[568.5,574.6,4],[593.5,599.5,4],[612.2,618.4,4],[631.1,637.2,4],[656.1,662.2,4],[681.2,687.3,4],[717.2,723.4,4],[729.7,735.9,4],[754.7,761.0,4],[786.1,792.2,4],[810.9,816.0,4],[834.9,840.9,4],[859.9,866.0,4],[878.7,884.7,4],[903.6,909.7,4],[928.6,933.9,4],[959.0,965.1,4],[984.1,990.1,4],[1015.4,1021.4,4],[1033.9,1040.1,4],[1052.8,1058.8,4],[1076.8,1083.0,4],[1101.7,1107.8,4],[1126.8,1129.1,4]]},{"label":"thread 1","segs":[[12.7,18.9,1],[37.8,43.9,1],[94.1,100.3,1],[119.2,125.4,1],[144.2,150.4,1],[181.8,187.9,1],[206.9,213.0,1],[244.4,250.5,1],[263.2,269.3,1],[288.2,294.3,1],[313.4,319.3,1],[338.3,344.4,1],[357.1,362.9,1],[375.6,381.6,1],[400.6,406.8,1],[413.2,419.2,1],[457.0,463.2,1],[482.1,488.1,1],[525.8,531.9,1],[550.9,555.9,1],[574.8,580.8,1],[606.0,612.2,1],[637.3,643.5,1],[668.7,674.7,1],[687.4,688.1,1],[688.1,693.4,7],[710.9,717.1,7],[736.0,742.1,7],[761.0,767.1,7],[779.8,785.9,7],[804.8,810.8,7],[828.6,834.6,7],[847.3,853.4,7],[872.4,878.5,7],[897.4,903.5,7],[916.0,922.1,7],[940.2,946.5,7],[965.3,971.4,7],[990.3,996.5,7],[1009.2,1015.2,7],[1046.5,1052.7,7],[1071.6,1076.7,7],[1108.0,1114.1,7],[1129.2,1139.1,7],[1158.0,1164.1,7],[1169.7,1181.9,7],[1188.4,1194.5,7],[1201.0,1207.0,7],[1209.9,1211.9,7]]},{"label":"thread 2","segs":[[25.3,31.4,2],[50.3,56.4,2],[81.6,87.8,2],[106.7,112.9,2],[131.7,137.8,2],[169.3,175.4,2],[194.3,200.4,2],[219.4,225.5,2],[238.2,244.3,2],[257.0,263.0,2],[282.0,288.1,2],[307.0,313.0,2],[332.0,338.1,2],[388.1,394.3,2],[432.0,438.1,2],[444.5,450.5,2],[469.4,475.6,2],[494.5,500.6,2],[519.6,525.7,2],[538.3,544.5,2],[562.3,568.4,2],[581.1,587.1,2],[599.8,605.8,2],[618.5,624.7,2],[643.6,643.6,2],[643.7,649.8,6],[662.5,668.5,6],[693.7,699.4,6],[723.5,729.6,6],[748.5,754.6,6],[773.6,779.6,6],[792.3,798.4,6],[822.2,828.4,6],[841.1,847.2,6],[866.0,872.3,6],[891.2,897.3,6],[922.4,928.4,6],[946.5,952.6,6],[971.5,977.7,6],[1002.9,1008.9,6],[1027.7,1033.8,6],[1059.0,1065.2,6],[1083.2,1089.2,6],[1095.6,1101.5,6],[1114.3,1120.4,6],[1145.6,1158.0,6],[1182.1,1188.4,6],[1194.8,1200.9,6],[1207.3,1209.9,6]]},{"label":"thread 3","segs":[[44.1,50.1,3],[62.9,69.0,3],[100.4,106.6,3],[125.5,131.6,3],[150.5,156.6,3],[163.0,169.2,3],[188.1,194.2,3],[213.2,219.2,3],[231.9,238.0,3],[250.6,256.8,3],[275.7,281.8,3],[294.6,300.5,3],[319.4,325.6,3],[344.5,350.7,3],[363.1,369.2,3],[381.8,387.9,3],[406.9,412.9,3],[425.7,431.8,3],[450.8,456.8,3],[463.2,469.4,3],[488.3,494.4,3],[507.2,519.5,3],[532.1,538.2,3],[556.1,556.7,3],[556.7,562.1,5],[587.3,593.4,5],[624.9,630.9,5],[649.9,655.9,5],[674.8,680.9,5],[699.5,710.9,5],[742.3,748.4,5],[767.4,773.3,5],[798.6,804.6,5],[816.0,822.1,5],[853.6,859.7,5],[884.9,891.0,5],[909.9,916.0,5],[934.1,940.2,5],[952.8,958.9,5],[977.8,983.9,5],[996.6,1002.8,5],[1021.7,1027.6,5],[1040.3,1046.4,5],[1065.3,1071.4,5],[1089.3,1095.5,5],[1120.6,1126.6,5],[1139.3,1145.3,5],[1164.3,1169.6,5]]}]},"cpu_processes":{"total":432.3,"printed":"prime counts, 4 processes: 0.43 seconds","lanes":[{"label":"process 1","segs":[[88.4,245.2,0],[245.4,405.0,4]]},{"label":"process 2","segs":[[88.7,247.3,1],[247.4,410.6,5]]},{"label":"process 3","segs":[[88.9,247.4,2],[247.6,407.0,6]]},{"label":"process 4","segs":[[92.6,251.9,3],[252.0,414.1,7]]}]},"cpu_threads_nogil":{"total":305.4,"printed":"prime counts, 4 threads, no GIL: 0.31 seconds","lanes":[{"label":"thread 0","segs":[[0.1,149.9,0],[149.9,171.9,5],[173.1,305.1,5]]},{"label":"thread 1","segs":[[0.2,149.7,1],[149.7,302.2,4]]},{"label":"thread 2","segs":[[0.3,150.9,2],[150.9,268.4,6],[269.4,303.8,6]]},{"label":"thread 3","segs":[[0.4,48.9,3],[50.4,151.5,3],[151.5,305.2,7]]}]},"io_async_blocking":{"total":2446.4,"printed":"downloads, asyncio with time.sleep: 2.45 seconds","lanes":[{"label":"download 0","segs":[[0.8,202.6,0]]},{"label":"download 1","segs":[[202.7,407.0,1]]},{"label":"download 2","segs":[[407.1,611.2,2]]},{"label":"download 3","segs":[[611.3,813.1,3]]},{"label":"download 4","segs":[[813.2,1014.2,4]]},{"label":"download 5","segs":[[1014.8,1218.9,5]]},{"label":"download 6","segs":[[1219.0,1424.1,6]]},{"label":"download 7","segs":[[1424.1,1626.8,7]]},{"label":"download 8","segs":[[1626.8,1831.1,8]]},{"label":"download 9","segs":[[1831.2,2035.6,9]]},{"label":"download 10","segs":[[2035.7,2240.7,10]]},{"label":"download 11","segs":[[2240.8,2445.9,11]]}]},"io_async_trace":{"total":203.0,"printed":"the thread ran download code for 0.21 ms of 203 ms","events":[["start",0,0.35],["yield",0,0.37],["start",1,0.372],["yield",1,0.382],["start",2,0.384],["yield",2,0.389],["start",3,0.39],["yield",3,0.393],["start",4,0.394],["yield",4,0.397],["start",5,0.398],["yield",5,0.4],["start",6,0.401],["yield",6,0.404],["start",7,0.405],["yield",7,0.407],["start",8,0.408],["yield",8,0.41],["start",9,0.411],["yield",9,0.414],["start",10,0.415],["yield",10,0.417],["start",11,0.418],["yield",11,0.42],["resume",0,201.893],["return",0,201.947],["resume",1,201.975],["return",1,201.995],["resume",2,202.006],["return",2,202.014],["resume",3,202.022],["return",3,202.033],["resume",4,202.041],["return",4,202.052],["resume",5,202.059],["return",5,202.067],["resume",6,202.078],["return",6,202.085],["resume",7,202.093],["return",7,202.099],["resume",8,202.122],["return",8,202.129],["resume",9,202.138],["return",9,202.144],["resume",10,202.151],["return",10,202.157],["resume",11,202.164],["return",11,202.17]]}};
+const SRC = "\"\"\"Record real timelines for the concurrency page: when each task ran, on which worker.\"\"\"\nimport asyncio, json, math, os, sys, threading, time\nfrom concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor\n\nnow = time.time_ns\n\n# ---------- an IO-bound task: a pretend download that mostly waits ----------\ndef download(i):\n    start = now()\n    time.sleep(0.2)                         # waiting on the network\n    return {\"task\": i, \"worker\": threading.current_thread().name, \"wait\": [start, now()]}\n\nasync def download_async(i):\n    start = now()\n    await asyncio.sleep(0.2)                # waiting on the network, without blocking the thread\n    return {\"task\": i, \"worker\": f\"task-{i}\", \"wait\": [start, now()]}\n\nasync def download_async_blocking(i):\n    start = now()\n    time.sleep(0.2)                         # waiting on the network, and blocking the thread\n    return {\"task\": i, \"worker\": f\"task-{i}\", \"wait\": [start, now()]}\n\n# ---------- what the one thread does during asyncio: note every time it enters or leaves a download ----------\ndef trace_async(coro_fn):\n    events, M, code = [], sys.monitoring, download_async.__code__\n    def note(kind):  # kind: \"start\", \"yield\" (await hands the thread back), \"resume\", or \"return\"\n        return lambda c, *_: events.append([kind, sys._getframe(1).f_locals[\"i\"], now()]) if c is code else None\n    M.use_tool_id(M.PROFILER_ID, \"timing\")\n    for kind in (\"start\", \"yield\", \"resume\", \"return\"):\n        M.register_callback(M.PROFILER_ID, getattr(M.events, f\"PY_{kind.upper()}\"), note(kind))\n    M.set_local_events(M.PROFILER_ID, code, M.events.PY_START | M.events.PY_YIELD | M.events.PY_RESUME | M.events.PY_RETURN)\n    t0 = now(); asyncio.run(coro_fn()); t1 = now()\n    M.free_tool_id(M.PROFILER_ID)\n    busy = sum(b[2] - a[2] for a, b in zip(events, events[1:]) if a[0] in (\"start\", \"resume\") and a[1] == b[1])\n    OUT[\"io_async_trace\"] = f\"the thread ran download code for {busy / 1e6:.2f} ms of {(t1 - t0) / 1e6:.0f} ms\"\n    print(OUT[\"io_async_trace\"])\n    return {\"t0\": t0, \"t1\": t1, \"events\": events}\n\n# ---------- a CPU-bound task: count primes, noting progress every 50 numbers ----------\ndef is_prime(n):\n    if n < 2: return False\n    if n % 2 == 0: return n == 2\n    r = int(math.isqrt(n))\n    for f in range(3, r + 1, 2):\n        if n % f == 0: return False\n    return True\n\ndef count_primes_near(center, window=60_000, task=0):\n    ticks = [now()]\n    count = 0\n    for k, n in enumerate(range(center - window // 2, center + window // 2)):\n        if is_prime(n): count += 1\n        if k % 50 == 49: ticks.append(now())\n    name = threading.current_thread().name\n    if name == \"MainThread\": name = f\"pid {os.getpid()}\"\n    return {\"task\": task, \"worker\": name, \"ticks\": ticks, \"count\": count}\n\nNUM_DOWNLOADS, NUM_PRIME_COUNTS, WORKERS = 12, 8, 4\nCENTERS = [5_000_000 + i * 50_000 for i in range(NUM_PRIME_COUNTS)]\n\nLABELS = {\"io_serial\": \"downloads, one at a time\", \"io_threads\": \"downloads, 4 threads\", \"io_async\": \"downloads, asyncio\",\n          \"io_async_blocking\": \"downloads, asyncio with time.sleep\",\n          \"cpu_serial\": \"prime counts, one at a time\", \"cpu_processes\": \"prime counts, 4 processes\",\n          \"cpu_threads\": \"prime counts, 4 threads\", \"cpu_threads_nogil\": \"prime counts, 4 threads, no GIL\"}\nOUT = {}\n\ndef timed(fn, key):\n    t0 = now(); out = fn(); t1 = now()\n    OUT[key] = f\"{LABELS[key]}: {(t1 - t0) / 1e9:.2f} seconds\"\n    print(OUT[key])\n    return {\"t0\": t0, \"t1\": t1, \"tasks\": out}\n\ndef main(which):\n    runs = {}\n    async def io_async():\n        return await asyncio.gather(*(download_async(i) for i in range(NUM_DOWNLOADS)))\n    if which == \"asyncio\":\n        runs[\"io_async_trace\"] = trace_async(io_async)\n        async def io_async_blocking():\n            return await asyncio.gather(*(download_async_blocking(i) for i in range(NUM_DOWNLOADS)))\n        runs[\"io_async_blocking\"] = timed(lambda: asyncio.run(io_async_blocking()), \"io_async_blocking\")\n        return {\"printed\": OUT, \"python\": sys.version.split()[0], \"runs\": runs}\n    if which == \"default\":\n        runs[\"io_serial\"] = timed(lambda: [download(i) for i in range(NUM_DOWNLOADS)], \"io_serial\")\n        def io_threads():\n            with ThreadPoolExecutor(max_workers=WORKERS, thread_name_prefix=\"thread\") as ex:\n                return list(ex.map(download, range(NUM_DOWNLOADS)))\n        runs[\"io_threads\"] = timed(io_threads, \"io_threads\")\n        runs[\"io_async\"] = timed(lambda: asyncio.run(io_async()), \"io_async\")\n        runs[\"cpu_serial\"] = timed(lambda: [count_primes_near(c, task=i) for i, c in enumerate(CENTERS)], \"cpu_serial\")\n        def cpu_procs():\n            with ProcessPoolExecutor(max_workers=WORKERS) as ex:\n                return list(ex.map(count_primes_near, CENTERS, [60_000] * NUM_PRIME_COUNTS, range(NUM_PRIME_COUNTS)))\n        runs[\"cpu_processes\"] = timed(cpu_procs, \"cpu_processes\")\n    def cpu_threads():\n        with ThreadPoolExecutor(max_workers=WORKERS, thread_name_prefix=\"thread\") as ex:\n            return list(ex.map(count_primes_near, CENTERS, [60_000] * NUM_PRIME_COUNTS, range(NUM_PRIME_COUNTS)))\n    key = \"cpu_threads\" if which == \"default\" else \"cpu_threads_nogil\"\n    runs[key] = timed(cpu_threads, key)\n    return {\"printed\": OUT, \"python\": sys.version.split()[0], \"gil\": sys._is_gil_enabled(), \"cores\": os.cpu_count(), \"runs\": runs}\n\nif __name__ == \"__main__\":\n    json.dump(main(sys.argv[1]), open(sys.argv[2], \"w\"))";
 </script>
 <script>
 (() => {
@@ -158,11 +181,79 @@ const SRC = "\"\"\"Record real timelines for the concurrency page: when each tas
     const rows = [];
     ranges.forEach((r, k) => {
       if (k) rows.push(`<span class="ln gap"><span class="t">   …</span></span>`);
-      for (let n = r[0]; n <= r[1]; n++) rows.push(`<span class="ln"><span class="n">${String(n).padStart(3)}</span>  ${esc(LINES[n - 1])}</span>`);
+      for (let n = r[0]; n <= r[1]; n++) rows.push(`<span class="ln" data-n="${n}"><span class="n">${String(n).padStart(3)}</span>  ${esc(LINES[n - 1])}</span>`);
     });
     panel(side, head).innerHTML = rows.join("");
   };
   const outPanel = (side, text, head = "Output") => { panel(side, head).innerHTML = text.split("\n").map((t) => `<span class="ln">${esc(t)}</span>`).join(""); };
+  // Side-by-side boxes; each is [kind ("ok" or "bad"), heading, body HTML].
+  const cards = (side, items) => side.insertAdjacentHTML("beforeend", `<div class="cards">${items.map(([k, h, b]) => `<div class="card ${k}"><div class="card-h">${h}</div><p>${b}</p></div>`).join("")}</div>`);
+
+  // ---------- the event loop, step by step ----------
+  // Replays a real trace of asyncio's one thread: one column per download, one row per state.
+  // The steps play one at a time; the clock shows the real time each one happened.
+  const eventLoop = (el, trace) => {
+    const N = 12;
+    const W = Math.max(320, Math.min(620, el.clientWidth || 620)), LX = W < 480 ? 66 : 104, PW = W - LX - 4;
+    const cw = PW / N, chW = Math.min(34, cw - 4), chH = 22, RH = 38, TOP = 4;
+    const ROWS = [["ready", "in the queue"], ["running", "the one thread"], ["waiting", "on a timer"], ["done", ""]];
+    const rowY = (r) => TOP + r * RH;
+    const ev = trace.events;
+    const at = (k, i) => ev.find((e) => e[0] === k && e[1] === i)[2];
+    // Build the steps: each is the state of every download, what happened, and its real time.
+    const steps = [], st = Array(N).fill(0);
+    const push = (what, t, hl, dur, idleTo = null) => steps.push({ st: st.slice(), what, t, hl, dur, idleTo });
+    push("<code>asyncio.gather</code> puts all 12 downloads in the event loop's queue.", 0, [75, 76], 2200);
+    ev.forEach(([k, i, t], j) => {
+      const first = i === 0;
+      if (k === "start") { st[i] = 1; push(first ? "The event loop gives its one thread to <code>download(0)</code>, which runs from its first line." : `The same for <code>download(${i})</code>: it runs, reaches <code>await</code>, and hands the thread back.`, t, [14], first ? 1800 : 220); }
+      if (k === "yield") {
+        st[i] = 2; push(first ? "At <code>await</code>, <code>download(0)</code> sets a 0.2-second timer and hands the thread back to the event loop." : `The same for <code>download(${i})</code>: it runs, reaches <code>await</code>, and hands the thread back.`, t, [15], first ? 2400 : 220);
+        if (i === N - 1) push("Nothing is ready to run. The event loop asks the operating system to wake it when the first timer is up, and the thread sits idle.", t, [], 3000, ev[j + 1][2]);
+      }
+      if (k === "resume") { st[i] = 1; push(first ? "<code>download(0)</code>'s timer is up. The event loop gives it the thread again, and it picks up right after its <code>await</code>." : `<code>download(${i})</code>'s timer is up too: it resumes, returns, and is done.`, t, [16], first ? 2200 : 220); }
+      if (k === "return") { st[i] = 3; push(first ? "<code>download(0)</code> returns. The event loop moves on to the next download whose timer is up." : `<code>download(${i})</code>'s timer is up too: it resumes, returns, and is done.`, t, [16], first ? 1800 : 220); }
+    });
+    st.fill(3); push(`All 12 downloads are done. Over the whole ${trace.total.toFixed(0)} ms run, the thread spent ${trace.printed.match(/([\d.]+) ms of/)[1]} ms running download code.`, ev[ev.length - 1][2], [], 0);
+    const starts = []; steps.reduce((s, x) => (starts.push(s), s + x.dur), 0);
+    const H = TOP + ROWS.length * RH + 4;
+    let m = `<div class="loop-status"><span class="clock"><small>real time</small><span data-clock></span></span><span class="what" data-what></span></div>`;
+    m += `<svg class="tl" viewBox="0 0 ${W} ${H}" role="img" aria-label="Twelve downloads as chips that move between four rows: ready, running on the one thread, waiting on a timer, and done. One at a time, each chip runs until its await and moves to waiting, so all twelve wait at once while the thread is idle. When the timers are up, each chip runs again, one at a time, and is done.">`;
+    ROWS.forEach(([l, sub], r) => {
+      const y = rowY(r);
+      m += `<rect class="${r === 1 ? "row-run" : "row-bg"}" x="${LX}" y="${y}" width="${PW}" height="${RH - 6}" rx="5"/>`;
+      m += `<text class="row-l" x="${LX - 8}" y="${y + (sub ? 14 : 21)}" text-anchor="end">${l}</text>`;
+      if (sub) m += `<text class="row-sub" x="${LX - 8}" y="${y + 27}" text-anchor="end">${W < 480 ? { "in the queue": "queue", "the one thread": "1 thread", "on a timer": "timer" }[sub] : sub}</text>`;
+    });
+    for (let i = 0; i < N; i++) {
+      const x = LX + i * cw + (cw - chW) / 2;
+      m += `<g class="chip s0" data-chip="${i}"><rect class="c" x="${x}" y="${(RH - 6 - chH) / 2}" width="${chW}" height="${chH}" rx="4"/><text x="${x + chW / 2}" y="${(RH - 6) / 2 + 3.5}">${i}</text><rect class="timer" x="${x}" y="${(RH - 6 + chH) / 2 + 1}" width="0" height="2.5" rx="1"/></g>`;
+    }
+    el.innerHTML = m + `</svg>`;
+    const chips = [...el.querySelectorAll("[data-chip]")], timers = chips.map((c) => c.querySelector(".timer"));
+    const clock = el.querySelector("[data-clock]"), what = el.querySelector("[data-what]");
+    const codeLines = [...el.closest(".layer").querySelectorAll(".ln[data-n]")];
+    const waits = Array.from({ length: N }, (_, i) => [at("yield", i), at("resume", i)]);
+    let cur = -1;
+    const draw = (t) => {
+      let k = 0;
+      while (k + 1 < steps.length && starts[k + 1] <= t) k++;
+      const s = steps[k];
+      if (k !== cur) {
+        cur = k;
+        chips.forEach((c, i) => { c.setAttribute("class", `chip s${s.st[i]}`); c.style.transform = `translateY(${rowY(s.st[i])}px)`; });
+        what.innerHTML = s.what;
+        codeLines.forEach((ln) => ln.classList.toggle("on", s.hl.includes(+ln.dataset.n)));
+      }
+      const real = s.idleTo == null ? s.t : s.t + (s.idleTo - s.t) * Math.min(1, (t - starts[k]) / s.dur);
+      clock.textContent = `${real.toFixed(3)} ms`;
+      timers.forEach((r, i) => {
+        const [a, b] = waits[i];
+        r.setAttribute("width", s.st[i] === 2 ? chW * Math.max(0, Math.min(1, (real - a) / (b - a))) : 0);
+      });
+    };
+    return { draw, from: 0, to: starts[starts.length - 1], speed: 1 };
+  };
 
   // ---------- timelines ----------
   // Each picture is drawn at its container's own width, so labels stay readable on a phone.
@@ -244,7 +335,7 @@ const SRC = "\"\"\"Record real timelines for the concurrency page: when each tas
     { group: "Waiting" },
     {
       title: "Some tasks spend their time waiting; others spend it working",
-      side: (s) => srcPanel(s, [[8, 11], [27, 32]]),
+      side: (s) => srcPanel(s, [[8, 11], [48, 53]]),
       pic: (el) => timeline(el, { total: Infinity, lanes: [
         { label: "download(0)", kind: "wait", segs: [TL.io_serial.lanes[0].segs[0]] },
         { label: "prime count", kind: "work", segs: [((ss) => [0, Math.max(...ss.map((x) => x[1])) - ss[0][0], 0])(TL.cpu_serial.lanes[0].segs.filter((x) => x[2] === 0))] },
@@ -252,43 +343,57 @@ const SRC = "\"\"\"Record real timelines for the concurrency page: when each tas
     },
     {
       title: "One at a time, the waits add up",
-      side: (s) => { srcPanel(s, [[54, 54]]); outPanel(s, TL.io_serial.printed); },
+      side: (s) => { srcPanel(s, [[84, 84]]); outPanel(s, TL.io_serial.printed); },
       pic: (el) => timeline(el, TL.io_serial, { ...IO, kind: "wait", label: "One lane, the main thread, with twelve 0.2-second waits end to end, finishing at 2.43 seconds." }),
     },
     {
       title: "Threads let the waits overlap",
-      side: (s) => { srcPanel(s, [[55, 58]]); outPanel(s, TL.io_threads.printed); },
+      side: (s) => { srcPanel(s, [[85, 88]]); outPanel(s, TL.io_threads.printed); },
       pic: (el) => timeline(el, TL.io_threads, { ...IO, kind: "wait", label: "Four lanes, one per thread, each waiting on three downloads, side by side. Done at 0.61 seconds." }),
     },
     {
       title: "asyncio overlaps every wait, on one thread",
-      side: (s) => { srcPanel(s, [[13, 16], [59, 61]]); outPanel(s, TL.io_async.printed); },
+      side: (s) => { srcPanel(s, [[13, 16], [75, 76], [89, 89]]); outPanel(s, TL.io_async.printed); },
       pic: (el) => timeline(el, TL.io_async, { ...IO, kind: "wait", lane: 10, gap: 4, label: "Twelve lanes, one per download, all waiting at the same moment on a single thread. Done at 0.20 seconds." }),
+    },
+    {
+      title: "Up close: the event loop runs one task at a time, until it awaits",
+      side: (s) => { srcPanel(s, [[13, 16], [75, 76]], "timing.py: the highlighted line is the one running"); outPanel(s, TL.io_async_trace.printed, "Output: the same asyncio run, traced"); },
+      pic: (el) => eventLoop(el, TL.io_async_trace),
+    },
+    {
+      title: "Without an await, asyncio's tasks wait one at a time",
+      side: (s) => {
+        srcPanel(s, [[18, 21], [79, 81]]); outPanel(s, TL.io_async_blocking.printed);
+        cards(s, [["ok", "Threads", "A thread blocked in <code>time.sleep</code> lets go of the GIL, and Python runs another thread. Python decides when threads switch, so four threads can each wait in <code>time.sleep</code> at once."],
+                  ["bad", "asyncio tasks", "There is one thread, and a task keeps it until it reaches an <code>await</code>. A task blocked in <code>time.sleep</code> blocks the event loop, and every other task waits for it."]]);
+      },
+      pic: (el) => timeline(el, TL.io_async_blocking, { ...IO, kind: "wait", lane: 10, gap: 4, label: "Twelve lanes, one per download, each waiting only after the one before it finishes, in a staircase. Done at 2.45 seconds, as slow as one at a time." }),
     },
     { group: "Working" },
     {
       title: "Working tasks take as long as their work",
-      side: (s) => { srcPanel(s, [[62, 62]]); outPanel(s, TL.cpu_serial.printed); },
+      side: (s) => { srcPanel(s, [[90, 90]]); outPanel(s, TL.cpu_serial.printed); },
       pic: (el) => timeline(el, TL.cpu_serial, { ...CPU, kind: "work", label: "One lane with eight prime counts end to end, finishing at 1.25 seconds." }),
     },
     {
       title: "Threads don't make working tasks any faster",
-      side: (s) => { srcPanel(s, [[67, 71]]); outPanel(s, TL.cpu_threads.printed); },
+      side: (s) => { srcPanel(s, [[95, 99]]); outPanel(s, TL.cpu_threads.printed); },
       pic: (el) => timeline(el, TL.cpu_threads, { ...CPU, kind: "work", label: "Four thread lanes, each striped with short bursts of work. The run still takes 1.21 seconds, about as long as one at a time." }),
     },
     {
       title: "Up close: only one thread runs Python at any moment",
-      side: (s) => { srcPanel(s, [[27, 32]], "timing.py: a tick every 50 numbers shows when a thread made progress"); outPanel(s, TL.cpu_threads.printed); },
+      side: (s) => { srcPanel(s, [[48, 53]], "timing.py: a tick every 50 numbers shows when a thread made progress"); outPanel(s, TL.cpu_threads.printed); },
       pic: (el) => timeline(el, TL.cpu_threads, { max: 60, from: 0, ticks: [0, 10, 20, 30, 40, 50, 60], kind: "work", speed: 0.02, gilToken: true, label: "The first 60 milliseconds of the four-thread run. Bursts of work hop from thread to thread every few milliseconds, never overlapping, and a green GIL marker follows the one thread that is running." }),
     },
     {
       title: "Each process has its own interpreter, and its own GIL",
-      side: (s) => { srcPanel(s, [[63, 66]]); outPanel(s, TL.cpu_processes.printed); },
+      side: (s) => { srcPanel(s, [[91, 94]]); outPanel(s, TL.cpu_processes.printed); },
       pic: (el) => timeline(el, TL.cpu_processes, { ...CPU, kind: "work", bracket: [0, TL.cpu_processes.lanes[0].segs[0][0], "starting"], label: "Four process lanes, each working solidly at the same time after a short start-up gap. Done at 0.43 seconds." }),
     },
     {
       title: "Python 3.14t has no GIL: threads work at the same time",
-      side: (s) => { srcPanel(s, [[67, 71]], "timing.py, run with python3.14t"); outPanel(s, TL.cpu_threads_nogil.printed); },
+      side: (s) => { srcPanel(s, [[95, 99]], "timing.py, run with python3.14t"); outPanel(s, TL.cpu_threads_nogil.printed); },
       pic: (el) => timeline(el, TL.cpu_threads_nogil, { ...CPU, kind: "work", label: "Four thread lanes working solidly at the same time, with no start-up gap. Done at 0.31 seconds." }),
     },
     { group: "All of it" },
