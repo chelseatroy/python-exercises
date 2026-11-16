@@ -51,7 +51,7 @@
   presenters:
     - name: Ran Jing
       library: Matplotlib or Plotly
-      video: ""
+      video: "https://uchicago.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=cd9dcdcf-fab7-4f93-a641-b500015fa641"
     - name: James Jin
       library: Flask and FastAPI
       video: ""
