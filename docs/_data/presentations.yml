@@ -54,7 +54,7 @@
       video: "https://uchicago.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=cd9dcdcf-fab7-4f93-a641-b500015fa641"
     - name: James Jin
       library: Flask and FastAPI
-      video: ""
+      video: "https://youtu.be/9YdXdE0Ufq4"
     - name: Alejandro Orihuela Mesias
       library: pathlib and logging
       video: "https://youtu.be/sg47Mj85U88"
